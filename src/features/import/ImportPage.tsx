@@ -1,0 +1,574 @@
+import {
+  CheckCircle2,
+  Database,
+  Download,
+  FileCheck2,
+  FileSpreadsheet,
+  LoaderCircle,
+  RefreshCw,
+  ShieldCheck,
+  Upload,
+} from "lucide-react";
+import { useState } from "react";
+import { PageGuide } from "../../components/PageGuide";
+import { PageHeader } from "../../components/PageHeader";
+import { getBrowserRepositories } from "../../repositories/browserRepositories";
+import type { ImportManifest } from "../../schemas/manifest";
+import type { ValidationIssue } from "../../schemas/validationIssue";
+import { createSyntheticImportFiles } from "./demoImportFiles";
+import {
+  buildValidationReportCsv,
+  commitImportReview,
+  reviewImportFiles,
+  type ImportReview,
+} from "./importWorkflow";
+
+export interface ImportPageDependencies {
+  createDemoFiles: typeof createSyntheticImportFiles;
+  reviewFiles: (schedule: File, performance: File) => Promise<ImportReview>;
+  commitReview: (
+    review: ImportReview,
+    options: {
+      configurationConfirmed: boolean;
+      duplicateChecksumConfirmed: boolean;
+    },
+  ) => Promise<ImportManifest>;
+  downloadIssues: (issues: readonly ValidationIssue[]) => void;
+}
+
+const downloadIssues = (issues: readonly ValidationIssue[]) => {
+  const blob = new Blob([buildValidationReportCsv(issues)], {
+    type: "text/csv;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "project-controls-validation-report.csv";
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
+const defaultDependencies: ImportPageDependencies = {
+  createDemoFiles: createSyntheticImportFiles,
+  reviewFiles: (schedule, performance) => {
+    const repositories = getBrowserRepositories();
+    return reviewImportFiles(schedule, performance, repositories);
+  },
+  commitReview: (review, options) =>
+    commitImportReview(review, options, getBrowserRepositories().imports),
+  downloadIssues,
+};
+
+const fileSize = (bytes: number) => {
+  if (bytes < 1024) return String(bytes) + " B";
+  return (bytes / 1024).toFixed(1) + " KB";
+};
+
+interface ImportFileFieldProps {
+  id: string;
+  label: string;
+  description: string;
+  file?: File;
+  onChange: (file?: File) => void;
+}
+
+function ImportFileField({
+  id,
+  label,
+  description,
+  file,
+  onChange,
+}: ImportFileFieldProps) {
+  return (
+    <div className={"import-file" + (file ? " import-file--selected" : "")}>
+      <div className="import-file__icon" aria-hidden="true">
+        {file ? <FileCheck2 size={23} /> : <FileSpreadsheet size={23} />}
+      </div>
+      <div className="import-file__body">
+        <label htmlFor={id}>{label}</label>
+        <p>{description}</p>
+        {file ? (
+          <div className="import-file__selection">
+            <strong>{file.name}</strong>
+            <span>{fileSize(file.size)}</span>
+          </div>
+        ) : null}
+        <input
+          id={id}
+          type="file"
+          accept=".csv,text/csv"
+          onChange={(event) => onChange(event.target.files?.[0])}
+        />
+      </div>
+    </div>
+  );
+}
+
+const severityOrder: Record<ValidationIssue["severity"], number> = {
+  blocking: 0,
+  warning: 1,
+  information: 2,
+};
+
+const locationFor = (issue: ValidationIssue) =>
+  [
+    issue.fileName,
+    issue.recordNumber === undefined
+      ? undefined
+      : "record " + String(issue.recordNumber),
+    issue.physicalLineStart === undefined
+      ? undefined
+      : "line " + String(issue.physicalLineStart),
+  ]
+    .filter((item): item is string => item !== undefined)
+    .join(" · ");
+
+export function ImportPage({
+  dependencies = defaultDependencies,
+}: {
+  dependencies?: ImportPageDependencies;
+}) {
+  const [scheduleFile, setScheduleFile] = useState<File>();
+  const [performanceFile, setPerformanceFile] = useState<File>();
+  const [review, setReview] = useState<ImportReview>();
+  const [committed, setCommitted] = useState<ImportManifest>();
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
+  const [configurationConfirmed, setConfigurationConfirmed] = useState(false);
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const resetReview = () => {
+    setReview(undefined);
+    setCommitted(undefined);
+    setConfigurationConfirmed(false);
+    setDuplicateConfirmed(false);
+    setErrorMessage("");
+  };
+
+  const updateSchedule = (file?: File) => {
+    setScheduleFile(file);
+    resetReview();
+  };
+
+  const updatePerformance = (file?: File) => {
+    setPerformanceFile(file);
+    resetReview();
+  };
+
+  const runReview = async (schedule: File, performance: File) => {
+    setIsReviewing(true);
+    setErrorMessage("");
+    setCommitted(undefined);
+    setConfigurationConfirmed(false);
+    setDuplicateConfirmed(false);
+    try {
+      setReview(await dependencies.reviewFiles(schedule, performance));
+    } catch (error) {
+      setReview(undefined);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The files could not be reviewed.",
+      );
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  const useExample = async () => {
+    const files = dependencies.createDemoFiles();
+    setScheduleFile(files.schedule);
+    setPerformanceFile(files.performance);
+    resetReview();
+    await runReview(files.schedule, files.performance);
+  };
+
+  const validateSelected = async () => {
+    if (scheduleFile === undefined || performanceFile === undefined) return;
+    await runReview(scheduleFile, performanceFile);
+  };
+
+  const commit = async () => {
+    if (review === undefined) return;
+    setIsCommitting(true);
+    setErrorMessage("");
+    try {
+      setCommitted(
+        await dependencies.commitReview(review, {
+          configurationConfirmed,
+          duplicateChecksumConfirmed: duplicateConfirmed,
+        }),
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The atomic import did not complete.",
+      );
+    } finally {
+      setIsCommitting(false);
+    }
+  };
+
+  const startAgain = () => {
+    setScheduleFile(undefined);
+    setPerformanceFile(undefined);
+    resetReview();
+  };
+
+  const blockingIssues =
+    review?.issues.filter((issue) => issue.severity === "blocking") ?? [];
+  const warningIssues =
+    review?.issues.filter((issue) => issue.severity === "warning") ?? [];
+  const sortedIssues = [...(review?.issues ?? [])].sort(
+    (left, right) =>
+      severityOrder[left.severity] - severityOrder[right.severity] ||
+      left.fileName.localeCompare(right.fileName) ||
+      (left.recordNumber ?? 0) - (right.recordNumber ?? 0),
+  );
+  const configurationReady =
+    review === undefined ||
+    !review.configurationRequiresConfirmation ||
+    configurationConfirmed;
+  const duplicateReady =
+    review === undefined ||
+    review.duplicateChecksumMatches.length === 0 ||
+    duplicateConfirmed;
+  const canCommit = Boolean(
+    review?.preview?.canCommit &&
+      configurationReady &&
+      duplicateReady &&
+      !isCommitting,
+  );
+
+  return (
+    <div className="page-stack">
+      <PageHeader
+        eyebrow="M1 data foundation"
+        title="Import and data quality"
+        description="Validate synthetic schedule and performance CSV files before an atomic local commit."
+        actions={
+          <div className="local-only-chip">
+            <ShieldCheck size={18} aria-hidden="true" />
+            <span>
+              <small>Privacy boundary</small>
+              Local and synthetic only
+            </span>
+          </div>
+        }
+      />
+
+      <PageGuide
+        pageName="Import and data quality"
+        purpose="Use this workflow to prove file quality and confirm project boundaries before active data can change."
+        steps={[
+          {
+            title: "Choose both files",
+            detail: "Select matching schedule and performance CSV files, or load the safe synthetic example.",
+          },
+          {
+            title: "Resolve validation",
+            detail: "Review blocking rows, warnings and exact correction guidance before continuing.",
+          },
+          {
+            title: "Confirm and commit",
+            detail: "Approve first-project registries or repeated checksums, then make one atomic local commit.",
+          },
+        ]}
+      />
+
+      <ol className="import-steps" aria-label="Import progress">
+        {[
+          ["1", "Select files"],
+          ["2", "Validate"],
+          ["3", "Confirm"],
+          ["4", "Commit"],
+        ].map(([number, label], index) => {
+          const current = committed
+            ? 3
+            : review
+              ? 2
+              : scheduleFile && performanceFile
+                ? 1
+                : 0;
+          return (
+            <li
+              key={number}
+              className={
+                index < current
+                  ? "import-step import-step--complete"
+                  : index === current
+                    ? "import-step import-step--current"
+                    : "import-step"
+              }
+              aria-current={index === current ? "step" : undefined}
+            >
+              <span>{index < current ? <CheckCircle2 size={17} /> : number}</span>
+              <strong>{label}</strong>
+            </li>
+          );
+        })}
+      </ol>
+
+      {committed ? (
+        <section className="import-receipt" aria-labelledby="import-success-title">
+          <div className="import-receipt__icon" aria-hidden="true">
+            <Database size={28} />
+          </div>
+          <div>
+            <p className="eyebrow">Atomic commit complete</p>
+            <h2 id="import-success-title">The validated generation is now active.</h2>
+            <p>
+              {committed.totals.acceptedRows} records were stored locally for data
+              date {committed.dataDate}. {committed.previousImportId
+                ? "The previous active generation was preserved for recovery."
+                : "This is the first controlled active generation."}
+            </p>
+            <dl className="import-receipt__meta">
+              <div><dt>Import ID</dt><dd>{committed.importId}</dd></div>
+              <div><dt>Project</dt><dd>{committed.projectId}</dd></div>
+              <div><dt>Baseline</dt><dd>{committed.baselineVersion}</dd></div>
+            </dl>
+          </div>
+          <button className="button button--secondary" type="button" onClick={startAgain}>
+            <RefreshCw size={17} aria-hidden="true" /> Start another import
+          </button>
+        </section>
+      ) : (
+        <>
+          <section className="panel import-selection" aria-labelledby="import-files-title">
+            <div className="panel__header">
+              <div>
+                <p className="eyebrow">Input pair</p>
+                <h2 id="import-files-title">Choose the reporting files</h2>
+                <p className="panel__description">
+                  Files are read in this browser only. The allowlist accepts UTF-8 .csv files.
+                </p>
+              </div>
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={useExample}
+                disabled={isReviewing}
+              >
+                {isReviewing ? (
+                  <LoaderCircle className="spin" size={17} aria-hidden="true" />
+                ) : (
+                  <FileCheck2 size={17} aria-hidden="true" />
+                )}
+                Load synthetic example
+              </button>
+            </div>
+
+            <div className="import-file-grid">
+              <ImportFileField
+                id="schedule-file"
+                label="Schedule CSV"
+                description="Activities, dates, logic, ownership, calendars and baseline budget."
+                file={scheduleFile}
+                onChange={updateSchedule}
+              />
+              <ImportFileField
+                id="performance-file"
+                label="Performance CSV"
+                description="Periodic planned value, earned value, actual cost and progress."
+                file={performanceFile}
+                onChange={updatePerformance}
+              />
+            </div>
+
+            <div className="import-selection__actions">
+              <p>Both files are required and must describe one project and baseline.</p>
+              <button
+                className="button button--primary"
+                type="button"
+                disabled={
+                  scheduleFile === undefined ||
+                  performanceFile === undefined ||
+                  isReviewing
+                }
+                onClick={validateSelected}
+              >
+                {isReviewing ? (
+                  <LoaderCircle className="spin" size={17} aria-hidden="true" />
+                ) : (
+                  <Upload size={17} aria-hidden="true" />
+                )}
+                {isReviewing ? "Validating…" : "Validate both files"}
+              </button>
+            </div>
+          </section>
+
+          {errorMessage ? (
+            <div className="import-error" role="alert">
+              <strong>Import could not continue.</strong>
+              <span>{errorMessage}</span>
+            </div>
+          ) : null}
+
+          {review ? (
+            <section className="import-review" aria-labelledby="validation-result-title">
+              <div
+                className={
+                  "validation-banner " +
+                  (review.preview?.canCommit
+                    ? "validation-banner--ready"
+                    : "validation-banner--blocked")
+                }
+              >
+                <div>
+                  <p className="eyebrow">Validation result</p>
+                  <h2 id="validation-result-title">
+                    {review.preview?.canCommit
+                      ? "The data pair is technically valid."
+                      : "Blocking issues must be corrected."}
+                  </h2>
+                  <p>
+                    {review.preview?.canCommit
+                      ? "Review the inferred controls below before the active pointer can change."
+                      : "No data has been written. Correct the listed rows and validate again."}
+                  </p>
+                </div>
+                <span className="validation-banner__status">
+                  {review.preview?.canCommit ? "Ready to confirm" : "Commit blocked"}
+                </span>
+              </div>
+
+              <div className="validation-summary" aria-label="Validation summary">
+                <div><span>Source rows</span><strong>{
+                  (review.preview?.scheduleCounts.sourceRows ?? review.schedule.parseResult.records.length) +
+                  (review.preview?.performanceCounts.sourceRows ?? review.performance.parseResult.records.length)
+                }</strong></div>
+                <div><span>Accepted rows</span><strong>{
+                  (review.preview?.scheduleCounts.acceptedRows ?? 0) +
+                  (review.preview?.performanceCounts.acceptedRows ?? 0)
+                }</strong></div>
+                <div><span>Blocking issues</span><strong>{blockingIssues.length}</strong></div>
+                <div><span>Warnings</span><strong>{warningIssues.length}</strong></div>
+                <div><span>Data date</span><strong>{review.preview?.dataDate ?? "Unavailable"}</strong></div>
+              </div>
+
+              {review.configuration ? (
+                <fieldset className="confirmation-panel">
+                  <legend>Project registry control</legend>
+                  <div className="confirmation-panel__header">
+                    <div>
+                      <strong>
+                        {review.configurationRequiresConfirmation
+                          ? "Confirm the first-project registry"
+                          : "Active project registry applied"}
+                      </strong>
+                      <p>
+                        {review.configurationRequiresConfirmation
+                          ? "These values were inferred from accepted schedule rows. Confirm they are the authorised boundaries for this synthetic project."
+                          : "The candidate was checked against the immutable registry created by the first successful import."}
+                      </p>
+                    </div>
+                    <span>{review.configuration.projectId}</span>
+                  </div>
+                  <dl className="registry-grid">
+                    <div><dt>Work packages</dt><dd>{review.configuration.workPackageIds.join(", ")}</dd></div>
+                    <div><dt>Calendars</dt><dd>{review.configuration.calendarIds.join(", ")}</dd></div>
+                    <div><dt>Authorised starts</dt><dd>{review.configuration.authorisedStartActivityIds.join(", ") || "None"}</dd></div>
+                    <div><dt>Authorised finishes</dt><dd>{review.configuration.authorisedFinishActivityIds.join(", ") || "None"}</dd></div>
+                  </dl>
+                  {review.configurationRequiresConfirmation ? (
+                    <label className="confirmation-check">
+                      <input
+                        type="checkbox"
+                        checked={configurationConfirmed}
+                        onChange={(event) => setConfigurationConfirmed(event.target.checked)}
+                      />
+                      <span>I confirm this proposed synthetic project registry.</span>
+                    </label>
+                  ) : null}
+                </fieldset>
+              ) : null}
+
+              {review.duplicateChecksumMatches.length > 0 ? (
+                <fieldset className="confirmation-panel confirmation-panel--attention">
+                  <legend>Repeated file control</legend>
+                  <p>
+                    {review.duplicateChecksumMatches.length} checksum matches were found in successful import history. The same bytes may be imported only after explicit confirmation.
+                  </p>
+                  <label className="confirmation-check">
+                    <input
+                      type="checkbox"
+                      checked={duplicateConfirmed}
+                      onChange={(event) => setDuplicateConfirmed(event.target.checked)}
+                    />
+                    <span>I intend to import these repeated file bytes.</span>
+                  </label>
+                </fieldset>
+              ) : null}
+
+              <section className="panel issue-panel" aria-labelledby="issue-list-title">
+                <div className="panel__header">
+                  <div>
+                    <p className="eyebrow">Row-level evidence</p>
+                    <h2 id="issue-list-title">Validation issues</h2>
+                    <p className="panel__description">
+                      Record numbers are one-based CSV records; the header is record 1.
+                    </p>
+                  </div>
+                  {sortedIssues.length > 0 ? (
+                    <button
+                      className="button button--secondary"
+                      type="button"
+                      onClick={() => dependencies.downloadIssues(sortedIssues)}
+                    >
+                      <Download size={17} aria-hidden="true" /> Download report
+                    </button>
+                  ) : null}
+                </div>
+                {sortedIssues.length === 0 ? (
+                  <div className="empty-validation">
+                    <CheckCircle2 size={22} aria-hidden="true" />
+                    <div><strong>No validation issues found.</strong><span>Both files passed all current import rules.</span></div>
+                  </div>
+                ) : (
+                  <div className="table-scroll">
+                    <table>
+                      <caption className="sr-only">CSV validation issues</caption>
+                      <thead><tr><th scope="col">Severity</th><th scope="col">Location</th><th scope="col">Field / code</th><th scope="col">Rule and correction</th></tr></thead>
+                      <tbody>
+                        {sortedIssues.slice(0, 50).map((issue, index) => (
+                          <tr key={issue.fileName + String(issue.recordNumber) + issue.code + String(index)}>
+                            <td><span className={"issue-severity issue-severity--" + issue.severity}>{issue.severity}</span></td>
+                            <td><span className="table-primary">{locationFor(issue)}</span>{issue.suppliedValue ? <span className="table-secondary">Value: {issue.suppliedValue}</span> : null}</td>
+                            <td><span className="table-primary">{issue.column ?? "File"}</span><span className="table-secondary">{issue.code}</span></td>
+                            <td className="issue-rule"><strong>{issue.rule}</strong><span>{issue.suggestion}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {sortedIssues.length > 50 ? <p className="issue-limit">Showing the first 50 issues. Download the report for all {sortedIssues.length}.</p> : null}
+              </section>
+
+              <div className="commit-bar">
+                <div>
+                  <strong>Atomic safety boundary</strong>
+                  <p>Rows, manifest and project registry commit together; the active pointer changes last.</p>
+                </div>
+                <button
+                  className="button button--primary"
+                  type="button"
+                  disabled={!canCommit}
+                  onClick={commit}
+                >
+                  {isCommitting ? <LoaderCircle className="spin" size={17} aria-hidden="true" /> : <Database size={17} aria-hidden="true" />}
+                  {isCommitting ? "Committing…" : "Commit validated import"}
+                </button>
+              </div>
+            </section>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}

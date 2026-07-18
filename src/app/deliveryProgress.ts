@@ -18,8 +18,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M1",
     title: "Foundation and import",
     plannedHours: 15,
-    completionPercent: 70,
-    evidence: "Parsing, validation, hostile fixtures and atomic storage are tested; the import wizard and backup UI remain.",
+    completionPercent: 85,
+    evidence: "The guided two-file import, row validation, registry confirmation, checksum control and atomic commit are tested; backup/restore remains.",
   },
   {
     id: "M2",
@@ -77,19 +77,17 @@ const totalPlannedHours = deliveryMilestones.reduce(
   0,
 );
 
-const rawEvidencedPlanHours = deliveryMilestones.reduce(
+const weightedHourPercent = deliveryMilestones.reduce(
   (total, milestone) =>
-    total + milestone.plannedHours * (milestone.completionPercent / 100),
+    total + milestone.plannedHours * milestone.completionPercent,
   0,
 );
 
-const evidencedPlanHours = Math.round(rawEvidencedPlanHours * 10) / 10;
+const evidencedPlanHours = Math.round(weightedHourPercent / 10) / 10;
 
 export const deliveryProgress = {
   totalPlannedHours,
   evidencedPlanHours,
-  completionPercent: Math.round(
-    (evidencedPlanHours / totalPlannedHours) * 100,
-  ),
+  completionPercent: Math.round(weightedHourPercent / totalPlannedHours),
   assessedOn: "2026-07-18",
 } as const;

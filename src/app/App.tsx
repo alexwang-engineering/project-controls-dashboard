@@ -8,6 +8,11 @@ const OverviewPage = lazy(() =>
     default: module.OverviewPage,
   })),
 );
+const ImportPage = lazy(() =>
+  import("../features/import/ImportPage").then((module) => ({
+    default: module.ImportPage,
+  })),
+);
 const MilestonesPage = lazy(() =>
   import("../features/milestones/MilestonesPage").then((module) => ({
     default: module.MilestonesPage,
@@ -37,39 +42,7 @@ export function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<OverviewPage />} />
-            <Route
-              path="import"
-              element={
-                <ModulePage
-                  eyebrow="M1 data foundation"
-                  title="Import and data quality"
-                  description="Validate schedule and performance files before an atomic commit."
-                  items={[
-                    "RFC-compatible CSV parsing",
-                    "Row and field validation",
-                    "Schedule-logic health checks",
-                    "Import manifest and checksum",
-                  ]}
-                  guide={{
-                    purpose: "Use this planned workflow to prove data quality before anything replaces the active dataset.",
-                    steps: [
-                      {
-                        title: "Prepare files",
-                        detail: "Choose synthetic schedule and performance CSV files for the same reporting period.",
-                      },
-                      {
-                        title: "Resolve validation",
-                        detail: "Review blocking errors, warnings and quarantined rows before continuing.",
-                      },
-                      {
-                        title: "Commit deliberately",
-                        detail: "Confirm registries and duplicates; a failed commit must preserve the active dataset.",
-                      },
-                    ],
-                  }}
-                />
-              }
-            />
+            <Route path="import" element={<ImportPage />} />
             <Route
               path="schedule-cost"
               element={
