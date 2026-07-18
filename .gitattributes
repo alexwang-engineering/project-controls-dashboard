@@ -1,0 +1,4 @@
+# CSV test fixtures are byte-level evidence. Preserve BOMs, CRLF/LF choices,
+# control characters, binary impostors, and missing final record endings exactly.
+src/test/fixtures/csv/** -text -diff
+src/test/fixtures/csv/SHA256SUMS text diff

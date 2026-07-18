@@ -18,15 +18,16 @@
 | Changes | Read-only register, exposure summary, baseline warning | Working slice |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 16 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 74 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
+| M1 fixture/parser boundary | 28 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export, manual headers | Tested increment |
 
 ## Milestone position against the accepted plan
 
 | Milestone | Target | Current evidence | Remaining gate work |
 |---|---:|---|---|
 | M0 — Specification and architecture | 22 Jul | Master plan, two ADRs, stack, fixed fixture, independent M1 review | Record remaining governance registers and formal gate decision |
-| M1 — Foundation and import | 31 Jul | Shell, types, demo snapshot, tests, trust-boundary decisions | CSV schemas/parser, validation UI, generation/pointer storage, backup/recovery |
+| M1 — Foundation and import | 31 Jul | Shell, demo snapshot, trust-boundary ADR, exact fixtures, parser/scalar boundary | Full row schemas, cross-file/graph validation, worker UI, generation storage, backup/recovery |
 | M2 — Overview | 9 Aug | Core overview, curve, KPIs, WP table, responsive QA | True cross-view filtering, source-row trace, empty/error states, research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, fixture tests | Aggregation trace, current-period view, variance workflow, help content |
 | M4 — Milestones | 20 Aug | Read-only register and overview exceptions | Domain status rules/tests, filters, predecessor chain, recovery workflow |
@@ -43,10 +44,12 @@ depends on validated, recoverable data.
 The normative contract decisions are recorded in
 [`ADR-0002`](architecture-decisions/ADR-0002-m1-import-trust-boundary.md).
 
-1. Define Zod schemas and versioned CSV templates for schedule and performance.
-2. Build Papa Parse normalisation with row/field error locations and hostile-cell
-   neutralisation.
-3. Add relationship checks for self-links, missing predecessors, and cycles.
+1. Complete the Zod row schemas and versioned templates for schedule and
+   performance; shared money, ID, ISO-date, and boolean grammars are now tested.
+2. Move the tested Papa Parse boundary into the typed module-worker protocol and
+   connect row/field issues to the preview model.
+3. Add cross-file and relationship checks for missing references, self-links,
+   duplicate keys, period gaps, and cycles.
 4. Create preview/validation/commit steps and preserve the active dataset on a
    failed import.
 5. Add an atomic Dexie repository, import manifest, checksums, backup, and restore.

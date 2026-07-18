@@ -100,6 +100,10 @@ and checksum history are retained even when superseded row generations are
 garbage-collected. An identical re-import requires explicit confirmation and the
 confirmation is recorded in the new immutable manifest.
 
+Garbage collection may delete superseded activity and performance row
+generations only. It never deletes manifests or checksum history. The repository
+integration test must assert both survive generation cleanup.
+
 ### D9 — Header and scalar normalisation policy
 
 - Parse with `header: false`, `dynamicTyping: false`, and
@@ -144,7 +148,10 @@ M1 implementation and review must preserve these invariants:
 6. No foreign promise is awaited inside a Dexie transaction.
 7. Money is integer pence after validation.
 8. `NaN` and `Infinity` never reach domain or UI code.
-9. Candidate validation never mixes with the active dataset.
+9. Candidate validation never mixes candidate rows with active imported rows.
+   Membership validation receives project configuration as an explicit input:
+   the proposed configuration during a first import and the active configuration
+   during later imports.
 10. Every CSV export uses the shared injection-safe encoder.
 11. Parsing and validation are pure until explicit commit.
 12. Backup restore uses the same validated atomic commit path.
@@ -163,6 +170,17 @@ M1 implementation and review must preserve these invariants:
 - The validation error report is treated as an untrusted export surface.
 - The fixture pack and parser/repository tests must be built before the import UI
   is considered complete.
+
+## Required regression additions
+
+- First-project work-package confirmation: accepting proposed IDs creates the
+  registry in the same atomic commit; declining writes nothing.
+- Later work-package validation: an unknown `wbs_id` blocks against the active
+  registry and does not mutate that registry.
+- The equivalent first-import confirmation and later unknown-ID cases apply to
+  calendars.
+- Generation garbage collection removes eligible row data while retaining every
+  manifest and checksum-history record.
 
 ## Rejected alternatives
 

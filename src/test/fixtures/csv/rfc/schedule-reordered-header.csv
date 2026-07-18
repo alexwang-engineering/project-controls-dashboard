@@ -1,0 +1,2 @@
+commentary,progress_method,baseline_budget,is_milestone,constraint_date,constraint_type,calendar_id,predecessor_links,actual_finish,actual_start,forecast_finish,forecast_start,baseline_finish,baseline_start,owner,activity_name,wbs_id,activity_id,baseline_version,project_id
+Accepted fixture record,percent_complete,100000,false,,none,CAL-5D,,2026-04-10,2026-04-06,2026-04-10,2026-04-06,2026-04-10,2026-04-06,Design Lead,Confirm design requirements,WP100,A-001,B0,ASTER
