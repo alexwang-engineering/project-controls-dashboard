@@ -26,6 +26,7 @@
 | M1 schedule graph | Self/missing links, exact cycle members, lag/open-end/constraint warnings, iterative 10,000-node proof | Tested increment |
 | M1 import orchestration | Accepted-row stage isolation, explicit quarantine loop, manifest/count reconciliation | Tested increment |
 | M1 generation repository | Pointer-last Dexie commit, active reads, rollback/quota injection, confirmation, duplicate history, revert and GC | Tested increment |
+| Desktop review build | Signed local macOS app wrapper, SPA route fallback and repeatable packaging command | Verified |
 
 ## Milestone position against the accepted plan
 
