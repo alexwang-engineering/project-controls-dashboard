@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/PageHeader";
+import { PageGuide } from "../../components/PageGuide";
 import { StatusPill } from "../../components/StatusPill";
 import { demoSnapshot } from "../../data/demo";
 import type { ChangeStatus, MetricStatus } from "../../domain/types";
@@ -34,6 +35,25 @@ export function ChangesPage() {
         eyebrow="Baseline governance"
         title="Change control"
         description="Separate proposed, approved and incorporated change so the performance baseline remains explainable."
+      />
+
+      <PageGuide
+        pageName="Change control"
+        purpose="Use the register to make decisions visible without hiding historic performance or changing the baseline early."
+        steps={[
+          {
+            title: "Check decisions",
+            detail: "Start with submitted requests and approved changes that are not yet baselined.",
+          },
+          {
+            title: "Assess impact",
+            detail: "Review cost, schedule and decision due date before approval.",
+          },
+          {
+            title: "Protect the baseline",
+            detail: "Only an approved and implemented change may link to a new controlled baseline version.",
+          },
+        ]}
       />
 
       <section className="summary-strip" aria-label="Change summary">

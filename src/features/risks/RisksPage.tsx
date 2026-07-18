@@ -1,4 +1,5 @@
 import { PageHeader } from "../../components/PageHeader";
+import { PageGuide } from "../../components/PageGuide";
 import { StatusPill } from "../../components/StatusPill";
 import { demoSnapshot } from "../../data/demo";
 import type { MetricStatus, RiskRating } from "../../domain/types";
@@ -29,6 +30,25 @@ export function RisksPage() {
         eyebrow="Uncertainty control"
         title="Risk exposure"
         description="Prioritise residual exposure, breached triggers and treatment actions before they become delivery variance."
+      />
+
+      <PageGuide
+        pageName="Risk exposure"
+        purpose="Use residual exposure and trigger evidence to decide which treatments need management attention now."
+        steps={[
+          {
+            title: "Read exposure",
+            detail: "Start with critical or high risks and any breached early-warning triggers.",
+          },
+          {
+            title: "Locate concentration",
+            detail: "Use the heatmap to see where probability and impact combine; confirm exact values in the register.",
+          },
+          {
+            title: "Prioritise treatment",
+            detail: "Work down the sorted register and check each control, owner and treatment due date.",
+          },
+        ]}
       />
 
       <section className="summary-strip" aria-label="Risk summary">

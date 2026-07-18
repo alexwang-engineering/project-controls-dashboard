@@ -295,6 +295,66 @@ h2 {
   color: var(--muted);
 }
 
+.topbar__status {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.build-progress {
+  display: grid;
+  width: 210px;
+  gap: 0.2rem;
+}
+
+.build-progress__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+.build-progress__label strong {
+  color: var(--navy-950);
+  font-size: 0.78rem;
+}
+
+.build-progress progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #dfe9ed;
+  color: var(--teal-600);
+  appearance: none;
+}
+
+.build-progress progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #dfe9ed;
+}
+
+.build-progress progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal-700), #37aaa8);
+}
+
+.build-progress progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal-700), #37aaa8);
+}
+
+.build-progress small {
+  color: #6f818b;
+  font-size: 0.57rem;
+  line-height: 1.2;
+  text-align: right;
+}
+
 .data-quality {
   display: flex;
   align-items: center;
@@ -356,6 +416,109 @@ h2 {
   margin-top: 0.55rem;
   color: var(--muted);
   font-size: 0.96rem;
+}
+
+.page-guide {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.72fr) minmax(0, 2.28fr);
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #bddbdc;
+  border-left: 4px solid var(--teal-600);
+  border-radius: 13px;
+  background: linear-gradient(115deg, #f0f9f8, #ffffff 48%);
+  box-shadow: 0 6px 20px rgb(22 54 69 / 4%);
+}
+
+.page-guide__intro {
+  padding-right: 0.8rem;
+  border-right: 1px solid #d5e7e8;
+}
+
+.page-guide__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--teal-700);
+}
+
+.page-guide__title-row h2 {
+  color: var(--navy-950);
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.page-guide__intro > p {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.42;
+}
+
+.page-guide__state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  margin-top: 0.58rem;
+  padding: 0.16rem 0.47rem;
+  border-radius: 999px;
+  background: var(--positive-bg);
+  color: var(--positive);
+  font-size: 0.61rem;
+  font-weight: 850;
+}
+
+.page-guide__state--planned {
+  background: var(--neutral-bg);
+  color: var(--neutral);
+}
+
+.page-guide__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-guide__steps li {
+  display: flex;
+  min-width: 0;
+  gap: 0.55rem;
+  padding: 0.1rem 0.85rem;
+  border-right: 1px solid #e0eaed;
+}
+
+.page-guide__steps li:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.page-guide__number {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--navy-900);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 850;
+}
+
+.page-guide__steps strong {
+  display: block;
+  color: var(--navy-950);
+  font-size: 0.72rem;
+}
+
+.page-guide__steps p {
+  margin-top: 0.22rem;
+  color: var(--muted);
+  font-size: 0.67rem;
+  line-height: 1.42;
 }
 
 .eyebrow {
@@ -1042,6 +1205,16 @@ tfoot td {
 }
 
 @media (max-width: 1120px) {
+  .page-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .page-guide__intro {
+    padding: 0 0 0.7rem;
+    border-right: 0;
+    border-bottom: 1px solid #d5e7e8;
+  }
+
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1101,6 +1274,10 @@ tfoot td {
     min-height: 52px;
   }
 
+  .build-progress {
+    width: 185px;
+  }
+
   .summary-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1126,6 +1303,45 @@ tfoot td {
 
   .page-header__actions {
     width: 100%;
+  }
+
+  .workspace__topbar {
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding-inline: 0.75rem;
+  }
+
+  .workspace__topbar > div:first-child {
+    max-width: 42%;
+  }
+
+  .topbar__separator,
+  .topbar__baseline,
+  .data-quality {
+    display: none;
+  }
+
+  .build-progress {
+    width: min(48vw, 180px);
+  }
+
+  .page-guide__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .page-guide__steps li {
+    padding: 0.65rem 0;
+    border-right: 0;
+    border-bottom: 1px solid #e0eaed;
+  }
+
+  .page-guide__steps li:first-child {
+    padding-top: 0;
+  }
+
+  .page-guide__steps li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 
   .snapshot-chip {

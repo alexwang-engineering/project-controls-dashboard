@@ -1,11 +1,13 @@
 import { CheckCircle2, Clock3 } from "lucide-react";
 import { PageHeader } from "../../components/PageHeader";
+import { PageGuide, type PageGuideProps } from "../../components/PageGuide";
 
 interface ModulePageProps {
   eyebrow: string;
   title: string;
   description: string;
   items: string[];
+  guide: Omit<PageGuideProps, "pageName" | "state">;
 }
 
 export function ModulePage({
@@ -13,10 +15,18 @@ export function ModulePage({
   title,
   description,
   items,
+  guide,
 }: ModulePageProps) {
   return (
     <div className="page-stack">
       <PageHeader eyebrow={eyebrow} title={title} description={description} />
+
+      <PageGuide
+        pageName={title}
+        purpose={guide.purpose}
+        steps={guide.steps}
+        state="Planned workflow"
+      />
 
       <section className="panel module-roadmap" aria-labelledby="module-scope-title">
         <div className="panel__header">

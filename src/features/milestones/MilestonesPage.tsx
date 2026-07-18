@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { PageHeader } from "../../components/PageHeader";
+import { PageGuide } from "../../components/PageGuide";
 import { StatusPill } from "../../components/StatusPill";
 import { demoSnapshot } from "../../data/demo";
 import type { MetricStatus, MilestoneStatus } from "../../domain/types";
@@ -34,6 +35,25 @@ export function MilestonesPage() {
         eyebrow="Schedule commitments"
         title="Milestone control"
         description="Baseline, forecast and actual dates with movement, ownership and explicit exception commentary."
+      />
+
+      <PageGuide
+        pageName="Milestone control"
+        purpose="Use the register to find commitments moving beyond baseline and check that recovery is owned."
+        steps={[
+          {
+            title: "Scan the summary",
+            detail: "Start with forecast-late milestones and the next commitment date.",
+          },
+          {
+            title: "Compare the dates",
+            detail: "Read baseline against forecast or actual; a positive day variance means late.",
+          },
+          {
+            title: "Check the recovery",
+            detail: "For every adverse item, confirm the commentary explains the cause, owner and control action.",
+          },
+        ]}
       />
 
       <section className="summary-strip" aria-label="Milestone summary">

@@ -27,6 +27,40 @@ describe("project controls application", () => {
     const projectTotal = screen.getByRole("row", { name: /Project total/ });
     expect(within(projectTotal).getByText("-£150,000")).toBeInTheDocument();
     expect(within(projectTotal).getByText("-£90,000")).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("progressbar", { name: "MVP build progress" }),
+    ).toHaveAttribute("value", "44");
+    expect(screen.getByText("41.5 / 94 weighted hours")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["/", "Project overview"],
+    ["/import", "Import and data quality"],
+    ["/schedule-cost", "Schedule and cost"],
+    ["/milestones", "Milestone control"],
+    ["/risks", "Risk exposure"],
+    ["/changes", "Change control"],
+    ["/report", "Weekly management report"],
+    ["/settings", "Settings and data"],
+  ])("provides a three-step page guide on %s", async (path, pageName) => {
+    window.history.replaceState({}, "", path);
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: pageName, level: 1 }),
+    ).toBeInTheDocument();
+
+    const guide = screen.getByRole("region", {
+      name: `How to use ${pageName}`,
+    });
+    expect(
+      within(guide).getByRole("heading", {
+        name: "How to use this page",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+    expect(within(guide).getAllByRole("listitem")).toHaveLength(3);
   });
 
   it("applies a work-package highlight with an accessible announcement", async () => {

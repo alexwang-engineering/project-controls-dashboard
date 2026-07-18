@@ -11,6 +11,7 @@ import {
   Split,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+import { deliveryProgress } from "../app/deliveryProgress";
 import { demoSnapshot } from "../data/demo";
 import { useProjectStore } from "../app/store";
 import { formatDate } from "../utils/format";
@@ -93,9 +94,30 @@ export function AppShell() {
               Baseline {demoSnapshot.project.baselineVersion}
             </span>
           </div>
-          <div className="data-quality" aria-label="Data quality: three warnings, zero blocking errors">
-            <span className="data-quality__dot" aria-hidden="true" />
-            3 warnings
+          <div className="topbar__status">
+            <div
+              className="build-progress"
+              aria-label={`MVP build progress: ${deliveryProgress.completionPercent} percent, based on ${deliveryProgress.evidencedPlanHours} of ${deliveryProgress.totalPlannedHours} evidence-weighted plan hours`}
+            >
+              <div className="build-progress__label">
+                <span>MVP build</span>
+                <strong>{deliveryProgress.completionPercent}%</strong>
+              </div>
+              <progress
+                max="100"
+                value={deliveryProgress.completionPercent}
+                aria-label="MVP build progress"
+              >
+                {deliveryProgress.completionPercent}%
+              </progress>
+              <small>
+                {deliveryProgress.evidencedPlanHours} / {deliveryProgress.totalPlannedHours} weighted hours
+              </small>
+            </div>
+            <div className="data-quality" aria-label="Data quality: three warnings, zero blocking errors">
+              <span className="data-quality__dot" aria-hidden="true" />
+              3 warnings
+            </div>
           </div>
         </div>
 

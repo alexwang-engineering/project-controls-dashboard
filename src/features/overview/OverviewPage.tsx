@@ -3,6 +3,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { useProjectStore } from "../../app/store";
 import { MetricCard } from "../../components/MetricCard";
+import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import { demoSnapshot } from "../../data/demo";
@@ -71,6 +72,25 @@ export function OverviewPage() {
             </span>
           </div>
         }
+      />
+
+      <PageGuide
+        pageName="Project overview"
+        purpose="Start here each week: narrow the scope, read the exceptions first, then trace the numbers that need action."
+        steps={[
+          {
+            title: "Set the scope",
+            detail: "Choose all work packages for the project position, or one package to highlight its result.",
+          },
+          {
+            title: "Read the position",
+            detail: "Start with adverse cards; SPI or CPI below 1.00 means behind plan or over cost.",
+          },
+          {
+            title: "Follow the exception",
+            detail: "Open the milestone, risk or change register and confirm an owner, action and due date.",
+          },
+        ]}
       />
 
       <section className="filter-bar" aria-label="Dashboard filters">

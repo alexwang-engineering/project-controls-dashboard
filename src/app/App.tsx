@@ -50,6 +50,23 @@ export function App() {
                     "Schedule-logic health checks",
                     "Import manifest and checksum",
                   ]}
+                  guide={{
+                    purpose: "Use this planned workflow to prove data quality before anything replaces the active dataset.",
+                    steps: [
+                      {
+                        title: "Prepare files",
+                        detail: "Choose synthetic schedule and performance CSV files for the same reporting period.",
+                      },
+                      {
+                        title: "Resolve validation",
+                        detail: "Review blocking errors, warnings and quarantined rows before continuing.",
+                      },
+                      {
+                        title: "Commit deliberately",
+                        detail: "Confirm registries and duplicates; a failed commit must preserve the active dataset.",
+                      },
+                    ],
+                  }}
                 />
               }
             />
@@ -66,6 +83,23 @@ export function App() {
                     "Structured variance analysis",
                     "Activity and reporting-period trace",
                   ]}
+                  guide={{
+                    purpose: "Use this planned view to move from project-level variance to the work package and source record that needs action.",
+                    steps: [
+                      {
+                        title: "Set the scope",
+                        detail: "Choose the reporting date and work package you want to investigate.",
+                      },
+                      {
+                        title: "Compare performance",
+                        detail: "Read PV, EV and AC together; SPI or CPI below 1.00 is adverse.",
+                      },
+                      {
+                        title: "Trace the cause",
+                        detail: "Open the affected period and activity, then assign a corrective action and owner.",
+                      },
+                    ],
+                  }}
                 />
               }
             />
@@ -85,6 +119,23 @@ export function App() {
                     "Owned decisions and actions",
                     "Accessible HTML and secondary print output",
                   ]}
+                  guide={{
+                    purpose: "Use this planned workflow to turn the frozen dashboard snapshot into a concise weekly decision pack.",
+                    steps: [
+                      {
+                        title: "Freeze the snapshot",
+                        detail: "Select the reporting date and confirm the data-quality position.",
+                      },
+                      {
+                        title: "Review exceptions",
+                        detail: "Check the suggested narrative, decisions, actions, owners and due dates.",
+                      },
+                      {
+                        title: "Publish and verify",
+                        detail: "Generate accessible HTML first, then inspect the secondary PDF before sharing.",
+                      },
+                    ],
+                  }}
                 />
               }
             />
@@ -101,6 +152,23 @@ export function App() {
                     "Calculation and schema versions",
                     "Synthetic-data privacy boundary",
                   ]}
+                  guide={{
+                    purpose: "Use this planned page to keep local data recoverable, versioned and clearly separated from real project information.",
+                    steps: [
+                      {
+                        title: "Check storage",
+                        detail: "Review local usage, persistence, schema and calculation versions.",
+                      },
+                      {
+                        title: "Create a backup",
+                        detail: "Export a versioned backup before imports or structural changes.",
+                      },
+                      {
+                        title: "Restore safely",
+                        detail: "Validate and preview a backup before it is allowed to replace active data.",
+                      },
+                    ],
+                  }}
                 />
               }
             />
