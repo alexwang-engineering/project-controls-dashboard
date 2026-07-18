@@ -1,0 +1,332 @@
+import { AlertTriangle, ArrowRight, CalendarDays } from "lucide-react";
+import { differenceInCalendarDays, parseISO } from "date-fns";
+import { Link } from "react-router-dom";
+import { useProjectStore } from "../../app/store";
+import { MetricCard } from "../../components/MetricCard";
+import { PageHeader } from "../../components/PageHeader";
+import { StatusPill } from "../../components/StatusPill";
+import { demoSnapshot } from "../../data/demo";
+import {
+  calculateEarnedValue,
+  efficiencyStatus,
+} from "../../domain/calculations/earnedValue";
+import {
+  formatCompactCurrency,
+  formatCurrency,
+  formatDate,
+  formatIndex,
+  formatPercent,
+} from "../../utils/format";
+import { PerformanceChart } from "./PerformanceChart";
+
+const getCurrentPoint = () => {
+  const point = demoSnapshot.trend.find(
+    (candidate) => candidate.period === demoSnapshot.project.reportingDate,
+  );
+
+  if (!point) {
+    throw new Error("The reporting-date trend point is missing from the demo data.");
+  }
+
+  return point;
+};
+
+const currentPoint = getCurrentPoint();
+
+const projectMetrics = calculateEarnedValue({
+  bac: demoSnapshot.project.originalBac,
+  pv: currentPoint.pv,
+  ev: currentPoint.ev,
+  ac: currentPoint.ac,
+});
+
+const finishVarianceDays = differenceInCalendarDays(
+  parseISO(demoSnapshot.project.forecastFinish),
+  parseISO(demoSnapshot.project.baselineFinish),
+);
+
+const criticalRiskCount = demoSnapshot.risks.filter(
+  (risk) => risk.rating === "critical",
+).length;
+
+export function OverviewPage() {
+  const { selectedWorkPackage, reportingDate, setSelectedWorkPackage } =
+    useProjectStore();
+  const selectedPackage = demoSnapshot.workPackages.find(
+    (workPackage) => workPackage.id === selectedWorkPackage,
+  );
+
+  return (
+    <div className="page-stack">
+      <PageHeader
+        eyebrow="Management control room"
+        title="Project overview"
+        description="A decision-first view of the latest validated schedule, cost and delivery position."
+        actions={
+          <div className="snapshot-chip">
+            <CalendarDays size={17} aria-hidden="true" />
+            <span>
+              <small>Data date</small>
+              {formatDate(reportingDate)}
+            </span>
+          </div>
+        }
+      />
+
+      <section className="filter-bar" aria-label="Dashboard filters">
+        <label htmlFor="work-package-filter">Work package</label>
+        <select
+          id="work-package-filter"
+          value={selectedWorkPackage}
+          onChange={(event) => setSelectedWorkPackage(event.target.value)}
+        >
+          <option value="all">All work packages</option>
+          {demoSnapshot.workPackages.map((workPackage) => (
+            <option key={workPackage.id} value={workPackage.id}>
+              {workPackage.id} — {workPackage.name}
+            </option>
+          ))}
+        </select>
+        <p>
+          {selectedPackage
+            ? "Highlighting " + selectedPackage.id + " in the work-package table."
+            : "Showing the full-project performance position."}
+        </p>
+      </section>
+
+      <section className="decision-banner" aria-labelledby="decision-title">
+        <div className="decision-banner__icon" aria-hidden="true">
+          <AlertTriangle size={22} />
+        </div>
+        <div>
+          <p className="eyebrow">Management attention</p>
+          <h2 id="decision-title">
+            Recovery action is needed to protect energisation and handover.
+          </h2>
+          <p>
+            The project is {formatPercent(projectMetrics.earnedCompletion)} earned
+            complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
+            Mechanical completion is seven days late and the panel FAT risk trigger is
+            breached.
+          </p>
+        </div>
+        <Link className="button button--light" to="/risks">
+          Review exposure <ArrowRight size={17} aria-hidden="true" />
+        </Link>
+      </section>
+
+      <section className="metric-grid" aria-label="Headline performance indicators">
+        <MetricCard
+          label="Earned completion"
+          value={formatPercent(projectMetrics.earnedCompletion)}
+          status="adverse"
+          statusLabel="Behind plan"
+          delta="−6.3 pp"
+          detail={formatPercent(projectMetrics.plannedCompletion) + " planned"}
+        />
+        <MetricCard
+          label="Schedule performance index"
+          value={formatIndex(projectMetrics.spi)}
+          status={efficiencyStatus(projectMetrics.spi)}
+          statusLabel="Adverse"
+          delta={formatCompactCurrency(projectMetrics.sv)}
+          detail="Earned value for each £1.00 planned"
+        />
+        <MetricCard
+          label="Cost performance index"
+          value={formatIndex(projectMetrics.cpi)}
+          status={efficiencyStatus(projectMetrics.cpi)}
+          statusLabel="Adverse"
+          delta={formatCompactCurrency(projectMetrics.cv)}
+          detail="Earned value for each £1.00 spent"
+        />
+        <MetricCard
+          label="Forecast finish"
+          value={formatDate(demoSnapshot.project.forecastFinish)}
+          status="adverse"
+          statusLabel="Late"
+          delta={"+" + String(finishVarianceDays) + " days"}
+          detail={"Baseline " + formatDate(demoSnapshot.project.baselineFinish)}
+        />
+        <MetricCard
+          label="Estimate at completion"
+          value={formatCompactCurrency(projectMetrics.managementEac)}
+          status="attention"
+          statusLabel="Above budget"
+          delta={formatCompactCurrency(-projectMetrics.vac)}
+          detail="CPI-based management forecast"
+        />
+        <MetricCard
+          label="To-complete performance"
+          value={formatIndex(projectMetrics.tcpiBac)}
+          status="adverse"
+          statusLabel="Recovery required"
+          detail="Efficiency needed to recover the original BAC"
+        />
+      </section>
+
+      <PerformanceChart
+        trend={demoSnapshot.trend}
+        reportingPeriod={currentPoint.label}
+        reportingDate={demoSnapshot.project.reportingDate}
+      />
+
+      <section className="panel" aria-labelledby="work-package-title">
+        <div className="panel__header">
+          <div>
+            <p className="eyebrow">Variance ownership</p>
+            <h2 id="work-package-title">Work-package performance</h2>
+            <p className="panel__description">
+              Current snapshot reconciles to the project BAC, PV, EV and AC totals.
+            </p>
+          </div>
+        </div>
+        <div className="table-scroll">
+          <table className="performance-table">
+            <caption className="sr-only">
+              Work-package budget and earned-value performance
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Work package</th>
+                <th scope="col">Owner</th>
+                <th scope="col">BAC</th>
+                <th scope="col">SV</th>
+                <th scope="col">CV</th>
+                <th scope="col">SPI</th>
+                <th scope="col">CPI</th>
+                <th scope="col">Position</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demoSnapshot.workPackages.map((workPackage) => {
+                const metrics = calculateEarnedValue(workPackage);
+                const combinedStatus =
+                  metrics.spi !== null && metrics.cpi !== null
+                    ? efficiencyStatus(Math.min(metrics.spi, metrics.cpi))
+                    : "neutral";
+                const isSelected = selectedWorkPackage === workPackage.id;
+
+                return (
+                  <tr
+                    key={workPackage.id}
+                    className={isSelected ? "table-row--selected" : undefined}
+                  >
+                    <th scope="row">
+                      <span className="table-primary">{workPackage.id}</span>
+                      <span className="table-secondary">{workPackage.name}</span>
+                    </th>
+                    <td>{workPackage.owner}</td>
+                    <td>{formatCurrency(workPackage.bac)}</td>
+                    <td className={metrics.sv < 0 ? "number--adverse" : undefined}>
+                      {formatCurrency(metrics.sv)}
+                    </td>
+                    <td className={metrics.cv < 0 ? "number--adverse" : undefined}>
+                      {formatCurrency(metrics.cv)}
+                    </td>
+                    <td>{formatIndex(metrics.spi)}</td>
+                    <td>{formatIndex(metrics.cpi)}</td>
+                    <td>
+                      <StatusPill status={combinedStatus}>
+                        {combinedStatus === "positive"
+                          ? "Controlled"
+                          : combinedStatus === "attention"
+                            ? "Watch"
+                            : "Recover"}
+                      </StatusPill>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" colSpan={2}>Project total</th>
+                <td>{formatCurrency(projectMetrics.bac)}</td>
+                <td className="number--adverse">{formatCurrency(projectMetrics.sv)}</td>
+                <td className="number--adverse">{formatCurrency(projectMetrics.cv)}</td>
+                <td>{formatIndex(projectMetrics.spi)}</td>
+                <td>{formatIndex(projectMetrics.cpi)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section className="exception-grid" aria-label="Management exceptions">
+        <article className="panel exception-card">
+          <div className="panel__header">
+            <div>
+              <p className="eyebrow">Milestone movement</p>
+              <h2>Two forecast late</h2>
+            </div>
+            <Link to="/milestones">View register</Link>
+          </div>
+          <ul className="exception-list">
+            {demoSnapshot.milestones
+              .filter((milestone) => milestone.status === "forecast-late")
+              .map((milestone) => (
+                <li key={milestone.id}>
+                  <div>
+                    <strong>{milestone.name}</strong>
+                    <span>{milestone.owner}</span>
+                  </div>
+                  <span>{formatDate(milestone.forecastDate)}</span>
+                </li>
+              ))}
+          </ul>
+        </article>
+
+        <article className="panel exception-card">
+          <div className="panel__header">
+            <div>
+              <p className="eyebrow">Risk exposure</p>
+              <h2>
+                {criticalRiskCount +
+                  (criticalRiskCount === 1 ? " critical risk" : " critical risks")}
+              </h2>
+            </div>
+            <Link to="/risks">Open heatmap</Link>
+          </div>
+          <ul className="exception-list">
+            {demoSnapshot.risks.slice(0, 2).map((risk) => (
+              <li key={risk.id}>
+                <div>
+                  <strong>{risk.title}</strong>
+                  <span>{risk.owner}</span>
+                </div>
+                <StatusPill status={risk.rating === "critical" ? "adverse" : "attention"}>
+                  {String(risk.residualScore)} / 25
+                </StatusPill>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="panel exception-card">
+          <div className="panel__header">
+            <div>
+              <p className="eyebrow">Change control</p>
+              <h2>Two decisions pending</h2>
+            </div>
+            <Link to="/changes">View changes</Link>
+          </div>
+          <ul className="exception-list">
+            {demoSnapshot.changes
+              .filter((change) => change.status === "submitted")
+              .map((change) => (
+                <li key={change.id}>
+                  <div>
+                    <strong>{change.title}</strong>
+                    <span>{change.id + " · " + change.wbsId}</span>
+                  </div>
+                  <span>{formatCompactCurrency(change.costImpact)}</span>
+                </li>
+              ))}
+          </ul>
+        </article>
+      </section>
+    </div>
+  );
+}

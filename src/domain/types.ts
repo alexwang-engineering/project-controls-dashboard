@@ -1,0 +1,116 @@
+export type MetricStatus = "positive" | "attention" | "adverse" | "neutral";
+
+export interface ProjectIdentity {
+  id: string;
+  name: string;
+  description: string;
+  originalBac: number;
+  baselineVersion: string;
+  reportingDate: string;
+  baselineFinish: string;
+  forecastFinish: string;
+  lastImportAt: string;
+  importId: string;
+  schemaVersion: string;
+}
+
+export interface TrendPoint {
+  period: string;
+  label: string;
+  pv: number;
+  ev: number;
+  ac: number;
+}
+
+export interface WorkPackageSnapshot {
+  id: string;
+  name: string;
+  owner: string;
+  bac: number;
+  pv: number;
+  ev: number;
+  ac: number;
+  forecastFinish: string;
+}
+
+export interface Activity {
+  id: string;
+  wbsId: string;
+  name: string;
+  owner: string;
+  baselineStart: string;
+  baselineFinish: string;
+  forecastStart: string;
+  forecastFinish: string;
+  predecessorIds: string[];
+  baselineBudget: number;
+  progressMethod: "percent_complete";
+}
+
+export type MilestoneStatus =
+  | "complete-on-time"
+  | "complete-late"
+  | "on-track"
+  | "forecast-late"
+  | "overdue"
+  | "data-issue";
+
+export interface Milestone {
+  id: string;
+  name: string;
+  wbsId: string;
+  owner: string;
+  baselineDate: string;
+  previousForecastDate: string;
+  forecastDate: string;
+  actualDate?: string;
+  status: MilestoneStatus;
+  commentary: string;
+}
+
+export type RiskRating = "low" | "moderate" | "high" | "critical";
+
+export interface Risk {
+  id: string;
+  title: string;
+  owner: string;
+  wbsId: string;
+  category: string;
+  residualProbability: number;
+  residualImpact: number;
+  residualScore: number;
+  rating: RiskRating;
+  treatment: string;
+  treatmentDue: string;
+  triggerStatus: "clear" | "watch" | "breached";
+  controlEffectiveness: "effective" | "partly-effective" | "ineffective";
+}
+
+export type ChangeStatus =
+  | "draft"
+  | "submitted"
+  | "approved"
+  | "rejected"
+  | "implemented"
+  | "withdrawn";
+
+export interface ChangeRequest {
+  id: string;
+  title: string;
+  wbsId: string;
+  status: ChangeStatus;
+  costImpact: number;
+  scheduleImpactDays: number;
+  decisionDue: string;
+  incorporatedBaselineVersion?: string;
+}
+
+export interface DemoSnapshot {
+  project: ProjectIdentity;
+  trend: TrendPoint[];
+  workPackages: WorkPackageSnapshot[];
+  activities: Activity[];
+  milestones: Milestone[];
+  risks: Risk[];
+  changes: ChangeRequest[];
+}

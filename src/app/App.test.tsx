@@ -1,0 +1,77 @@
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { useProjectStore } from "./store";
+import { App } from "./App";
+
+describe("project controls application", () => {
+  beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+    useProjectStore.getState().reloadDemo();
+  });
+
+  afterEach(() => cleanup());
+
+  it("presents the reconciled Week 10 management position", async () => {
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Project overview", level: 1 }),
+    ).toBeInTheDocument();
+    const indicators = screen.getByRole("region", {
+      name: "Headline performance indicators",
+    });
+    expect(within(indicators).getByText("0.900")).toBeInTheDocument();
+    expect(within(indicators).getByText("0.938")).toBeInTheDocument();
+
+    const projectTotal = screen.getByRole("row", { name: /Project total/ });
+    expect(within(projectTotal).getByText("-£150,000")).toBeInTheDocument();
+    expect(within(projectTotal).getByText("-£90,000")).toBeInTheDocument();
+  });
+
+  it("applies a work-package highlight with an accessible announcement", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Project overview", level: 1 });
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Work package" }),
+      "WP300",
+    );
+
+    expect(
+      screen.getByText("Highlighting WP300 in the work-package table."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Work-package filter applied.",
+    );
+    expect(screen.getByRole("row", { name: /WP300/ })).toHaveClass(
+      "table-row--selected",
+    );
+  });
+
+  it("navigates to the risk register and exposes the heatmap as a table", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Project overview", level: 1 });
+
+    const navigation = screen.getByRole("navigation", {
+      name: "Primary navigation",
+    });
+    await user.click(within(navigation).getByRole("link", { name: "Risks" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Risk exposure", level: 1 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("table", {
+        name: /Residual risk heatmap/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Probability 4, impact 4: 1 risks/),
+    ).toHaveTextContent("R-001");
+  });
+});
