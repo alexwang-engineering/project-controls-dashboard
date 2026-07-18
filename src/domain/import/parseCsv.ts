@@ -17,7 +17,7 @@ export interface CsvContract {
 
 export interface RawCsvRecord {
   recordNumber: number;
-  physicalLineStart: number;
+  physicalLineStart?: number;
   cells: string[];
 }
 
@@ -169,6 +169,15 @@ export function parseCsvText(
     scannedRecords.pop();
   }
 
+  // The scanner exists only to enrich Papa's authoritative record numbers with
+  // a physical-line hint. If their record boundaries ever diverge, omitting the
+  // hint is safer than reporting a plausible but incorrect physical line.
+  const physicalLineAlignmentIsReliable = scannedRecords.length === rows.length;
+  const physicalLineStartFor = (rowIndex: number) =>
+    physicalLineAlignmentIsReliable
+      ? scannedRecords[rowIndex]?.physicalLineStart
+      : undefined;
+
   const header = rows[0] ?? [];
   const issues: ValidationIssue[] = [];
 
@@ -191,7 +200,7 @@ export function parseCsvText(
       code: "csv_" + error.code.toLowerCase(),
       fileName: contract.fileName,
       recordNumber: rowIndex + 1,
-      physicalLineStart: scannedRecords[rowIndex]?.physicalLineStart,
+      physicalLineStart: physicalLineStartFor(rowIndex),
       rule: error.message,
       suggestion: "Correct the CSV structure and import the file again.",
     });
@@ -238,14 +247,15 @@ export function parseCsvText(
   const records = rows.slice(1).map((cells, index): RawCsvRecord => {
     const recordNumber = index + 2;
     const scanned = scannedRecords[index + 1];
+    const physicalLineStart = physicalLineStartFor(index + 1);
 
-    if (scanned?.raw === "") {
+    if (physicalLineAlignmentIsReliable && scanned?.raw === "") {
       issues.push({
         severity: "blocking",
         code: "blank_physical_line",
         fileName: contract.fileName,
         recordNumber,
-        physicalLineStart: scanned.physicalLineStart,
+        physicalLineStart,
         rule: "Blank physical lines outside quoted fields are not allowed.",
         suggestion: "Delete the blank line without shifting adjacent records.",
       });
@@ -257,7 +267,7 @@ export function parseCsvText(
         code: "column_count",
         fileName: contract.fileName,
         recordNumber,
-        physicalLineStart: scanned?.physicalLineStart,
+        physicalLineStart,
         rule:
           "Record contains " +
           String(cells.length) +
@@ -275,7 +285,7 @@ export function parseCsvText(
         code: "cell_length",
         fileName: contract.fileName,
         recordNumber,
-        physicalLineStart: scanned?.physicalLineStart,
+        physicalLineStart,
         column: header[columnIndex] ?? "column_" + String(columnIndex + 1),
         suppliedValue: truncateSuppliedValue(cell),
         rule:
@@ -286,7 +296,7 @@ export function parseCsvText(
 
     return {
       recordNumber,
-      physicalLineStart: scanned?.physicalLineStart ?? recordNumber,
+      physicalLineStart,
       cells,
     };
   });

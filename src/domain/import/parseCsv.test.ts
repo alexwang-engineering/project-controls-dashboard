@@ -69,6 +69,39 @@ describe("RFC-compatible CSV parser boundary", () => {
     expect(result.issues.filter((issue) => issue.severity === "blocking")).toEqual([]);
   });
 
+  it("keeps record numbering stable after a multiline record", () => {
+    const result = parseSchedule("rfc/schedule-after-multiline.csv");
+
+    expect(result.records[1]).toMatchObject({
+      recordNumber: 3,
+      physicalLineStart: 4,
+    });
+  });
+
+  it("omits physical-line hints when the enrichment scanner and parser diverge", () => {
+    const [header = "", dataRow = ""] = readText(
+      "rfc/schedule-lf-no-final-newline.csv",
+    ).split("\n");
+    const input =
+      header +
+      "\n" +
+      dataRow.replace("Accepted fixture record", 'stray"quote') +
+      "\n" +
+      dataRow.replace("A-001", "A-002") +
+      "\n";
+    const result = parseCsvText(input, {
+      fileName: "scanner-divergence.csv",
+      requiredHeaders: SCHEDULE_CSV_HEADERS,
+    });
+
+    expect(result.records).toHaveLength(2);
+    expect(result.records.map((record) => record.physicalLineStart)).toEqual([
+      undefined,
+      undefined,
+    ]);
+    expect(result.records.map((record) => record.recordNumber)).toEqual([2, 3]);
+  });
+
   it("reports a blank physical line without shifting the following record", () => {
     const result = parseSchedule("rfc/schedule-blank-line.csv");
     const blankIssue = result.issues.find(

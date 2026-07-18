@@ -20,7 +20,7 @@ describe("checked-in CSV fixture integrity", () => {
         return { checksum, relativePath };
       });
 
-    expect(entries).toHaveLength(28);
+    expect(entries).toHaveLength(29);
 
     for (const entry of entries) {
       const bytes = readFileSync(resolve(fixtureRoot, entry.relativePath));

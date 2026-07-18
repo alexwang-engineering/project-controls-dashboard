@@ -23,4 +23,17 @@ describe("safe CSV export", () => {
     expect(output).toBe("field,supplied value\r\nactivity_id,\"'=1+1\"\r\n");
     expect(output.replaceAll("\r\n", "")).not.toContain("\n");
   });
+
+  it("allows explicitly trusted scalar columns without weakening text columns", () => {
+    const output = encodeCsv(
+      [
+        ["metric", "value"],
+        ["schedule_variance", "-150000"],
+      ],
+      { columnTrust: ["untrusted-text", "trusted-scalar"] },
+    );
+
+    expect(output).toBe("metric,value\r\nschedule_variance,-150000\r\n");
+    expect(encodeCsvCell("-150000")).toBe("\"'-150000\"");
+  });
 });

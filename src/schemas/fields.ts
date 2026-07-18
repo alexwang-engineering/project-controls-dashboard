@@ -1,12 +1,29 @@
 import { z } from "zod";
+import type { Pence } from "../domain/records";
 
-export type Pence = number & { readonly __brand: "Pence" };
+export type { Pence } from "../domain/records";
 
-export type ScalarFailureCode =
+export type FieldValidationCode =
   | "formula_like"
   | "invalid_money"
   | "negative_not_allowed"
-  | "money_out_of_range";
+  | "money_out_of_range"
+  | "required_field"
+  | "invalid_identifier"
+  | "invalid_date"
+  | "invalid_boolean"
+  | "invalid_percentage"
+  | "invalid_relationship"
+  | "invalid_enum"
+  | "invalid_length";
+
+export type ScalarFailureCode = Extract<
+  FieldValidationCode,
+  | "formula_like"
+  | "invalid_money"
+  | "negative_not_allowed"
+  | "money_out_of_range"
+>;
 
 export type ScalarResult<T> =
   | { success: true; value: T }
@@ -15,6 +32,27 @@ export type ScalarResult<T> =
 const signedMoneyGrammar = /^-?\d+(?:\.\d{1,2})?$/;
 const formulaPrefix = /^[=+\-@\t\r\n]/;
 const maximumSafePence = BigInt(Number.MAX_SAFE_INTEGER);
+
+export const addCodedIssue = (
+  context: z.RefinementCtx,
+  validationCode: FieldValidationCode | string,
+  message: string,
+  path?: PropertyKey[],
+) =>
+  context.addIssue({
+    code: "custom",
+    message,
+    params: { validationCode },
+    ...(path === undefined ? {} : { path }),
+  });
+
+export const validationCodeFromIssue = (issue: {
+  code: string;
+  params?: Record<string, unknown>;
+}) =>
+  typeof issue.params?.validationCode === "string"
+    ? issue.params.validationCode
+    : "zod_" + issue.code;
 
 export const startsWithFormulaCharacter = (value: string) =>
   formulaPrefix.test(value);
@@ -75,7 +113,7 @@ const moneySchema = (allowNegative: boolean) =>
     const result = parseMoneyPence(input, { allowNegative });
 
     if (!result.success) {
-      context.addIssue({ code: "custom", message: result.message });
+      addCodedIssue(context, result.code, result.message);
       return z.NEVER;
     }
 
@@ -85,33 +123,76 @@ const moneySchema = (allowNegative: boolean) =>
 export const nonNegativeMoneyPenceSchema = moneySchema(false);
 export const signedMoneyPenceSchema = moneySchema(true);
 
+export const requiredNonNegativeMoneyPenceSchema = z
+  .string()
+  .transform((input, context) => {
+    if (input === "") {
+      addCodedIssue(context, "required_field", "A value is required.");
+      return z.NEVER;
+    }
+
+    const result = parseMoneyPence(input, { allowNegative: false });
+    if (!result.success) {
+      addCodedIssue(context, result.code, result.message);
+      return z.NEVER;
+    }
+    return result.value;
+  });
+
+export const optionalNonNegativeMoneyPenceSchema = z
+  .string()
+  .transform((input, context) => {
+    if (input === "") return undefined;
+    const result = parseMoneyPence(input, { allowNegative: false });
+    if (!result.success) {
+      addCodedIssue(context, result.code, result.message);
+      return z.NEVER;
+    }
+    return result.value;
+  });
+
 const identifierGrammar = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 export const strictIdentifierSchema = z.string().superRefine((input, context) => {
   if (identifierGrammar.test(input)) return;
 
-  context.addIssue({
-    code: "custom",
-    message: startsWithFormulaCharacter(input)
+  addCodedIssue(
+    context,
+    startsWithFormulaCharacter(input) ? "formula_like" : "invalid_identifier",
+    startsWithFormulaCharacter(input)
       ? "Identifier resembles a spreadsheet formula."
       : "Use uppercase letters, digits, and internal hyphens only.",
-  });
+  );
 });
+
+export const requiredIdentifierSchema = z
+  .string()
+  .superRefine((input, context) => {
+    if (input === "") {
+      addCodedIssue(context, "required_field", "An identifier is required.");
+      return;
+    }
+    if (identifierGrammar.test(input)) return;
+    addCodedIssue(
+      context,
+      startsWithFormulaCharacter(input) ? "formula_like" : "invalid_identifier",
+      startsWithFormulaCharacter(input)
+        ? "Identifier resembles a spreadsheet formula."
+        : "Use uppercase letters, digits, and internal hyphens only.",
+    );
+  });
 
 const isoDateGrammar = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export const strictIsoDateSchema = z.string().superRefine((input, context) => {
   if (startsWithFormulaCharacter(input)) {
-    context.addIssue({
-      code: "custom",
-      message: "Date resembles a spreadsheet formula.",
-    });
+    addCodedIssue(context, "formula_like", "Date resembles a spreadsheet formula.");
     return;
   }
 
   const match = isoDateGrammar.exec(input);
   if (!match) {
-    context.addIssue({ code: "custom", message: "Use YYYY-MM-DD." });
+    addCodedIssue(context, "invalid_date", "Use YYYY-MM-DD.");
     return;
   }
 
@@ -125,19 +206,74 @@ export const strictIsoDateSchema = z.string().superRefine((input, context) => {
     date.getUTCDate() === day;
 
   if (!isRealDate) {
-    context.addIssue({ code: "custom", message: "Enter a real calendar date." });
+    addCodedIssue(context, "invalid_date", "Enter a real calendar date.");
   }
 });
+
+export const requiredIsoDateSchema = z
+  .string()
+  .superRefine((input, context) => {
+    if (input === "") {
+      addCodedIssue(context, "required_field", "A date is required.");
+      return;
+    }
+    const result = strictIsoDateSchema.safeParse(input);
+    if (result.success) return;
+    for (const issue of result.error.issues) {
+      addCodedIssue(
+        context,
+        validationCodeFromIssue(issue),
+        issue.message,
+      );
+    }
+  });
+
+export const optionalIsoDateSchema = z
+  .string()
+  .transform((input, context) => {
+    if (input === "") return undefined;
+    const result = strictIsoDateSchema.safeParse(input);
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        addCodedIssue(
+          context,
+          validationCodeFromIssue(issue),
+          issue.message,
+        );
+      }
+      return z.NEVER;
+    }
+    return input;
+  });
 
 export const strictBooleanSchema = z
   .string()
   .superRefine((input, context) => {
     if (input === "true" || input === "false") return;
-    context.addIssue({
-      code: "custom",
-      message: startsWithFormulaCharacter(input)
+    addCodedIssue(
+      context,
+      startsWithFormulaCharacter(input) ? "formula_like" : "invalid_boolean",
+      startsWithFormulaCharacter(input)
         ? "Boolean resembles a spreadsheet formula."
         : "Use lowercase true or false.",
-    });
+    );
+  })
+  .transform((input) => input === "true");
+
+export const requiredBooleanSchema = z
+  .string()
+  .superRefine((input, context) => {
+    if (input === "") {
+      addCodedIssue(context, "required_field", "A boolean is required.");
+      return;
+    }
+    if (input === "true" || input === "false") return;
+    addCodedIssue(
+      context,
+      startsWithFormulaCharacter(input) ? "formula_like" : "invalid_boolean",
+      startsWithFormulaCharacter(input)
+        ? "Boolean resembles a spreadsheet formula."
+        : "Use lowercase true or false.",
+    );
   })
   .transform((input) => input === "true");

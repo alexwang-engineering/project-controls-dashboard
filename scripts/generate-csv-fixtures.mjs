@@ -144,6 +144,18 @@ writeFixture(
     "\r\n",
 );
 writeFixture(
+  "rfc/schedule-after-multiline.csv",
+  scheduleHeader +
+    "\r\n" +
+    scheduleRow({ commentary: "First line\r\nSecond line" }) +
+    "\r\n" +
+    scheduleRow({
+      activity_id: "A-002",
+      activity_name: "Record after multiline commentary",
+    }) +
+    "\r\n",
+);
+writeFixture(
   "rfc/schedule-blank-line.csv",
   scheduleHeader +
     "\n" +

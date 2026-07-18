@@ -62,6 +62,8 @@ Reports state this definition. `physicalLineStart` is included when the parser
 can establish it reliably and is mandatory for blank-line and structural parser
 errors, but record number remains the stable identifier used for quarantine and
 manifest reconciliation.
+If the boundary scanner and Papa Parse do not produce the same record count, all
+physical-line hints for that parse are omitted rather than guessed.
 
 ### D5 — Formula-like input and legitimate negative numbers
 
@@ -75,6 +77,10 @@ number, enum, boolean, or relationship grammar and begin with `=`, `+`, `-`,
 Free text is accepted and rendered only as text. Every CSV export, including
 the validation-error report, neutralises untrusted leading formula characters
 with an apostrophe before RFC quoting.
+Trusted calculated scalars may bypass formula neutralisation only through an
+explicit per-column encoder policy; they still receive RFC quoting. This keeps
+legitimate negative variance values numeric in future management exports while
+making untrusted text the default.
 
 ### D6 — Quarantine and dependent rows
 
@@ -116,6 +122,8 @@ integration test must assert both survive generation cleanup.
 - Monetary values are converted once to branded integer pence. Scientific
   notation, currency symbols, grouping separators, hexadecimal values, and more
   than two decimal places are rejected.
+- M1 cell-length limits use JavaScript string length (UTF-16 code units), so a
+  supplementary Unicode character such as many emoji counts as two units.
 
 ### D10 — Worker, storage, and demonstration architecture
 
