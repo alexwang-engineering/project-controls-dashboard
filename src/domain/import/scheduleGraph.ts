@@ -11,6 +11,11 @@ export interface ScheduleGraphValidationInput {
   configuration: ProjectConfigurationInput;
 }
 
+export interface ScheduleGraphValidationResult {
+  issues: ValidationIssue[];
+  blockedActivityIds: ReadonlySet<ActivityId>;
+}
+
 const issueAt = (
   record: SourcedRecord<NormalisedActivity>,
   issue: Omit<
@@ -128,10 +133,11 @@ const exampleCyclePath = (
   return [...component, start];
 };
 
-export function validateScheduleGraph(
+export function analyseScheduleGraph(
   input: ScheduleGraphValidationInput,
-): ValidationIssue[] {
+): ScheduleGraphValidationResult {
   const issues: ValidationIssue[] = [];
+  const blockedActivityIds = new Set<ActivityId>();
   const byId = new Map(
     input.activities.map((record) => [record.value.activityId, record] as const),
   );
@@ -186,6 +192,7 @@ export function validateScheduleGraph(
       }
 
       if (link.activityId === activity.activityId) {
+        blockedActivityIds.add(activity.activityId);
         issues.push(
           issueAt(record, {
             severity: "blocking",
@@ -199,6 +206,7 @@ export function validateScheduleGraph(
         continue;
       }
       if (!byId.has(link.activityId)) {
+        blockedActivityIds.add(activity.activityId);
         issues.push(
           issueAt(record, {
             severity: "blocking",
@@ -246,6 +254,7 @@ export function validateScheduleGraph(
         (component[0] !== undefined &&
           (adjacency.get(component[0]) ?? []).includes(component[0]));
       if (!isCycle) continue;
+      for (const activityId of component) blockedActivityIds.add(activityId);
       const sortedIds = [...component].sort();
       const source = sortedIds[0] === undefined ? undefined : byId.get(sortedIds[0]);
       if (source === undefined) continue;
@@ -304,5 +313,8 @@ export function validateScheduleGraph(
     }
   }
 
-  return issues;
+  return { issues, blockedActivityIds };
 }
+
+export const validateScheduleGraph = (input: ScheduleGraphValidationInput) =>
+  analyseScheduleGraph(input).issues;

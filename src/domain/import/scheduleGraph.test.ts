@@ -107,6 +107,30 @@ describe("iterative candidate schedule graph validation", () => {
     expect(cycleIssues[0]?.suppliedValue).not.toContain("A-100");
   });
 
+  it("excludes a node downstream of a cycle from the cycle membership", () => {
+    const activities = [
+      sourcedActivity(
+        { activity_id: "A-001", predecessor_links: "A-002|FS|0" },
+        2,
+      ),
+      sourcedActivity(
+        { activity_id: "A-002", predecessor_links: "A-001|FS|0" },
+        3,
+      ),
+      sourcedActivity(
+        { activity_id: "A-003", predecessor_links: "A-002|FS|0" },
+        4,
+      ),
+    ];
+    const cycle = validateScheduleGraph({
+      activities,
+      configuration: projectConfiguration(activities),
+    }).find((issue) => issue.code === "schedule_cycle");
+
+    expect(cycle?.suppliedValue).toBe("A-001, A-002");
+    expect(cycle?.suppliedValue).not.toContain("A-003");
+  });
+
   it("warns for negative and excessive lag", () => {
     const activities = [
       sourcedActivity({ activity_id: "A-001", predecessor_links: "" }),

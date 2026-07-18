@@ -12,6 +12,11 @@ All imported cells enter the schema layer as strings. Parsing never performs
 dynamic typing. A row becomes a domain record only after its entire Zod schema
 and its row-level refinements pass.
 
+Field parsing and row-level cross-field refinement are deliberately staged. If a
+row contains both an invalid scalar and a cross-field violation, the scalar
+issue blocks the first preview; cross-field issues are evaluated after the
+scalar is corrected. The import never accepts the row between those passes.
+
 | Convention | Definition |
 |---|---|
 | CSV dialect | Comma-delimited RFC-compatible CSV; quoted commas, doubled quotes, and quoted CR/LF are supported |
@@ -112,6 +117,54 @@ row data. The input contains:
 First-import discovery only produces a proposal. Declining confirmation returns
 no configuration. The repository increment must persist a confirmed proposal in
 the same transaction as the generation and must write nothing after a decline.
+
+That repository contract is now implemented: a first successful commit converts
+the confirmed proposal to an active configuration in the same transaction as
+the rows and manifest. Later commits accept only an exact active-registry input;
+they cannot update registry membership as a side effect.
+
+## Import preview and quarantine
+
+Quarantine decisions are ordered, explicit records containing file name, record
+number, blocking reason code, and rationale. The orchestrator validates each
+decision against the current preview before applying it, then re-runs all later
+stages. This makes dependent errors visible without silent cascading. A valid
+row cannot be quarantined under an invented reason.
+
+For each file:
+
+```text
+sourceRows = acceptedRows + blockedRows
+quarantinedRows <= blockedRows
+```
+
+On a committable preview, every remaining blocked row is explicitly quarantined.
+The immutable manifest stores both per-file and total counts, and the detailed
+quarantine list must reconcile with those totals.
+
+## Generation storage
+
+Every successful import is an immutable generation keyed by `importId`.
+
+| Store | Primary key / purpose |
+|---|---|
+| `meta` | `key`; contains schema version and the single `activeImportId` pointer |
+| `manifests` | `importId`; immutable history, file checksums, counts, confirmation and previous-generation link |
+| `activities` | `(importId, activityId)`; normalised schedule generation rows |
+| `performance` | `(importId, activityId, periodEnd)`; normalised performance generation rows |
+| `projectConfigurations` | `projectId`; confirmed registries and authorised schedule endpoints |
+
+The commit transaction reads the expected pointer and checksum history, verifies
+configuration, writes configuration when required, writes both row sets and the
+manifest, and performs the pointer update as its final database operation. Its
+callback contains only Dexie promises and synchronous fault hooks. Checksums,
+timestamps, schema work, worker communication, and browser APIs finish before
+the transaction opens.
+
+Dataset reads always resolve through `activeImportId`. Revert changes only that
+pointer after confirming the previous generation still has rows. Garbage
+collection retains the active and previous generations, deletes only older row
+generations, and never deletes manifests or checksum history.
 
 ## Validation issue contract
 
