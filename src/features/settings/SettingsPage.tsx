@@ -279,7 +279,7 @@ export function SettingsPage({
           <Archive size={21} aria-hidden="true" />
           <span>Storage schema</span>
           <strong>Version {lifecycle?.schemaVersion ?? "…"}</strong>
-          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} retained</small>
+          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} · {lifecycle?.varianceAnalysisCount ?? 0} variance-analysis record{lifecycle?.varianceAnalysisCount === 1 ? "" : "s"}</small>
         </article>
       </section>
 
@@ -303,7 +303,7 @@ export function SettingsPage({
       <section className="settings-action-grid">
         <article className="panel settings-action" aria-labelledby="backup-title">
           <div className="settings-action__icon"><Download size={22} aria-hidden="true" /></div>
-          <div><p className="eyebrow">Protect current data</p><h2 id="backup-title">Download versioned backup</h2><p>Exports the active schedule, performance rows, manifest and confirmed registry. The current schema reserves management-record sections for later editable registers.</p></div>
+          <div><p className="eyebrow">Protect current data</p><h2 id="backup-title">Download versioned backup</h2><p>Exports the active schedule, performance rows, manifest and confirmed registry. Variance-analysis drafts and signed revisions are currently local-only and are not included in this active-generation backup.</p></div>
           <button className="button button--primary" type="button" onClick={createBackup} disabled={isBusy || lifecycle?.activeImportId === undefined}>
             {busyAction === "backup" ? <LoaderCircle aria-hidden="true" className="spin" size={17} /> : <Download size={17} aria-hidden="true" />} Download JSON backup
           </button>
@@ -334,7 +334,7 @@ export function SettingsPage({
       ) : null}
 
       <section className="panel settings-danger" aria-labelledby="reset-title">
-        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, registry and lifecycle timestamp from this browser origin. Download a backup first if recovery may be needed.</p></div>
+        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, registry, variance-analysis revision and lifecycle timestamp from this browser origin. The current backup does not include analysis records.</p></div>
         <label className="confirmation-check"><input type="checkbox" checked={resetConfirmed} onChange={(event) => setResetConfirmed(event.target.checked)} /><span>I understand this action removes all local project-control data.</span></label>
         <button className="button button--danger" type="button" disabled={isBusy || !resetConfirmed} onClick={reset}><Trash2 size={17} aria-hidden="true" /> Reset local data</button>
       </section>

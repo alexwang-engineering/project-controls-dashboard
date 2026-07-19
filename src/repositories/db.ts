@@ -5,8 +5,9 @@ import type {
   ProjectConfigurationInput,
 } from "../domain/records";
 import type { ImportManifest } from "../schemas/manifest";
+import type { VarianceAnalysisRecord } from "../domain/varianceAnalysis";
 
-export const DATABASE_SCHEMA_VERSION = "2" as const;
+export const DATABASE_SCHEMA_VERSION = "3" as const;
 
 export interface MetaRecord {
   key:
@@ -52,6 +53,7 @@ export class ProjectControlsDb extends Dexie {
     ProjectConfigurationHistoryRecord,
     [string, number]
   >;
+  varianceAnalyses!: Table<VarianceAnalysisRecord, string>;
 
   constructor(name = "project-controls-dashboard", options?: DexieOptions) {
     super(name, options);
@@ -103,6 +105,25 @@ export class ProjectControlsDb extends Dexie {
             );
         });
       });
+    this.version(3)
+      .stores({
+        meta: "&key",
+        manifests: "&importId, projectId, importedAt",
+        activities: "[importId+activityId], importId, activityId",
+        performance:
+          "[importId+activityId+periodEnd], importId, [importId+activityId], periodEnd",
+        projectConfigurations: "&projectId",
+        projectConfigurationHistory:
+          "[projectId+revision], projectId, recordedAt",
+        varianceAnalyses:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, signedAt",
+      })
+      .upgrade((transaction) =>
+        transaction.table("meta").put({
+          key: "schemaVersion",
+          value: DATABASE_SCHEMA_VERSION,
+        }),
+      );
     this.on("populate", () =>
       this.meta.add({ key: "schemaVersion", value: DATABASE_SCHEMA_VERSION }),
     );

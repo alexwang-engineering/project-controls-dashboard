@@ -10,6 +10,7 @@ import {
   encodeBackupJson,
   parseBackupJson,
 } from "../schemas/backup";
+import { varianceAnalysisRecordSchema } from "../domain/varianceAnalysis";
 import { BackupRepository } from "./backupRepository";
 import { DatasetRepository } from "./datasetRepository";
 import { ProjectControlsDb } from "./db";
@@ -196,6 +197,53 @@ describe("versioned backup and validated restore", () => {
 
   it("records backup completion and resets all local data atomically", async () => {
     await commitSynthetic(sourceDb);
+    await sourceDb.varianceAnalyses.put(
+      varianceAnalysisRecordSchema.parse({
+        recordId: "ASTER|B0|project|all|2026-06-14::draft",
+        recordType: "draft",
+        contextKey: "ASTER|B0|project|all|2026-06-14",
+        projectId: "ASTER",
+        baselineVersion: "B0",
+        scopeType: "project",
+        scopeId: "all",
+        reportingPeriod: "2026-06-14",
+        sourceImportId: "IMPORT-BACKUP-SOURCE",
+        managementScenario: "budget-rate",
+        breachedMetrics: ["SPI"],
+        facts: {
+          bacPence: 100_000,
+          pvPence: 50_000,
+          evPence: 45_000,
+          acPence: 47_000,
+          svPence: -5_000,
+          cvPence: -2_000,
+          spi: 0.9,
+          cpi: 0.957,
+          managementEacPence: 102_000,
+          vacPence: -2_000,
+          tcpiBac: 1.038,
+          tcpiEac: 1,
+        },
+        factFingerprint: "test-fingerprint",
+        details: {
+          rootCause: "",
+          dependencyImpact: "",
+          milestoneImpact: "",
+          criticalPathImpact: "",
+          costEacEffect: "",
+          correctiveAction: "",
+          owner: "",
+          dueDate: "",
+          recoveryEvidence: "",
+          expectedRecoveryPeriod: "",
+          status: "open",
+          author: "",
+        },
+        createdAt: "2026-07-19T09:30:00.000Z",
+        updatedAt: "2026-07-19T09:30:00.000Z",
+      }),
+    );
+    expect(await sourceDb.varianceAnalyses.count()).toBe(1);
     const backups = new BackupRepository(sourceDb);
     await backups.recordBackupCompleted("2026-07-19T10:00:00.000Z");
     expect((await backups.getLifecycleStatus()).lastBackupAt).toBe(
@@ -205,10 +253,11 @@ describe("versioned backup and validated restore", () => {
     await backups.resetAllLocalData();
     const status = await backups.getLifecycleStatus();
     expect(status).toMatchObject({
-      schemaVersion: "2",
+      schemaVersion: "3",
       manifestCount: 0,
       activityCount: 0,
       performanceCount: 0,
+      varianceAnalysisCount: 0,
     });
     expect(status.activeImportId).toBeUndefined();
     expect(status.lastBackupAt).toBeUndefined();

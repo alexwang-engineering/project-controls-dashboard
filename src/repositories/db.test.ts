@@ -62,7 +62,8 @@ describe("project-controls database migrations", () => {
       activeImportId: "IMPORT-001",
       reason: "created",
     });
-    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "2" });
+    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "3" });
+    expect(await upgraded.varianceAnalyses.count()).toBe(0);
     upgraded.close();
   });
 });

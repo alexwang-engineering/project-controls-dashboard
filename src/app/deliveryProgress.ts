@@ -32,8 +32,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M3",
     title: "Calculation engine",
     plannedHours: 10,
-    completionPercent: 60,
-    evidence: "Core EVM calculations, imported-data aggregation and source-period traces work; structured variance ownership and sensitivity controls remain.",
+    completionPercent: 85,
+    evidence: "Core EVM calculations, imported-data aggregation, three explicit EAC scenarios and a revisioned variance-analysis workflow work; report integration and baseline-revision reconciliation remain.",
   },
   {
     id: "M4",

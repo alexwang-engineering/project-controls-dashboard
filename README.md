@@ -38,20 +38,27 @@ release.
   reconciled performance to the shell, Overview, and Schedule & Cost pages.
 - Period/work-package filtering plus cumulative EVM and activity-level source
   trace on Schedule & Cost.
+- Three transparent management EAC scenarios: remaining work at budget rate,
+  CPI continuation, and CPI × SPI composite continuation. Each exposes its
+  formula, assumption, VAC and performance-to-complete consequence.
+- A generation-aware variance-analysis workflow with read-only facts, structured
+  causes/impacts/actions, draft persistence, explicit ownership, sign-off gates,
+  and immutable revision history.
 - An explicit synthetic-fallback label whenever no validated import is active.
 - A Settings & Data workflow with browser storage health, persistence requests,
   versioned active-generation backup, schema/domain-validated atomic restore,
   and an explicitly confirmed local reset.
 
 Backups intentionally contain the active generation and its confirmed registry
-only. They do not contain older manifests, checksum-detection history, or the
-rows needed by **Revert to previous**. Keep the original browser data when those
-history features are required. The backup input limit is 20 MiB; each source CSV
-remains limited to 5 MiB.
+only. They do not contain variance-analysis drafts or signed revisions, older
+manifests, checksum-detection history, or the rows needed by **Revert to
+previous**. Keep the original browser data when those history features are
+required. The backup input limit is 20 MiB; each source CSV remains limited to
+5 MiB.
 
 The M1 closure increment was independently reviewed in an isolated checkout and
-approved with no blocking findings. Structured variance ownership, editable
-registers, and weekly report generation remain to be completed.
+approved with no blocking findings. Editable registers, variance-to-report
+integration, and weekly report generation remain to be completed.
 
 ## Fixed Week 10 control fixture
 

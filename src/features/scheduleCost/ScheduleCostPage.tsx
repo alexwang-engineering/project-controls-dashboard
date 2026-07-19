@@ -10,6 +10,11 @@ import {
   efficiencyStatus,
 } from "../../domain/calculations/earnedValue";
 import {
+  buildEacScenarios,
+  type EacScenarioId,
+} from "../../domain/calculations/eacScenarios";
+import { createVarianceAnalysisContext } from "../../domain/varianceAnalysis";
+import {
   activityPerformanceAtPeriod,
   periodicPerformanceForScope,
 } from "../../domain/viewModels/projectPerformance";
@@ -20,6 +25,8 @@ import {
   formatIndex,
   formatPercent,
 } from "../../utils/format";
+import { EacScenarioPanel } from "./EacScenarioPanel";
+import { VarianceAnalysisPanel } from "./VarianceAnalysisPanel";
 
 export function ScheduleCostPage() {
   const { snapshot } = useProjectPerformance();
@@ -27,6 +34,8 @@ export function ScheduleCostPage() {
   const [selectedPeriod, setSelectedPeriod] = useState(
     snapshot.project.reportingDate,
   );
+  const [managementScenario, setManagementScenario] =
+    useState<EacScenarioId>("cpi");
 
   const scopedPeriods = useMemo(
     () => periodicPerformanceForScope(snapshot, workPackageId),
@@ -67,11 +76,42 @@ export function ScheduleCostPage() {
     cumulativeRows.find((period) => period.period === selectedPeriod) ??
     cumulativeRows.at(-1);
   const bac = selectedWorkPackage?.bac ?? snapshot.project.originalBac;
+  const baseMetrics = calculateEarnedValue({
+    bac,
+    pv: selectedRow?.cumulativePv ?? 0,
+    ev: selectedRow?.cumulativeEv ?? 0,
+    ac: selectedRow?.cumulativeAc ?? 0,
+  });
+  const scenarios = buildEacScenarios(baseMetrics);
+  const selectedScenario = scenarios.find(
+    (scenario) => scenario.id === managementScenario,
+  );
+  const selectedManagementEac =
+    selectedScenario?.available === true ? selectedScenario.value : null;
   const metrics = calculateEarnedValue({
     bac,
     pv: selectedRow?.cumulativePv ?? 0,
     ev: selectedRow?.cumulativeEv ?? 0,
     ac: selectedRow?.cumulativeAc ?? 0,
+    ...(selectedManagementEac === null || selectedManagementEac === undefined
+      ? {}
+      : { managementEac: selectedManagementEac }),
+  });
+  const effectiveScenario =
+    selectedScenario?.available === true ? managementScenario : "budget-rate";
+  const varianceContext = createVarianceAnalysisContext({
+    projectId: snapshot.project.id,
+    baselineVersion: snapshot.project.baselineVersion,
+    scopeId: workPackageId,
+    reportingPeriod: selectedPeriod,
+    sourceImportId:
+      snapshot.source === "active-import"
+        ? snapshot.importId
+        : `SYNTHETIC-${snapshot.importId}`,
+    expectedActiveImportId:
+      snapshot.source === "active-import" ? snapshot.importId : null,
+    managementScenario: effectiveScenario,
+    metrics,
   });
   const scopedActivities = snapshot.activities.filter(
     (activity) =>
@@ -109,7 +149,7 @@ export function ScheduleCostPage() {
           },
           {
             title: "Trace and assign",
-            detail: "Use the activity evidence to identify the accountable owner and the progress commentary that needs action.",
+            detail: "Select a stated EAC assumption, trace the source evidence, then save and sign a complete cause-impact-action record.",
           },
         ]}
       />
@@ -214,6 +254,13 @@ export function ScheduleCostPage() {
         />
       </section>
 
+      <EacScenarioPanel
+        scenarios={scenarios}
+        selectedScenarioId={effectiveScenario}
+        metrics={metrics}
+        onSelect={setManagementScenario}
+      />
+
       <section className="panel" aria-labelledby="period-trace-title">
         <div className="panel__header">
           <div>
@@ -286,6 +333,8 @@ export function ScheduleCostPage() {
           </div>
         )}
       </section>
+
+      <VarianceAnalysisPanel context={varianceContext} />
     </div>
   );
 }

@@ -48,12 +48,13 @@ describe("settings and data page", () => {
     dependencies = {
       load: vi.fn().mockResolvedValue({
         lifecycle: {
-          schemaVersion: "2",
+          schemaVersion: "3",
           activeImportId: "IMPORT-001",
           lastImportAt: "2026-07-19T09:00:00.000Z",
           manifestCount: 1,
           activityCount: 5,
           performanceCount: 5,
+          varianceAnalysisCount: 2,
         },
         storage: {
           availability: "supported",
@@ -91,6 +92,9 @@ describe("settings and data page", () => {
     expect(within(health).getByText("1.0 KB")).toBeInTheDocument();
     expect(within(health).getByText("Best effort")).toBeInTheDocument();
     expect(within(health).getByText("IMPORT-001")).toBeInTheDocument();
+    expect(
+      within(health).getByText(/2 variance-analysis records/),
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Download JSON backup" }),
