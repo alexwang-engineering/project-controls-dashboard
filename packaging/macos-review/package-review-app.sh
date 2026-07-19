@@ -5,7 +5,16 @@ set -euo pipefail
 packaging_dir="${0:A:h}"
 repository_root="${packaging_dir:h:h}"
 desktop_path=$(/usr/bin/osascript -e 'POSIX path of (path to desktop folder)')
-output_path="${1:-${desktop_path}Project Controls Dashboard.app}"
+desktop_link=""
+if (( $# > 0 )); then
+  output_path="$1"
+else
+  user_applications_path=$(
+    /usr/bin/osascript -e 'POSIX path of (path to applications folder from user domain)'
+  )
+  output_path="${user_applications_path}Project Controls Dashboard.app"
+  desktop_link="${desktop_path}Project Controls Dashboard.app"
+fi
 review_build_dir=$(mktemp -d)
 staged_app="$review_build_dir/Project Controls Dashboard.app"
 
@@ -47,4 +56,13 @@ xattr -d 'com.apple.fileprovider.fpfs#P' "$output_path" 2>/dev/null || true
 codesign --force --deep --sign - "$output_path"
 codesign --verify --deep --strict "$output_path"
 
-print "Created $output_path"
+if [[ -n "$desktop_link" ]]; then
+  if [[ -e "$desktop_link" || -L "$desktop_link" ]]; then
+    mv "$desktop_link" "$review_build_dir/previous-desktop-item"
+  fi
+  ln -s "$output_path" "$desktop_link"
+  codesign --verify --deep --strict "$desktop_link"
+  print "Created $desktop_link (signed app stored at $output_path)"
+else
+  print "Created $output_path"
+fi
