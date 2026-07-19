@@ -1,8 +1,8 @@
-# M1 closure-candidate evidence
+# M1 closure evidence
 
 **Evidence date:** 19 July 2026  
-**Candidate base:** `ce27219`  
-**Status:** Implementation complete; independent diff review and live module-worker confirmation pending.
+**Reviewed range:** `ce27219..2c858c4`
+**Status:** Closed; independently approved with no blocking findings and live module-worker operation confirmed.
 
 ## Gate results
 
@@ -15,7 +15,30 @@
 | D1/D2 update semantics | Unknown identifiers block; an additive revision requires confirmation, CAS protection and automatic revalidation; removals and stale previews fail | Pass |
 | Registry history migration | Dexie v1 registries migrate to revision 1 in storage schema v2; later accepted revisions are immutable history records | Pass |
 | Performance | 1,000 schedule activities plus 1,000 matching performance rows processed in 41 ms; threshold is under 2,000 ms | Pass |
-| Quality gate | Lint, strict typecheck, all 189 tests and production build | Pass |
+| Quality gate | Lint, strict typecheck, all 190 tests and production build | Pass |
+| Independent review | Hermes reviewed the range from a disposable isolated clone and reported `APPROVED` with no blocking findings | Pass |
+| Live packaged-app worker check | The complete ASTER example processed 1,020 accepted source rows in the isolated module worker in 74 ms, with zero blocking issues | Pass |
+
+## Independent closure review
+
+Hermes Agent reviewed `ce27219..2c858c4` read-only from a disposable clone on
+19 July 2026. It inspected the implementation and tests for worker/fallback
+parity, the complete ASTER pipeline, performance evidence, additive registry
+revisions, compare-and-set protection, history preservation, active-pointer
+safety and backup documentation. The verdict was **APPROVED**, with no blocking
+findings.
+
+Hermes could not run `pnpm` because the disposable environment did not inherit
+the project's bundled runtime path. Codex therefore reran the complete quality
+gate in the real clean checkout: lint, strict TypeScript, 190 tests and the
+production build all passed.
+
+The packaged Desktop build was then exercised at `/import`. The complete ASTER
+example produced 60 schedule activities and 960 performance records, displayed
+1,020 accepted rows, zero blocking issues and the explicit status **Validated
+in the isolated module worker**. The observed worker time was 74 ms. The one
+open-finish warning reflected the existing browser origin's older authorised
+finish and correctly exposed the controlled additive registry-update flow.
 
 ## Performance environment
 
@@ -29,9 +52,9 @@
 
 The 41 ms value is a recorded development-machine observation, while the automated acceptance assertion remains the plan's portable under-two-second threshold.
 
-## Review focus
+## Reviewed scope
 
-Review the next commit range against:
+The independent review assessed the range against:
 
 1. I15: module-worker and fallback results must remain structurally identical.
 2. D1/D2: a later import cannot mutate configuration as a side effect.
@@ -39,4 +62,3 @@ Review the next commit range against:
 4. The active dataset pointer must remain unchanged by a registry-only revision.
 5. The complete ASTER example must enter through the same import pipeline as user-selected files.
 6. Storage schema v2 migration must preserve existing v1 configuration data.
-

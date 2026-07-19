@@ -49,8 +49,9 @@ rows needed by **Revert to previous**. Keep the original browser data when those
 history features are required. The backup input limit is 20 MiB; each source CSV
 remains limited to 5 MiB.
 
-Independent review of the M1 closure candidate, structured variance ownership,
-editable registers, and weekly report generation remain to be completed.
+The M1 closure increment was independently reviewed in an isolated checkout and
+approved with no blocking findings. Structured variance ownership, editable
+registers, and weekly report generation remain to be completed.
 
 ## Fixed Week 10 control fixture
 

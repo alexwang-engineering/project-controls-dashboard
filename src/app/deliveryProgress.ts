@@ -18,8 +18,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M1",
     title: "Foundation and import",
     plannedHours: 15,
-    completionPercent: 98,
-    evidence: "Worker-isolated validation with identical fallback, the complete ASTER pair, revisioned registry updates, atomic storage and recovery all pass; independent M1 gate review remains.",
+    completionPercent: 100,
+    evidence: "Worker-isolated validation with identical fallback, the complete ASTER pair, revisioned registry updates, atomic storage and recovery all pass; the independent M1 review approved the increment with no blocking findings.",
   },
   {
     id: "M2",
