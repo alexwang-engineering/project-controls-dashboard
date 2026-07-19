@@ -56,9 +56,12 @@ previous**. Keep the original browser data when those history features are
 required. The backup input limit is 20 MiB; each source CSV remains limited to
 5 MiB.
 
-The M1 closure increment was independently reviewed in an isolated checkout and
-approved with no blocking findings. Editable registers, variance-to-report
-integration, and weekly report generation remain to be completed.
+The M1 closure increment was independently reviewed by Hermes and Claude in
+isolated checkouts and approved with no blocking findings; the post-review
+ratification and process-flag resolution are recorded in
+[`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Editable registers,
+variance-to-report integration, and weekly report generation remain to be
+completed.
 
 ## Fixed Week 10 control fixture
 

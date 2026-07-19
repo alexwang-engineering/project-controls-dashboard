@@ -1,8 +1,8 @@
 # M1 closure evidence
 
-**Evidence date:** 19 July 2026  
-**Reviewed range:** `ce27219..2c858c4`
-**Status:** Closed; independently approved with no blocking findings and live module-worker operation confirmed.
+**Evidence date:** 19 July 2026<br>
+**Reviewed range:** `ce27219..2c858c4`<br>
+**Status:** Closed and post-review ratified; independently approved with no blocking findings and live module-worker operation confirmed.
 
 ## Gate results
 
@@ -15,8 +15,8 @@
 | D1/D2 update semantics | Unknown identifiers block; an additive revision requires confirmation, CAS protection and automatic revalidation; removals and stale previews fail | Pass |
 | Registry history migration | Dexie v1 registries migrate to revision 1 in storage schema v2; later accepted revisions are immutable history records | Pass |
 | Performance | 1,000 schedule activities plus 1,000 matching performance rows processed in 41 ms; threshold is under 2,000 ms | Pass |
-| Quality gate | Lint, strict typecheck, all 190 tests and production build | Pass |
-| Independent review | Hermes reviewed the range from a disposable isolated clone and reported `APPROVED` with no blocking findings | Pass |
+| Candidate quality gate | Claude independently reproduced 189/189 tests, lint, strict typecheck and build at `2c858c4`; the later closure-record checkout passed 190 tests | Pass |
+| Independent review | Hermes and Claude reviewed the committed range in isolated checkouts and approved it with no blocking findings | Pass |
 | Live packaged-app worker check | The complete ASTER example processed 1,020 accepted source rows in the isolated module worker in 74 ms, with zero blocking issues | Pass |
 
 ## Independent closure review
@@ -51,6 +51,23 @@ finish and correctly exposed the controlled additive registry-update flow.
 - The timed fixture contains 1,000 activity records and 1,000 matching performance records.
 
 The 41 ms value is a recorded development-machine observation, while the automated acceptance assertion remains the plan's portable under-two-second threshold.
+
+## Claude ratification and process-flag resolution
+
+Claude independently reviewed `ce27219..2c858c4` on 19 July 2026 in an
+isolated worktree and approved the M1 code for closure. The complete read-only
+review is preserved at
+[`Claude_M1_Closure_Review.md`](reviews/Claude_M1_Closure_Review.md).
+Its source Desktop copy had SHA-256
+`a96c24fc7797274a874725d9170386a0e4822674b2ca451b2f8f60ee595b96ea`.
+
+The review raised two non-code process flags. They are resolved by the
+post-review ratification commit that contains this section:
+
+| Flag | Resolution |
+|---|---|
+| P1 — closure record predated Claude's approval | This later documentation commit records the real review by reviewer, date, range and preserved report; history is not rewritten. |
+| P2 — live checkout mixed dirty M3 work with the closed M1 state | M3 is separately committed as `263db1d`; the main tree is clean, and the current complete gate passes 205/205 tests, lint, strict typecheck and build. The exact M1 candidate remains reproducible at `2c858c4`. |
 
 ## Reviewed scope
 

@@ -34,7 +34,7 @@
 | M1 complete import pair | 60 activities, 8 schedule milestones and 960 performance rows across 16 periods | Tested |
 | M1 performance | 1,000 activities plus their performance rows processed in 41 ms on the development machine; gate is under 2 seconds | Passing |
 | M1 registry evolution | Additive-only revisions, explicit confirmation, CAS transaction, history and automatic revalidation | Tested |
-| M1 closure evidence | Independent Hermes review approved `ce27219..2c858c4` with no blocking findings; live packaged-app worker check accepted 1,020 rows | Complete |
+| M1 closure evidence | Hermes and Claude approved `ce27219..2c858c4` in isolated checkouts; the post-review ratification resolves both process flags and the live packaged app accepted 1,020 rows | Complete |
 | Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
 | EAC sensitivity | Budget-rate, CPI-continuation and CPI × SPI scenarios expose formulas, assumptions, VAC and TCPI consequences | Tested working slice |
 | Variance analysis | Generation-aware draft, structured impacts/actions, ownership, sign-off validation and immutable revisions | Tested working slice |
