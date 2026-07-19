@@ -6,8 +6,8 @@ import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
+import { ProjectSetupRequired } from "../../components/ProjectSetupRequired";
 import { StatusPill } from "../../components/StatusPill";
-import { demoSnapshot } from "../../data/demo";
 import {
   calculateEarnedValue,
   efficiencyStatus,
@@ -21,13 +21,58 @@ import {
 } from "../../utils/format";
 import { PerformanceChart } from "./PerformanceChart";
 
-const criticalRiskCount = demoSnapshot.risks.filter(
-  (risk) => risk.rating === "critical",
-).length;
-
 export function OverviewPage() {
-  const { selectedWorkPackage, setSelectedWorkPackage } = useProjectStore();
+  const {
+    selectedWorkPackage,
+    setSelectedWorkPackage,
+    milestones,
+    risks,
+    changes,
+  } = useProjectStore();
   const { snapshot, status, error } = useProjectPerformance();
+
+  if (snapshot === undefined) {
+    return (
+      <div className="page-stack">
+        <PageHeader
+          eyebrow="Management control room"
+          title="Project overview"
+          description="Your validated schedule, cost and management-register position will appear here."
+        />
+        <PageGuide
+          pageName="Project overview"
+          state="Setup required"
+          purpose="Create the project position by importing schedule and performance data, then enter the management registers."
+          steps={[
+            { title: "Import project data", detail: "Choose your schedule CSV and periodic-performance CSV, then validate and commit them." },
+            { title: "Enter the registers", detail: "Add milestones, risks and change requests from their pages." },
+            { title: "Review the position", detail: "Return here after import to see calculated schedule, cost and management exceptions." },
+          ]}
+        />
+        {error ? (
+          <div className="import-error" role="alert">
+            <strong>Local project data could not be read.</strong>
+            <span>{error}</span>
+          </div>
+        ) : null}
+        {status === "loading" ? (
+          <div className="route-loading" role="status">Checking local project data…</div>
+        ) : (
+          <ProjectSetupRequired />
+        )}
+      </div>
+    );
+  }
+
+  const criticalRiskCount = risks.filter(
+    (risk) => risk.rating === "critical",
+  ).length;
+  const lateMilestones = milestones.filter(
+    (milestone) => milestone.status === "forecast-late",
+  );
+  const pendingChanges = changes.filter(
+    (change) => change.status === "submitted",
+  );
   const currentPoint =
     [...snapshot.trend]
       .reverse()
@@ -54,10 +99,11 @@ export function OverviewPage() {
   const selectedPackage = snapshot.workPackages.find(
     (workPackage) => workPackage.id === effectiveWorkPackage,
   );
-  const sourceDescription =
-    snapshot.source === "active-import"
-      ? `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`
-      : "No validated generation is active in this local app, so the labelled synthetic demonstration snapshot is shown.";
+  const sourceDescription = `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`;
+  const recoveryNeeded =
+    (projectMetrics.spi !== null && projectMetrics.spi < 0.98) ||
+    (projectMetrics.cpi !== null && projectMetrics.cpi < 0.98) ||
+    finishVarianceDays > 0;
 
   return (
     <div className="page-stack">
@@ -77,22 +123,13 @@ export function OverviewPage() {
       />
 
       <section
-        className={
-          "source-banner " +
-          (snapshot.source === "active-import"
-            ? "source-banner--active"
-            : "source-banner--fallback")
-        }
+        className="source-banner source-banner--active"
         aria-label="Dashboard data source"
       >
         <Database size={19} aria-hidden="true" />
         <div>
           <strong>
-            {status === "loading"
-              ? "Checking local data…"
-              : snapshot.source === "active-import"
-                ? "Validated active generation"
-                : "Synthetic fallback in use"}
+            {status === "loading" ? "Checking local data…" : "Validated active generation"}
           </strong>
           <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
         </div>
@@ -145,7 +182,9 @@ export function OverviewPage() {
         <div>
           <p className="eyebrow">Management attention</p>
           <h2 id="decision-title">
-            Recovery action is needed to protect the current forecast.
+            {recoveryNeeded
+              ? "Recovery action is needed to protect the current forecast."
+              : "The current project position is within the control thresholds."}
           </h2>
           <p>
             The project is {formatPercent(projectMetrics.earnedCompletion)} earned
@@ -198,16 +237,16 @@ export function OverviewPage() {
         <MetricCard
           label="Estimate at completion"
           value={formatCompactCurrency(projectMetrics.managementEac)}
-          status="attention"
-          statusLabel="Above budget"
+          status={projectMetrics.vac < 0 ? "attention" : "positive"}
+          statusLabel={projectMetrics.vac < 0 ? "Above budget" : "Within budget"}
           delta={formatCompactCurrency(-projectMetrics.vac)}
           detail="CPI-based management forecast"
         />
         <MetricCard
           label="To-complete performance"
           value={formatIndex(projectMetrics.tcpiBac)}
-          status="adverse"
-          statusLabel="Recovery required"
+          status={projectMetrics.tcpiBac !== null && projectMetrics.tcpiBac > 1.05 ? "adverse" : "positive"}
+          statusLabel={projectMetrics.tcpiBac !== null && projectMetrics.tcpiBac > 1.05 ? "Recovery required" : "Achievable"}
           detail="Efficiency needed to recover the original BAC"
         />
       </section>
@@ -302,8 +341,8 @@ export function OverviewPage() {
       </section>
 
       <section className="register-source-note" aria-label="Supporting register data source">
-        <strong>Supporting registers remain synthetic.</strong>
-        <span>Milestone, risk and change editing will be connected to controlled local stores in later increments.</span>
+        <strong>Supporting registers use your local entries.</strong>
+        <span>Add or edit milestones, risks and changes on their register pages; updates appear here immediately.</span>
       </section>
 
       <section className="exception-grid" aria-label="Management exceptions">
@@ -311,14 +350,12 @@ export function OverviewPage() {
           <div className="panel__header">
             <div>
               <p className="eyebrow">Milestone movement</p>
-              <h2>Two forecast late</h2>
+              <h2>{lateMilestones.length} forecast late</h2>
             </div>
             <Link to="/milestones">View register</Link>
           </div>
           <ul className="exception-list">
-            {demoSnapshot.milestones
-              .filter((milestone) => milestone.status === "forecast-late")
-              .map((milestone) => (
+            {lateMilestones.map((milestone) => (
                 <li key={milestone.id}>
                   <div>
                     <strong>{milestone.name}</strong>
@@ -327,6 +364,7 @@ export function OverviewPage() {
                   <span>{formatDate(milestone.forecastDate)}</span>
                 </li>
               ))}
+            {lateMilestones.length === 0 ? <li>No late milestone is entered.</li> : null}
           </ul>
         </article>
 
@@ -342,7 +380,10 @@ export function OverviewPage() {
             <Link to="/risks">Open heatmap</Link>
           </div>
           <ul className="exception-list">
-            {demoSnapshot.risks.slice(0, 2).map((risk) => (
+            {[...risks]
+              .sort((left, right) => right.residualScore - left.residualScore)
+              .slice(0, 2)
+              .map((risk) => (
               <li key={risk.id}>
                 <div>
                   <strong>{risk.title}</strong>
@@ -353,6 +394,7 @@ export function OverviewPage() {
                 </StatusPill>
               </li>
             ))}
+            {risks.length === 0 ? <li>No risk is entered.</li> : null}
           </ul>
         </article>
 
@@ -360,14 +402,12 @@ export function OverviewPage() {
           <div className="panel__header">
             <div>
               <p className="eyebrow">Change control</p>
-              <h2>Two decisions pending</h2>
+              <h2>{pendingChanges.length} decisions pending</h2>
             </div>
             <Link to="/changes">View changes</Link>
           </div>
           <ul className="exception-list">
-            {demoSnapshot.changes
-              .filter((change) => change.status === "submitted")
-              .map((change) => (
+            {pendingChanges.map((change) => (
                 <li key={change.id}>
                   <div>
                     <strong>{change.title}</strong>
@@ -376,6 +416,7 @@ export function OverviewPage() {
                   <span>{formatCompactCurrency(change.costImpact)}</span>
                 </li>
               ))}
+            {pendingChanges.length === 0 ? <li>No submitted change is awaiting a decision.</li> : null}
           </ul>
         </article>
       </section>

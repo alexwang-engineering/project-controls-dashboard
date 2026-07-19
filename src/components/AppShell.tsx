@@ -28,9 +28,9 @@ const navigation = [
 ];
 
 export function AppShell() {
-  const { announcement, reloadDemo } = useProjectStore();
+  const { announcement, resetView } = useProjectStore();
   const { snapshot, status, error } = useProjectPerformance();
-  const hasActiveImport = snapshot.source === "active-import";
+  const hasActiveImport = snapshot?.source === "active-import";
 
   return (
     <div className="app-shell">
@@ -67,18 +67,18 @@ export function AppShell() {
 
         <div className="sidebar__project">
           <p className="sidebar__label">Current project</p>
-          <strong>{snapshot.project.name}</strong>
+          <strong>{snapshot?.project.name ?? "No project loaded"}</strong>
           <dl className="sidebar__meta">
             <div>
               <dt>Data date</dt>
-              <dd>{formatDate(snapshot.project.reportingDate)}</dd>
+              <dd>{snapshot ? formatDate(snapshot.project.reportingDate) : "Not available"}</dd>
             </div>
             <div>
               <dt>Baseline</dt>
-              <dd>{snapshot.project.baselineVersion}</dd>
+              <dd>{snapshot?.project.baselineVersion ?? "Not available"}</dd>
             </div>
           </dl>
-          <button className="button button--sidebar" type="button" onClick={reloadDemo}>
+          <button className="button button--sidebar" type="button" onClick={resetView}>
             <RefreshCw size={16} aria-hidden="true" />
             Reset view
           </button>
@@ -88,13 +88,11 @@ export function AppShell() {
       <div className="workspace">
         <div className="workspace__topbar">
           <div>
-            <span className="topbar__project">{snapshot.project.name}</span>
+            <span className="topbar__project">{snapshot?.project.name ?? "Project setup required"}</span>
             <span className="topbar__separator" aria-hidden="true">
               /
             </span>
-            <span className="topbar__baseline">
-              Baseline {snapshot.project.baselineVersion}
-            </span>
+            <span className="topbar__baseline">{snapshot ? `Baseline ${snapshot.project.baselineVersion}` : "Import schedule and performance data"}</span>
           </div>
           <div className="topbar__status">
             <div
@@ -131,10 +129,10 @@ export function AppShell() {
                   : status === "loading"
                     ? "Loading the active local dataset"
                     : hasActiveImport
-                      ? `Active validated import ${snapshot.importId}`
-                      : "No active import; using the synthetic demonstration snapshot"
+                      ? `Active validated import ${snapshot?.importId ?? ""}`
+                      : "No active import; project setup is required"
               }
-              title={error ?? snapshot.importId}
+              title={error ?? snapshot?.importId ?? "No active import"}
             >
               <span className="data-quality__dot" aria-hidden="true" />
               {status === "loading"
@@ -143,7 +141,7 @@ export function AppShell() {
                   ? "Read error"
                   : hasActiveImport
                     ? "Active import"
-                    : "Demo fallback"}
+                    : "Setup required"}
             </div>
           </div>
         </div>

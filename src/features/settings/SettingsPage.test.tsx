@@ -157,7 +157,7 @@ describe("settings and data page", () => {
     expect(dependencies.reset).toHaveBeenCalledOnce();
     expect(
       await screen.findByText(
-        "All local project-control data was removed. The synthetic fallback is active.",
+        "All local project-control data was removed. The app is ready for new input.",
       ),
     ).toBeInTheDocument();
   });

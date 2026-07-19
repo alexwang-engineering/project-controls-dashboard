@@ -6,10 +6,11 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
-import { demoSnapshot } from "../../data/demo";
+import { ProjectSetupRequired } from "../../components/ProjectSetupRequired";
 import {
   buildWeeklyReportSnapshot,
   type WeeklyReportSnapshot,
@@ -53,12 +54,6 @@ const defaultDependencies: ReportPageDependencies = {
       getBrowserRepositories().db,
     ).loadSignedForReport(query),
   now: () => new Date().toISOString(),
-};
-
-const defaultRegisters: ReportRegisterInput = {
-  milestones: demoSnapshot.milestones,
-  risks: demoSnapshot.risks,
-  changes: demoSnapshot.changes,
 };
 
 const formatTimestamp = (value: string) =>
@@ -108,14 +103,65 @@ const metricRows = (report: WeeklyReportSnapshot) => [
 export function ReportPage({
   dependencies = defaultDependencies,
   performanceOverride,
-  registerOverride = defaultRegisters,
+  registerOverride,
 }: {
   dependencies?: ReportPageDependencies;
   performanceOverride?: ProjectPerformanceSnapshot;
   registerOverride?: ReportRegisterInput;
 }) {
   const performanceState = useProjectPerformance();
+  const {
+    milestones,
+    risks,
+    changes,
+  } = useProjectStore();
   const performance = performanceOverride ?? performanceState.snapshot;
+  const registers = registerOverride ?? { milestones, risks, changes };
+
+  if (performance === undefined) {
+    return (
+      <div className="page-stack report-page">
+        <PageHeader
+          eyebrow="M7 reporting"
+          title="Weekly management report"
+          description="The management report is generated only from your active project data and entered registers."
+        />
+        <PageGuide
+          pageName="Weekly management report"
+          state="Setup required"
+          purpose="Complete the project input and control evidence before generating a management report."
+          steps={[
+            { title: "Import project data", detail: "Commit a validated schedule and periodic-performance pair." },
+            { title: "Complete control records", detail: "Enter milestones, risks and change requests, then sign required variance analyses." },
+            { title: "Generate the report", detail: "Return here to reconcile the facts and print an approved snapshot." },
+          ]}
+        />
+        <ProjectSetupRequired
+          title="Import project data before generating a report"
+          detail="The app will not create a report from placeholders. Your active import and local management-register entries are required."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <ReportWorkspace
+      dependencies={dependencies}
+      performance={performance}
+      registers={registers}
+    />
+  );
+}
+
+function ReportWorkspace({
+  dependencies,
+  performance,
+  registers,
+}: {
+  dependencies: ReportPageDependencies;
+  performance: ProjectPerformanceSnapshot;
+  registers: ReportRegisterInput;
+}) {
   const [report, setReport] = useState<WeeklyReportSnapshot>();
   const [error, setError] = useState("");
 
@@ -135,11 +181,11 @@ export function ReportPage({
           buildWeeklyReportSnapshot({
             performance,
             signedAnalyses,
-            milestones: registerOverride.milestones,
-            risks: registerOverride.risks,
-            changes: registerOverride.changes,
+            milestones: registers.milestones,
+            risks: registers.risks,
+            changes: registers.changes,
             generatedAt: dependencies.now(),
-            registerSource: "Synthetic ASTER management registers",
+            registerSource: "User-entered local management registers",
           }),
         );
       })
@@ -157,9 +203,9 @@ export function ReportPage({
   }, [
     dependencies,
     performance,
-    registerOverride.changes,
-    registerOverride.milestones,
-    registerOverride.risks,
+    registers.changes,
+    registers.milestones,
+    registers.risks,
   ]);
 
   return (

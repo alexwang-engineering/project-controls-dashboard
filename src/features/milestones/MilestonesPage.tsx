@@ -1,10 +1,17 @@
 import { differenceInCalendarDays, parseISO } from "date-fns";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { useProjectStore } from "../../app/store";
 import { PageHeader } from "../../components/PageHeader";
 import { PageGuide } from "../../components/PageGuide";
 import { StatusPill } from "../../components/StatusPill";
-import { demoSnapshot } from "../../data/demo";
-import type { MetricStatus, MilestoneStatus } from "../../domain/types";
+import {
+  firstRegisterError,
+  milestoneInputSchema,
+} from "../../domain/registers";
+import type { MetricStatus, Milestone, MilestoneStatus } from "../../domain/types";
 import { formatDate } from "../../utils/format";
+import { RegisterEditor } from "../registers/RegisterEditor";
 
 const statusPresentation: Record<
   MilestoneStatus,
@@ -20,113 +27,118 @@ const statusPresentation: Record<
 
 const signedDays = (days: number) => {
   if (days === 0) return "On baseline";
-  return (days > 0 ? "+" : "") + String(days) + (Math.abs(days) === 1 ? " day" : " days");
+  return `${days > 0 ? "+" : ""}${String(days)}${Math.abs(days) === 1 ? " day" : " days"}`;
 };
 
 export function MilestonesPage() {
-  const completed = demoSnapshot.milestones.filter((item) => item.actualDate).length;
-  const late = demoSnapshot.milestones.filter(
+  const { milestones, upsertMilestone, removeMilestone } = useProjectStore();
+  const [editing, setEditing] = useState<Milestone>();
+  const [isAdding, setIsAdding] = useState(false);
+  const [formError, setFormError] = useState("");
+  const completed = milestones.filter((item) => item.actualDate).length;
+  const late = milestones.filter(
     (item) => item.status === "forecast-late" || item.status === "overdue",
   ).length;
+  const nextCommitment = [...milestones]
+    .filter(({ actualDate }) => actualDate === undefined)
+    .sort((left, right) => left.forecastDate.localeCompare(right.forecastDate))[0];
+  const editorOpen = isAdding || editing !== undefined;
+
+  const closeEditor = () => {
+    setEditing(undefined);
+    setIsAdding(false);
+    setFormError("");
+  };
+  const save = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const parsed = milestoneInputSchema.safeParse(
+      Object.fromEntries(new FormData(event.currentTarget)),
+    );
+    if (!parsed.success) {
+      setFormError(firstRegisterError(parsed.error));
+      return;
+    }
+    if (
+      milestones.some(
+        ({ id }) => id === parsed.data.id && id !== editing?.id,
+      )
+    ) {
+      setFormError("That milestone ID already exists. Edit the existing record or use a new ID.");
+      return;
+    }
+    if (editing !== undefined && editing.id !== parsed.data.id) {
+      removeMilestone(editing.id);
+    }
+    upsertMilestone(parsed.data);
+    closeEditor();
+  };
 
   return (
     <div className="page-stack">
       <PageHeader
         eyebrow="Schedule commitments"
         title="Milestone control"
-        description="Baseline, forecast and actual dates with movement, ownership and explicit exception commentary."
+        description="Enter and maintain baseline, forecast and actual commitments with ownership and exception commentary."
+        actions={
+          <button className="button button--primary" type="button" onClick={() => { setIsAdding(true); setEditing(undefined); setFormError(""); }}>
+            <Plus size={17} aria-hidden="true" /> Add milestone
+          </button>
+        }
       />
 
       <PageGuide
         pageName="Milestone control"
-        purpose="Use the register to find commitments moving beyond baseline and check that recovery is owned."
+        purpose="Add each contractual or management commitment, then keep its current forecast, outcome and recovery explanation up to date."
         steps={[
-          {
-            title: "Scan the summary",
-            detail: "Start with forecast-late milestones and the next commitment date.",
-          },
-          {
-            title: "Compare the dates",
-            detail: "Read baseline against forecast or actual; a positive day variance means late.",
-          },
-          {
-            title: "Check the recovery",
-            detail: "For every adverse item, confirm the commentary explains the cause, owner and control action.",
-          },
+          { title: "Add the commitment", detail: "Enter its ID, work package, owner and approved baseline date." },
+          { title: "Maintain the forecast", detail: "Record previous and current forecast dates, actual date and status." },
+          { title: "Explain movement", detail: "For every adverse item, record a specific control action in the commentary." },
         ]}
       />
 
+      {editorOpen ? (
+        <RegisterEditor
+          title={editing ? `Edit milestone ${editing.id}` : "Add milestone"}
+          description="Dates use the ISO calendar control; completed statuses require an actual date."
+          submitLabel="Save milestone"
+          error={formError}
+          onCancel={closeEditor}
+          onSubmit={save}
+        >
+          <label>Milestone ID<input name="id" required defaultValue={editing?.id ?? ""} placeholder="M-001" /></label>
+          <label>Milestone name<input name="name" required defaultValue={editing?.name ?? ""} /></label>
+          <label>Work package ID<input name="wbsId" required defaultValue={editing?.wbsId ?? ""} placeholder="WP100" /></label>
+          <label>Owner<input name="owner" required defaultValue={editing?.owner ?? ""} /></label>
+          <label>Baseline date<input name="baselineDate" type="date" required defaultValue={editing?.baselineDate ?? ""} /></label>
+          <label>Previous forecast date<input name="previousForecastDate" type="date" required defaultValue={editing?.previousForecastDate ?? ""} /></label>
+          <label>Current forecast date<input name="forecastDate" type="date" required defaultValue={editing?.forecastDate ?? ""} /></label>
+          <label>Actual date<input name="actualDate" type="date" defaultValue={editing?.actualDate ?? ""} /></label>
+          <label>Milestone status<select name="status" defaultValue={editing?.status ?? "on-track"}>{Object.entries(statusPresentation).map(([value, presentation]) => <option key={value} value={value}>{presentation.label}</option>)}</select></label>
+          <label className="register-form-field--wide">Control commentary<textarea name="commentary" rows={3} required defaultValue={editing?.commentary ?? ""} /></label>
+        </RegisterEditor>
+      ) : null}
+
       <section className="summary-strip" aria-label="Milestone summary">
-        <div><span>Total milestones</span><strong>{demoSnapshot.milestones.length}</strong></div>
+        <div><span>Total milestones</span><strong>{milestones.length}</strong></div>
         <div><span>Completed</span><strong>{completed}</strong></div>
         <div><span>Forecast late</span><strong>{late}</strong></div>
-        <div><span>Next commitment</span><strong>28 Jun 2026</strong></div>
+        <div><span>Next commitment</span><strong>{nextCommitment ? formatDate(nextCommitment.forecastDate) : "Not entered"}</strong></div>
       </section>
 
       <section className="panel" aria-labelledby="milestone-register-title">
-        <div className="panel__header">
-          <div>
-            <p className="eyebrow">Controlled register</p>
-            <h2 id="milestone-register-title">Milestone position</h2>
-            <p className="panel__description">
-              Forecast movement is measured against the approved B0 baseline.
-            </p>
-          </div>
-        </div>
-        <div className="table-scroll">
-          <table>
-            <caption className="sr-only">Project milestone register</caption>
-            <thead>
-              <tr>
-                <th scope="col">Milestone</th>
-                <th scope="col">Owner</th>
-                <th scope="col">Baseline</th>
-                <th scope="col">Forecast / actual</th>
-                <th scope="col">Variance</th>
-                <th scope="col">Status</th>
-                <th scope="col">Control commentary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {demoSnapshot.milestones.map((milestone) => {
-                const presentation = statusPresentation[milestone.status];
-                const outcomeDate = milestone.actualDate ?? milestone.forecastDate;
-                const variance = differenceInCalendarDays(
-                  parseISO(outcomeDate),
-                  parseISO(milestone.baselineDate),
-                );
-
-                return (
-                  <tr key={milestone.id}>
-                    <th scope="row">
-                      <span className="table-primary">{milestone.name}</span>
-                      <span className="table-secondary">
-                        {milestone.id + " · " + milestone.wbsId}
-                      </span>
-                    </th>
-                    <td>{milestone.owner}</td>
-                    <td>{formatDate(milestone.baselineDate)}</td>
-                    <td>
-                      <span className="table-primary">{formatDate(outcomeDate)}</span>
-                      <span className="table-secondary">
-                        {milestone.actualDate ? "Actual" : "Current forecast"}
-                      </span>
-                    </td>
-                    <td className={variance > 0 ? "number--adverse" : undefined}>
-                      {signedDays(variance)}
-                    </td>
-                    <td>
-                      <StatusPill status={presentation.tone}>
-                        {presentation.label}
-                      </StatusPill>
-                    </td>
-                    <td className="commentary-cell">{milestone.commentary}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <div className="panel__header"><div><p className="eyebrow">Controlled register</p><h2 id="milestone-register-title">Milestone position</h2><p className="panel__description">Every row below comes from local user input.</p></div></div>
+        {milestones.length === 0 ? (
+          <div className="register-empty"><strong>No milestones have been entered.</strong><span>Use Add milestone to create the first controlled commitment.</span></div>
+        ) : (
+          <div className="table-scroll"><table><caption className="sr-only">Project milestone register</caption><thead><tr><th scope="col">Milestone</th><th scope="col">Owner</th><th scope="col">Baseline</th><th scope="col">Forecast / actual</th><th scope="col">Variance</th><th scope="col">Status</th><th scope="col">Control commentary</th><th scope="col">Actions</th></tr></thead><tbody>
+            {milestones.map((milestone) => {
+              const presentation = statusPresentation[milestone.status];
+              const outcomeDate = milestone.actualDate ?? milestone.forecastDate;
+              const variance = differenceInCalendarDays(parseISO(outcomeDate), parseISO(milestone.baselineDate));
+              return <tr key={milestone.id}><th scope="row"><span className="table-primary">{milestone.name}</span><span className="table-secondary">{milestone.id} · {milestone.wbsId}</span></th><td>{milestone.owner}</td><td>{formatDate(milestone.baselineDate)}</td><td><span className="table-primary">{formatDate(outcomeDate)}</span><span className="table-secondary">{milestone.actualDate ? "Actual" : "Current forecast"}</span></td><td className={variance > 0 ? "number--adverse" : undefined}>{signedDays(variance)}</td><td><StatusPill status={presentation.tone}>{presentation.label}</StatusPill></td><td className="commentary-cell">{milestone.commentary}</td><td><div className="register-row-actions"><button type="button" aria-label={`Edit ${milestone.id}`} onClick={() => { setEditing(milestone); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${milestone.id}`} onClick={() => { if (window.confirm(`Delete milestone ${milestone.id}?`)) removeMilestone(milestone.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td></tr>;
+            })}
+          </tbody></table></div>
+        )}
       </section>
     </div>
   );

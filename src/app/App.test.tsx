@@ -1,6 +1,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { demoSnapshot } from "../data/demo";
+import { createSyntheticImportFiles } from "../features/import/demoImportFiles";
 import { getBrowserRepositories } from "../repositories/browserRepositories";
 import { useProjectStore } from "./store";
 import { App } from "./App";
@@ -8,7 +10,14 @@ import { App } from "./App";
 describe("project controls application", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
-    useProjectStore.getState().reloadDemo();
+    useProjectStore.setState({
+      selectedWorkPackage: "all",
+      reportingDate: demoSnapshot.project.reportingDate,
+      announcement: "",
+      milestones: [...demoSnapshot.milestones],
+      risks: [...demoSnapshot.risks],
+      changes: [...demoSnapshot.changes],
+    });
   });
 
   afterEach(() => cleanup());
@@ -35,8 +44,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "61");
-    expect(screen.getByText("57.5 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "67");
+    expect(screen.getByText("63 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -123,15 +132,19 @@ describe("project controls application", () => {
       name: "Import and data quality",
       level: 1,
     });
-    await user.click(
-      screen.getByRole("button", { name: "Load complete ASTER example" }),
+    const inputFiles = createSyntheticImportFiles();
+    await user.upload(screen.getByLabelText("Schedule CSV"), inputFiles.schedule);
+    await user.upload(
+      screen.getByLabelText("Performance CSV"),
+      inputFiles.performance,
     );
+    await user.click(screen.getByRole("button", { name: "Validate both files" }));
     await screen.findByRole("heading", {
       name: "The data pair is technically valid.",
     });
     await user.click(
       await screen.findByRole("checkbox", {
-        name: "I confirm this proposed synthetic project registry.",
+        name: "I confirm this proposed project registry.",
       }),
     );
     await user.click(
@@ -160,7 +173,7 @@ describe("project controls application", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Performance data source" }),
-    ).toHaveTextContent("Calculated from the active import");
+    ).toHaveTextContent("Calculated from the active project import");
     expect(
       screen.getByRole("table", {
         name: "Activity-level schedule and cost evidence",

@@ -4,6 +4,7 @@ import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
+import { ProjectSetupRequired } from "../../components/ProjectSetupRequired";
 import { StatusPill } from "../../components/StatusPill";
 import {
   calculateEarnedValue,
@@ -17,6 +18,7 @@ import { createVarianceAnalysisContext } from "../../domain/varianceAnalysis";
 import {
   activityPerformanceAtPeriod,
   periodicPerformanceForScope,
+  type ProjectPerformanceSnapshot,
 } from "../../domain/viewModels/projectPerformance";
 import {
   formatCompactCurrency,
@@ -30,6 +32,41 @@ import { VarianceAnalysisPanel } from "./VarianceAnalysisPanel";
 
 export function ScheduleCostPage() {
   const { snapshot } = useProjectPerformance();
+
+  if (snapshot === undefined) {
+    return (
+      <div className="page-stack">
+        <PageHeader
+          eyebrow="M2–M3 performance"
+          title="Schedule and cost"
+          description="Calculated schedule and cost performance will appear after your project data is imported."
+        />
+        <PageGuide
+          pageName="Schedule and cost"
+          state="Setup required"
+          purpose="Import a matching schedule and periodic-performance pair before calculating variances or forecasts."
+          steps={[
+            { title: "Prepare the files", detail: "Use the schedule and performance CSV templates described on the data-input page." },
+            { title: "Validate and commit", detail: "Resolve every blocking validation issue and confirm the project registry." },
+            { title: "Analyse performance", detail: "Return here to trace PV, EV, AC, schedule variance, cost variance and EAC." },
+          ]}
+        />
+        <ProjectSetupRequired
+          title="Import schedule and cost data to calculate performance"
+          detail="No figures are calculated or displayed until your validated schedule and periodic-performance files are active."
+        />
+      </div>
+    );
+  }
+
+  return <ScheduleCostWorkspace key={snapshot.importId} snapshot={snapshot} />;
+}
+
+function ScheduleCostWorkspace({
+  snapshot,
+}: {
+  snapshot: ProjectPerformanceSnapshot;
+}) {
   const [workPackageId, setWorkPackageId] = useState("all");
   const [selectedPeriod, setSelectedPeriod] = useState(
     snapshot.project.reportingDate,
@@ -155,20 +192,16 @@ export function ScheduleCostPage() {
       />
 
       <section
-        className={`source-banner ${snapshot.source === "active-import" ? "source-banner--active" : "source-banner--fallback"}`}
+        className="source-banner source-banner--active"
         aria-label="Performance data source"
       >
         <Database size={19} aria-hidden="true" />
         <div>
           <strong>
-            {snapshot.source === "active-import"
-              ? "Calculated from the active import"
-              : "Synthetic fallback calculation"}
+            Calculated from the active project import
           </strong>
           <span>
-            {snapshot.source === "active-import"
-              ? `${snapshot.importId} · ${snapshot.activities.length} activities · ${snapshot.periods.length} reporting period${snapshot.periods.length === 1 ? "" : "s"}`
-              : "Import a validated schedule and performance pair to enable source-period activity trace."}
+            {snapshot.importId} · {snapshot.activities.length} activities · {snapshot.periods.length} reporting period{snapshot.periods.length === 1 ? "" : "s"}
           </span>
         </div>
       </section>
@@ -301,7 +334,7 @@ export function ScheduleCostPage() {
         {snapshot.performance.length === 0 ? (
           <div className="trace-empty">
             <BarChart3 size={23} aria-hidden="true" />
-            <div><strong>No imported activity-period records are active.</strong><span>The overview fallback is available, but source trace is intentionally withheld until a validated import is committed.</span></div>
+            <div><strong>No activity-period records are active.</strong><span>Import a performance file containing accepted activity-period records to enable the source trace.</span></div>
           </div>
         ) : (
           <div className="table-scroll">

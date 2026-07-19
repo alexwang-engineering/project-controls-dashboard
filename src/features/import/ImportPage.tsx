@@ -14,9 +14,11 @@ import { useActiveDataset } from "../../app/ActiveDatasetContext";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { getBrowserRepositories } from "../../repositories/browserRepositories";
+import { PERFORMANCE_CSV_HEADERS } from "../../schemas/performanceCsv";
+import { SCHEDULE_CSV_HEADERS } from "../../schemas/scheduleCsv";
 import type { ImportManifest } from "../../schemas/manifest";
 import type { ValidationIssue } from "../../schemas/validationIssue";
-import { createSyntheticImportFiles } from "./demoImportFiles";
+import { encodeCsv } from "../../utils/safeCsvExport";
 import {
   buildValidationReportCsv,
   commitImportReview,
@@ -25,7 +27,6 @@ import {
 } from "./importWorkflow";
 
 export interface ImportPageDependencies {
-  createDemoFiles: typeof createSyntheticImportFiles;
   reviewFiles: (schedule: File, performance: File) => Promise<ImportReview>;
   commitReview: (
     review: ImportReview,
@@ -52,8 +53,26 @@ const downloadIssues = (issues: readonly ValidationIssue[]) => {
   URL.revokeObjectURL(url);
 };
 
+const downloadBlankTemplate = (
+  headers: readonly string[],
+  fileName: string,
+) => {
+  const csv = encodeCsv([headers], {
+    columnTrust: headers.map(() => "trusted-scalar" as const),
+  });
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: "text/csv;charset=utf-8" }),
+  );
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
 const defaultDependencies: ImportPageDependencies = {
-  createDemoFiles: createSyntheticImportFiles,
   reviewFiles: (schedule, performance) => {
     const repositories = getBrowserRepositories();
     return reviewImportFiles(schedule, performance, repositories);
@@ -194,14 +213,6 @@ export function ImportPage({
     }
   };
 
-  const useExample = async () => {
-    const files = dependencies.createDemoFiles();
-    setScheduleFile(files.schedule);
-    setPerformanceFile(files.performance);
-    resetReview();
-    await runReview(files.schedule, files.performance);
-  };
-
   const validateSelected = async () => {
     if (scheduleFile === undefined || performanceFile === undefined) return;
     await runReview(scheduleFile, performanceFile);
@@ -293,13 +304,13 @@ export function ImportPage({
       <PageHeader
         eyebrow="M1 data foundation"
         title="Import and data quality"
-        description="Validate synthetic schedule and performance CSV files before an atomic local commit."
+        description="Validate your schedule and performance CSV files before an atomic local commit."
         actions={
           <div className="local-only-chip">
             <ShieldCheck size={18} aria-hidden="true" />
             <span>
               <small>Privacy boundary</small>
-              Local and synthetic only
+              Local data only
             </span>
           </div>
         }
@@ -311,7 +322,7 @@ export function ImportPage({
         steps={[
           {
             title: "Choose both files",
-            detail: "Select matching CSV files, or load the complete synthetic ASTER pair with 60 activities and 16 periods.",
+            detail: "Select matching schedule and periodic-performance CSV files for one project and baseline.",
           },
           {
             title: "Resolve validation",
@@ -392,19 +403,22 @@ export function ImportPage({
                   Files are read in this local app only. The allowlist accepts UTF-8 .csv files.
                 </p>
               </div>
-              <button
-                className="button button--secondary"
-                type="button"
-                onClick={useExample}
-                disabled={isReviewing}
-              >
-                {isReviewing ? (
-                  <LoaderCircle className="spin" size={17} aria-hidden="true" />
-                ) : (
-                  <FileCheck2 size={17} aria-hidden="true" />
-                )}
-                Load complete ASTER example
-              </button>
+              <div className="import-template-actions" aria-label="Blank CSV templates">
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={() => downloadBlankTemplate(SCHEDULE_CSV_HEADERS, "project-schedule-template.csv")}
+                >
+                  <Download size={16} aria-hidden="true" /> Download blank schedule template
+                </button>
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={() => downloadBlankTemplate(PERFORMANCE_CSV_HEADERS, "project-performance-template.csv")}
+                >
+                  <Download size={16} aria-hidden="true" /> Download blank performance template
+                </button>
+              </div>
             </div>
 
             <div className="import-file-grid">
@@ -522,7 +536,7 @@ export function ImportPage({
                       </strong>
                       <p>
                         {review.configurationRequiresConfirmation
-                          ? "These values were inferred from accepted schedule rows. Confirm they are the authorised boundaries for this synthetic project."
+                          ? "These values were inferred from accepted schedule rows. Confirm they are the authorised boundaries for this project."
                           : "The candidate was checked against the active revision-controlled registry."}
                       </p>
                     </div>
@@ -541,7 +555,7 @@ export function ImportPage({
                         checked={configurationConfirmed}
                         onChange={(event) => setConfigurationConfirmed(event.target.checked)}
                       />
-                      <span>I confirm this proposed synthetic project registry.</span>
+                      <span>I confirm this proposed project registry.</span>
                     </label>
                   ) : null}
                 </fieldset>

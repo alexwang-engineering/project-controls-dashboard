@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useActiveDataset } from "../../app/ActiveDatasetContext";
+import { useProjectStore } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import {
@@ -216,12 +217,13 @@ export function SettingsPage({
     if (!resetConfirmed) return;
     return run("reset", async () => {
       await dependencies.reset();
+      useProjectStore.getState().clearRegisters();
       await refresh();
       await load();
       setResetConfirmed(false);
       setPreview(undefined);
       setSelectedFile(undefined);
-      setMessage("All local project-control data was removed. The synthetic fallback is active.");
+      setMessage("All local project-control data was removed. The app is ready for new input.");
     });
   };
 

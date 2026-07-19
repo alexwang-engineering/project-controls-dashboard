@@ -1,12 +1,12 @@
 # Project Controls Dashboard
 
-A local-first project-controls portfolio application for turning synthetic
-engineering schedule, cost, milestone, risk, and change data into a concise
-management position.
+A local-first project-controls application for turning your engineering
+schedule, cost, milestone, risk, and change inputs into a concise management
+position.
 
 The current implementation is a tested local-first slice based on the Version
-1.1 master plan. It accepts only controlled synthetic data for the portfolio
-release.
+1.1 master plan. A new installation starts empty: no demonstration figures are
+presented as project data.
 
 ## What is working now
 
@@ -21,15 +21,18 @@ release.
 - Cumulative planned, earned, and actual curve. Future EV and AC values are not
   presented beyond the current reporting date.
 - Work-package reconciliation table and interactive highlight control.
-- Eight-milestone control register with baseline/forecast variance.
-- Twelve-risk register and accessible 5 × 5 residual-risk heatmap.
-- Six-item change register with an approved-but-not-baselined integrity warning.
+- Validated add/edit/delete milestone input with baseline/forecast variance.
+- Validated add/edit/delete risk input, derived residual score and an accessible
+  5 × 5 heatmap.
+- Validated add/edit/delete change input with signed impacts and an
+  approved-but-not-baselined integrity warning.
 - Route-level code splitting, semantic chart alternatives, reduced-motion and
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
-- Guided schedule/performance CSV import with field-level validation, checksum
-  control, explicit registry confirmation, and pointer-last atomic persistence.
+- Guided schedule/performance CSV import with downloadable blank templates,
+  field-level validation, checksum control, explicit registry confirmation, and
+  pointer-last atomic persistence.
 - A versioned Vite module worker for parsing and validation, with one pure
   processor shared by the explicitly labelled compatibility fallback.
 - The complete ASTER import pair: 60 activities, eight schedule milestones and
@@ -54,24 +57,25 @@ release.
 - Accessible HTML is the authoritative report format. The secondary print/PDF
   action uses the same timestamped snapshot and remains disabled while source,
   variance, baseline or decision-authority controls are blocking publication.
-- An explicit synthetic-fallback label whenever no validated import is active.
+- Explicit setup-required screens whenever no validated import is active; the
+  Overview, Schedule & Cost and report never substitute demonstration figures.
 - A Settings & Data workflow with browser storage health, persistence requests,
   versioned active-generation backup, schema/domain-validated atomic restore,
   and an explicitly confirmed local reset.
 
-Backups intentionally contain the active generation and its confirmed registry
-only. They do not contain variance-analysis drafts or signed revisions, older
-manifests, checksum-detection history, or the rows needed by **Revert to
-previous**. Keep the original browser data when those history features are
-required. The backup input limit is 20 MiB; each source CSV remains limited to
-5 MiB.
+Backups intentionally contain the active imported generation and its confirmed
+registry only. They do not yet contain the locally entered milestone, risk and
+change registers, variance-analysis drafts or signed revisions, older manifests,
+checksum-detection history, or the rows needed by **Revert to previous**. Keep
+the original CSV files and local app data when those records are required. The
+backup input limit is 20 MiB; each source CSV remains limited to 5 MiB.
 
 The M1 closure increment was independently reviewed by Hermes and Claude in
 isolated checkouts and approved with no blocking findings; the post-review
 ratification and process-flag resolution are recorded in
-[`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Editable registers,
-persisted report snapshots, editable report narrative, and print/PDF visual QA
-remain to be completed.
+[`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Controlled register
+workflow history, persisted report snapshots, editable report narrative, and
+print/PDF visual QA remain to be completed.
 
 ## Fixed Week 10 control fixture
 
@@ -118,7 +122,7 @@ build.
 src/
 ├── app/             routing and shared UI state
 ├── components/      reusable semantic interface components
-├── data/            synthetic Aster demonstration snapshot
+├── data/            deterministic calculation fixtures used by automated tests
 ├── domain/          records, validation, graph rules, calculations and view models
 ├── features/        import, overview, schedule/cost and management registers
 ├── repositories/    atomic local generations and active-dataset reads
@@ -135,10 +139,10 @@ import, validation, worker, and generation-storage contract is recorded in
 
 ## Privacy boundary
 
-All included project and commercial information is synthetic. No CV, university,
-employer, client, or confidential project data is included. The MVP is designed
-to process data locally in the browser; a cloud backend and authentication are
-outside the portfolio-release scope.
+The repository fixtures are synthetic. Data you choose in the app is processed
+and retained locally on that device; no CV, university, employer, client, or
+confidential project data is included in the source repository. A cloud backend
+and authentication are outside the portfolio-release scope.
 
 ## Delivery baseline
 

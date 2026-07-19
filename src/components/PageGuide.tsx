@@ -9,14 +9,14 @@ export interface PageGuideProps {
   pageName: string;
   purpose: string;
   steps: readonly [PageGuideStep, PageGuideStep, PageGuideStep];
-  state?: "Demo ready" | "Planned workflow";
+  state?: "Ready for input" | "Setup required" | "Planned workflow";
 }
 
 export function PageGuide({
   pageName,
   purpose,
   steps,
-  state = "Demo ready",
+  state = "Ready for input",
 }: PageGuideProps) {
   return (
     <section className="page-guide" aria-label={`How to use ${pageName}`}>
@@ -29,7 +29,7 @@ export function PageGuide({
         <span
           className={
             "page-guide__state" +
-            (state === "Planned workflow" ? " page-guide__state--planned" : "")
+            (state !== "Ready for input" ? " page-guide__state--planned" : "")
           }
         >
           {state}

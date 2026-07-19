@@ -29,7 +29,6 @@ describe("import page", () => {
     const imports = new ImportRepository(db);
     const configurations = new ProjectConfigurationRepository(db);
     dependencies = {
-      createDemoFiles: createSyntheticImportFiles,
       reviewFiles: (schedule, performance) =>
         reviewImportFiles(schedule, performance, {
           datasets,
@@ -62,7 +61,7 @@ describe("import page", () => {
     await db.delete();
   });
 
-  it("guides a reviewer from the synthetic pair to an explicit atomic commit", async () => {
+  it("starts without a demo shortcut and commits explicitly selected input files", async () => {
     const user = userEvent.setup();
     render(<ImportPage dependencies={dependencies} />);
 
@@ -72,10 +71,23 @@ describe("import page", () => {
     expect(
       screen.getByRole("button", { name: "Validate both files" }),
     ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /ASTER example/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download blank schedule template" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Download blank performance template" }),
+    ).toBeEnabled();
 
-    await user.click(
-      screen.getByRole("button", { name: "Load complete ASTER example" }),
+    const inputFiles = createSyntheticImportFiles();
+    await user.upload(screen.getByLabelText("Schedule CSV"), inputFiles.schedule);
+    await user.upload(
+      screen.getByLabelText("Performance CSV"),
+      inputFiles.performance,
     );
+    await user.click(screen.getByRole("button", { name: "Validate both files" }));
 
     expect(
       await screen.findByRole("heading", {
@@ -91,7 +103,7 @@ describe("import page", () => {
 
     await user.click(
       screen.getByRole("checkbox", {
-        name: "I confirm this proposed synthetic project registry.",
+        name: "I confirm this proposed project registry.",
       }),
     );
     expect(commitButton).toBeEnabled();

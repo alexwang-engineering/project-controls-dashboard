@@ -5,7 +5,8 @@ import {
 } from "../domain/viewModels/projectPerformance";
 import { useActiveDataset } from "./ActiveDatasetContext";
 
-const syntheticSnapshot = buildSyntheticPerformanceSnapshot();
+const syntheticTestSnapshot =
+  import.meta.env.MODE === "test" ? buildSyntheticPerformanceSnapshot() : undefined;
 
 export function useProjectPerformance() {
   const active = useActiveDataset();
@@ -13,7 +14,7 @@ export function useProjectPerformance() {
     () =>
       active.dataset
         ? buildImportedPerformanceSnapshot(active.dataset)
-        : syntheticSnapshot,
+        : syntheticTestSnapshot,
     [active.dataset],
   );
 
