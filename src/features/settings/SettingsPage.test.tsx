@@ -48,13 +48,14 @@ describe("settings and data page", () => {
     dependencies = {
       load: vi.fn().mockResolvedValue({
         lifecycle: {
-          schemaVersion: "4",
+          schemaVersion: "5",
           activeImportId: "IMPORT-001",
           lastImportAt: "2026-07-19T09:00:00.000Z",
           manifestCount: 1,
           activityCount: 5,
           performanceCount: 5,
           varianceAnalysisCount: 2,
+          publishedReportCount: 1,
         },
         storage: {
           availability: "supported",

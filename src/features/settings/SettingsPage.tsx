@@ -281,7 +281,7 @@ export function SettingsPage({
           <Archive size={21} aria-hidden="true" />
           <span>Storage schema</span>
           <strong>Version {lifecycle?.schemaVersion ?? "…"}</strong>
-          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} · {lifecycle?.varianceAnalysisCount ?? 0} variance-analysis record{lifecycle?.varianceAnalysisCount === 1 ? "" : "s"}</small>
+          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} · {lifecycle?.varianceAnalysisCount ?? 0} variance-analysis record{lifecycle?.varianceAnalysisCount === 1 ? "" : "s"} · {lifecycle?.publishedReportCount ?? 0} published report revision{lifecycle?.publishedReportCount === 1 ? "" : "s"}</small>
         </article>
       </section>
 

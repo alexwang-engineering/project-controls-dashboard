@@ -2,7 +2,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   FileCheck2,
+  FilePlus2,
+  History,
   Printer,
+  Save,
   ShieldAlert,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -30,6 +33,20 @@ import {
 } from "../../repositories/varianceAnalysisRepository";
 import type { VarianceAnalysisRecord } from "../../domain/varianceAnalysis";
 import {
+  buildReportSourceFingerprint,
+  emptyReportNarrative,
+  validateReportNarrativeForPublication,
+  type WeeklyReportNarrative,
+  type WeeklyReportPublicationRecord,
+  type WeeklyReportSourceEvidence,
+} from "../../domain/reports/reportPublication";
+import {
+  type PublishReportInput,
+  type ReportPublicationContextState,
+  type ReportPublicationQuery,
+  type SaveReportDraftInput,
+} from "../../repositories/reportPublicationRepository";
+import {
   formatCurrency,
   formatDate,
   formatIndex,
@@ -39,7 +56,17 @@ export interface ReportPageDependencies {
   loadSignedAnalyses: (
     query: SignedReportAnalysisQuery,
   ) => Promise<readonly VarianceAnalysisRecord[]>;
+  loadPublicationContext: (
+    query: ReportPublicationQuery,
+  ) => Promise<ReportPublicationContextState>;
+  saveReportDraft: (
+    input: SaveReportDraftInput,
+  ) => Promise<WeeklyReportPublicationRecord>;
+  publishReport: (
+    input: PublishReportInput,
+  ) => Promise<WeeklyReportPublicationRecord>;
   now: () => string;
+  print: () => void;
 }
 
 export interface ReportRegisterInput {
@@ -53,8 +80,28 @@ const defaultDependencies: ReportPageDependencies = {
     new VarianceAnalysisRepository(
       getBrowserRepositories().db,
     ).loadSignedForReport(query),
+  loadPublicationContext: (query) =>
+    getBrowserRepositories().reportPublications.loadContext(query),
+  saveReportDraft: (input) =>
+    getBrowserRepositories().reportPublications.saveDraft(input),
+  publishReport: (input) =>
+    getBrowserRepositories().reportPublications.publish(input),
   now: () => new Date().toISOString(),
+  print: () => window.print(),
 };
+
+const generatedNarrative = (report: WeeklyReportSnapshot): WeeklyReportNarrative => ({
+  ...emptyReportNarrative,
+  managementSummary: report.executiveSummary,
+  decisionsRequired:
+    report.changeDecisions.length === 0
+      ? "No additional management decision is currently required."
+      : `Decide ${report.changeDecisions.map(({ id }) => id).join(", ")} within the recorded required dates.`,
+  nextPeriodFocus:
+    report.actions.length === 0
+      ? "Maintain the current controls and prepare the next reporting update."
+      : `Complete and evidence ${report.actions.length} owned corrective action${report.actions.length === 1 ? "" : "s"}.`,
+});
 
 const formatTimestamp = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -162,12 +209,31 @@ function ReportWorkspace({
   performance: ProjectPerformanceSnapshot;
   registers: ReportRegisterInput;
 }) {
-  const [report, setReport] = useState<WeeklyReportSnapshot>();
+  const [liveReport, setLiveReport] = useState<WeeklyReportSnapshot>();
+  const [sourceEvidence, setSourceEvidence] =
+    useState<WeeklyReportSourceEvidence>();
+  const [sourceFingerprint, setSourceFingerprint] = useState("");
+  const [narrative, setNarrative] =
+    useState<WeeklyReportNarrative>(emptyReportNarrative);
+  const [publicationState, setPublicationState] =
+    useState<ReportPublicationContextState>({
+      publishedRevisions: [],
+      retainedDraftCount: 0,
+    });
+  const [selectedPublication, setSelectedPublication] =
+    useState<WeeklyReportPublicationRecord>();
+  const [publicationConfirmed, setPublicationConfirmed] = useState(false);
+  const [publicationMessage, setPublicationMessage] = useState("");
+  const [publicationBusy, setPublicationBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    setReport(undefined);
+    setLiveReport(undefined);
+    setSourceEvidence(undefined);
+    setSourceFingerprint("");
+    setSelectedPublication(undefined);
+    setPublicationMessage("");
     setError("");
     dependencies
       .loadSignedAnalyses({
@@ -177,8 +243,7 @@ function ReportWorkspace({
       })
       .then((signedAnalyses) => {
         if (!active) return;
-        setReport(
-          buildWeeklyReportSnapshot({
+        const built = buildWeeklyReportSnapshot({
             performance,
             signedAnalyses,
             milestones: registers.milestones,
@@ -186,8 +251,35 @@ function ReportWorkspace({
             changes: registers.changes,
             generatedAt: dependencies.now(),
             registerSource: "User-entered local management registers",
-          }),
-        );
+          });
+        const evidence: WeeklyReportSourceEvidence = {
+          activeImportId: performance.importId,
+          signedAnalyses,
+          milestones: registers.milestones,
+          risks: registers.risks,
+          changes: registers.changes,
+        };
+        const fingerprint = buildReportSourceFingerprint(built, evidence);
+        return dependencies
+          .loadPublicationContext({
+            projectId: built.identity.projectId,
+            baselineVersion: built.identity.baselineVersion,
+            reportingPeriod: built.identity.reportingPeriod,
+            sourceImportId: built.identity.sourceImportId,
+          })
+          .then((stored) => {
+            if (!active) return;
+            setLiveReport(built);
+            setSourceEvidence(evidence);
+            setSourceFingerprint(fingerprint);
+            setPublicationState(stored);
+            setSelectedPublication(stored.publishedRevisions[0]);
+            setNarrative(
+              stored.currentDraft?.sourceFingerprint === fingerprint
+                ? stored.currentDraft.narrative
+                : generatedNarrative(built),
+            );
+          });
       })
       .catch((loadError: unknown) => {
         if (!active) return;
@@ -208,6 +300,80 @@ function ReportWorkspace({
     registers.risks,
   ]);
 
+  const report = selectedPublication?.report ?? liveReport;
+  const narrativeErrors = validateReportNarrativeForPublication(narrative);
+  const publicationInput =
+    liveReport === undefined || sourceEvidence === undefined
+      ? undefined
+      : {
+          report: liveReport,
+          evidence: sourceEvidence,
+          sourceFingerprint,
+          narrative,
+        };
+  const currentDraftMatches =
+    publicationState.currentDraft?.sourceFingerprint === sourceFingerprint &&
+    JSON.stringify(publicationState.currentDraft.narrative) ===
+      JSON.stringify(narrative);
+
+  const updateNarrative = (field: keyof WeeklyReportNarrative, value: string) => {
+    setNarrative((current) => ({ ...current, [field]: value }));
+    setPublicationConfirmed(false);
+    setPublicationMessage("");
+  };
+
+  const saveDraft = () => {
+    if (publicationInput === undefined) return;
+    setPublicationBusy(true);
+    setPublicationMessage("");
+    dependencies
+      .saveReportDraft({
+        ...publicationInput,
+        savedAt: dependencies.now(),
+      })
+      .then((saved) => {
+        setPublicationState((current) => ({ ...current, currentDraft: saved }));
+        setNarrative(saved.narrative);
+        setPublicationConfirmed(false);
+        setPublicationMessage("Draft saved against the current source fingerprint.");
+      })
+      .catch((saveError: unknown) =>
+        setPublicationMessage(
+          saveError instanceof Error ? saveError.message : "The draft could not be saved.",
+        ),
+      )
+      .finally(() => setPublicationBusy(false));
+  };
+
+  const publish = () => {
+    if (publicationInput === undefined || !publicationConfirmed) return;
+    setPublicationBusy(true);
+    setPublicationMessage("");
+    dependencies
+      .publishReport({
+        ...publicationInput,
+        publishedAt: dependencies.now(),
+      })
+      .then((published) => {
+        setPublicationState((current) => ({
+          ...current,
+          currentDraft: undefined,
+          publishedRevisions: [published, ...current.publishedRevisions],
+        }));
+        setSelectedPublication(published);
+        setPublicationConfirmed(false);
+        setPublicationMessage(`Published immutable revision ${String(published.revision)}.`);
+      })
+      .catch((publishError: unknown) =>
+        setPublicationMessage(
+          publishError instanceof Error
+            ? publishError.message
+            : "The report could not be published.",
+        ),
+      )
+      .finally(() => setPublicationBusy(false));
+  };
+
   return (
     <div className="page-stack report-page">
       <PageHeader
@@ -218,10 +384,10 @@ function ReportWorkspace({
           <button
             className="button button--secondary no-print"
             type="button"
-            disabled={report?.canPublish !== true}
-            onClick={() => window.print()}
+            disabled={selectedPublication === undefined}
+            onClick={dependencies.print}
           >
-            <Printer size={17} aria-hidden="true" /> Print approved snapshot
+            <Printer size={17} aria-hidden="true" /> Print selected publication
           </button>
         }
       />
@@ -255,14 +421,80 @@ function ReportWorkspace({
         </div>
       ) : null}
 
-      {report === undefined && !error ? (
+      {liveReport === undefined && !error ? (
         <div className="route-loading" role="status">
           Reconciling report controls…
         </div>
       ) : null}
 
+      {liveReport ? (
+        <section className="report-publication no-print" aria-labelledby="report-publication-title">
+          <div className="report-section__heading">
+            <div>
+              <p className="eyebrow">Controlled publication</p>
+              <h2 id="report-publication-title">Management narrative and immutable history</h2>
+            </div>
+            <span>{publicationState.publishedRevisions.length} published revision{publicationState.publishedRevisions.length === 1 ? "" : "s"}</span>
+          </div>
+          <p>
+            Edit the decision-focused narrative, save it against the current source fingerprint, then publish. Published revisions cannot be overwritten; print uses only the selected stored revision.
+          </p>
+          <div className="report-publication__form">
+            <label>
+              Report author
+              <input aria-label="Report author" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined ? "report-author-error" : undefined} value={narrative.author} maxLength={80} onChange={(event) => updateNarrative("author", event.target.value)} />
+              {narrativeErrors.success ? null : <small id="report-author-error">{narrativeErrors.fieldErrors.author}</small>}
+            </label>
+            <label className="report-publication__wide">
+              Management summary
+              <textarea aria-label="Management summary" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.managementSummary !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.managementSummary !== undefined ? "report-summary-error" : undefined} value={narrative.managementSummary} maxLength={2_000} rows={4} onChange={(event) => updateNarrative("managementSummary", event.target.value)} />
+              {narrativeErrors.success ? null : <small id="report-summary-error">{narrativeErrors.fieldErrors.managementSummary}</small>}
+            </label>
+            <label>
+              Decisions required
+              <textarea aria-label="Decisions required" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.decisionsRequired !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.decisionsRequired !== undefined ? "report-decisions-error" : undefined} value={narrative.decisionsRequired} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("decisionsRequired", event.target.value)} />
+              {narrativeErrors.success ? null : <small id="report-decisions-error">{narrativeErrors.fieldErrors.decisionsRequired}</small>}
+            </label>
+            <label>
+              Next-period focus
+              <textarea aria-label="Next-period focus" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined ? "report-focus-error" : undefined} value={narrative.nextPeriodFocus} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("nextPeriodFocus", event.target.value)} />
+              {narrativeErrors.success ? null : <small id="report-focus-error">{narrativeErrors.fieldErrors.nextPeriodFocus}</small>}
+            </label>
+          </div>
+          <div className="report-publication__actions">
+            <button className="button button--secondary" type="button" disabled={publicationBusy} onClick={saveDraft}>
+              <Save size={17} aria-hidden="true" /> Save current draft
+            </button>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={publicationConfirmed} onChange={(event) => setPublicationConfirmed(event.target.checked)} />
+              I confirm this narrative and the frozen source evidence are ready to publish.
+            </label>
+            <button className="button button--primary" type="button" disabled={publicationBusy || !publicationConfirmed || !narrativeErrors.success || !liveReport.canPublish || !currentDraftMatches} onClick={publish}>
+              <FilePlus2 size={17} aria-hidden="true" /> Publish immutable revision
+            </button>
+          </div>
+          {publicationMessage ? <p className="form-status" role="status">{publicationMessage}</p> : null}
+          {publicationState.retainedDraftCount > 0 ? <p className="control-note">{publicationState.retainedDraftCount} draft{publicationState.retainedDraftCount === 1 ? "" : "s"} from earlier source generations remain retained for audit.</p> : null}
+          <div className="report-publication__history" aria-label="Published report history">
+            <History size={19} aria-hidden="true" />
+            <button className={selectedPublication === undefined ? "button button--small button--active" : "button button--small"} type="button" onClick={() => setSelectedPublication(undefined)}>View current live draft</button>
+            {publicationState.publishedRevisions.map((published) => (
+              <button key={published.recordId} className={selectedPublication?.recordId === published.recordId ? "button button--small button--active" : "button button--small"} type="button" onClick={() => setSelectedPublication(published)}>
+                Revision {String(published.revision)} · {published.publishedAt ? formatTimestamp(published.publishedAt) : "Published"}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {report ? (
         <article className="report-document" aria-labelledby="report-document-title">
+          {selectedPublication ? (
+            <section className="report-publication-banner" aria-label="Published revision">
+              <strong>Published revision {String(selectedPublication.revision)}</strong>
+              <span>{selectedPublication.publishedAt ? formatTimestamp(selectedPublication.publishedAt) : "Publication time unavailable"} · {selectedPublication.narrative.author}</span>
+            </section>
+          ) : null}
           <header className="report-document__header">
             <div>
               <p className="eyebrow">Weekly control snapshot</p>
@@ -310,11 +542,17 @@ function ReportWorkspace({
           <section className="report-section report-executive" aria-labelledby="report-executive-title">
             <p className="eyebrow">Decision-first position</p>
             <h2 id="report-executive-title">Executive position</h2>
-            <p className="report-lead">{report.executiveSummary}</p>
+            <p className="report-lead">{selectedPublication?.narrative.managementSummary ?? report.executiveSummary}</p>
             <div className="report-callout">
               <strong>Movement this period</strong>
               <p>{report.movement}</p>
             </div>
+            {selectedPublication ? (
+              <div className="report-management-narrative">
+                <div><strong>Decisions required</strong><p>{selectedPublication.narrative.decisionsRequired}</p></div>
+                <div><strong>Next-period focus</strong><p>{selectedPublication.narrative.nextPeriodFocus}</p></div>
+              </div>
+            ) : null}
           </section>
 
           <section className="report-section" aria-labelledby="report-kpi-title">

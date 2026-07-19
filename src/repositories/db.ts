@@ -10,8 +10,9 @@ import {
   buildStoredBaselineSnapshot,
   type StoredBaselineSnapshot,
 } from "../domain/baselineSnapshot";
+import type { WeeklyReportPublicationRecord } from "../domain/reports/reportPublication";
 
-export const DATABASE_SCHEMA_VERSION = "4" as const;
+export const DATABASE_SCHEMA_VERSION = "5" as const;
 
 export interface MetaRecord {
   key:
@@ -59,6 +60,7 @@ export class ProjectControlsDb extends Dexie {
   >;
   varianceAnalyses!: Table<VarianceAnalysisRecord, string>;
   baselineSnapshots!: Table<StoredBaselineSnapshot, string>;
+  reportPublications!: Table<WeeklyReportPublicationRecord, string>;
 
   constructor(name = "project-controls-dashboard", options?: DexieOptions) {
     super(name, options);
@@ -194,6 +196,29 @@ export class ProjectControlsDb extends Dexie {
                   }),
               ),
           ),
+      );
+    this.version(5)
+      .stores({
+        meta: "&key",
+        manifests: "&importId, projectId, importedAt",
+        activities: "[importId+activityId], importId, activityId",
+        performance:
+          "[importId+activityId+periodEnd], importId, [importId+activityId], periodEnd",
+        projectConfigurations: "&projectId",
+        projectConfigurationHistory:
+          "[projectId+revision], projectId, recordedAt",
+        varianceAnalyses:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, signedAt",
+        baselineSnapshots:
+          "&importId, projectId, [projectId+baselineVersion], importedAt",
+        reportPublications:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, publishedAt",
+      })
+      .upgrade((transaction) =>
+        transaction.table("meta").put({
+          key: "schemaVersion",
+          value: DATABASE_SCHEMA_VERSION,
+        }),
       );
     this.on("populate", () =>
       this.meta.add({ key: "schemaVersion", value: DATABASE_SCHEMA_VERSION }),

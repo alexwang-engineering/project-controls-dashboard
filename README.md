@@ -62,9 +62,15 @@ presented as project data.
   and cumulative facts distinct, presents three EAC sensitivities, requires a
   current signed variance analysis for every threshold breach, and separates
   approved-but-unincorporated changes from the active baseline.
+- Editable management narrative with one source-bound draft, an exact
+  fingerprint over the report calculations and complete source evidence,
+  append-only published revisions, stale-generation protection, and a retained
+  publication history.
 - Accessible HTML is the authoritative report format. The secondary print/PDF
-  action uses the same timestamped snapshot and remains disabled while source,
-  variance, baseline or decision-authority controls are blocking publication.
+  action is enabled only for a selected persisted publication and therefore
+  renders the same approved timestamp, facts and narrative. Publication remains
+  disabled while source, variance, baseline, decision-authority or narrative
+  controls are incomplete.
 - Explicit setup-required screens whenever no validated import is active; the
   Overview, Schedule & Cost and report never substitute demonstration figures.
 - A Settings & Data workflow with browser storage health, persistence requests,
@@ -73,8 +79,9 @@ presented as project data.
 
 Backups intentionally contain the active imported generation and its confirmed
 registry only. They do not yet contain the locally entered milestone, risk and
-change registers, variance-analysis drafts or signed revisions, older manifests,
-checksum-detection history, or the rows needed by **Revert to previous**. Keep
+change registers, variance-analysis drafts or signed revisions, weekly-report
+drafts or published revisions, older manifests, checksum-detection history, or
+the rows needed by **Revert to previous**. Keep
 the original CSV files and local app data when those records are required. The
 backup input limit is 20 MiB; each source CSV remains limited to 5 MiB.
 
@@ -82,8 +89,8 @@ The M1 closure increment was independently reviewed by Hermes and Claude in
 isolated checkouts and approved with no blocking findings; the post-review
 ratification and process-flag resolution are recorded in
 [`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Controlled register
-workflow history, persisted report snapshots, editable report narrative, and
-print/PDF visual QA remain to be completed.
+workflow history and persisted report publication are now implemented. Formal
+print/PDF page-count and cross-engine visual approval remain to be completed.
 
 ## Fixed Week 10 control fixture
 

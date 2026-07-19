@@ -19,7 +19,11 @@ review_build_dir=$(mktemp -d)
 staged_app="$review_build_dir/Project Controls Dashboard.app"
 
 cd "$repository_root"
-pnpm build
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm build
+else
+  corepack pnpm build
+fi
 
 mkdir -p "$staged_app/Contents/MacOS" "$staged_app/Contents/Resources/web"
 cp "$packaging_dir/Info.plist" "$staged_app/Contents/Info.plist"

@@ -253,11 +253,12 @@ describe("versioned backup and validated restore", () => {
     await backups.resetAllLocalData();
     const status = await backups.getLifecycleStatus();
     expect(status).toMatchObject({
-      schemaVersion: "4",
+      schemaVersion: "5",
       manifestCount: 0,
       activityCount: 0,
       performanceCount: 0,
       varianceAnalysisCount: 0,
+      publishedReportCount: 0,
     });
     expect(status.activeImportId).toBeUndefined();
     expect(status.lastBackupAt).toBeUndefined();

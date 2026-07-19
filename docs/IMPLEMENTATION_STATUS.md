@@ -3,9 +3,9 @@
 **Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Immutable baseline history and effective-period reconciliation
+**Current increment:** Immutable weekly-report publication
 
-**Evidence-weighted MVP progress:** 73% (68.2 of 94 planned hours)
+**Evidence-weighted MVP progress:** 76% (71.5 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -21,7 +21,7 @@
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 238 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 250 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -39,7 +39,7 @@
 | Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
 | EAC sensitivity | Budget-rate, CPI-continuation and CPI × SPI scenarios expose formulas, assumptions, VAC and TCPI consequences | Tested working slice |
 | Variance analysis | Generation-aware draft, structured impacts/actions, ownership, sign-off validation and immutable revisions | Tested working slice |
-| Weekly management report | Deterministic current/cumulative reconciliation, EAC sensitivity, signed-analysis coverage, publication controls, baseline/change separation and accessible HTML/print preview | Working slice |
+| Weekly management report | Deterministic reconciliation, editable narrative, exact source fingerprint, source-bound draft, append-only publication revisions, stale-pointer protection, retained history and snapshot-only print action | Working slice |
 | Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
 | Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
 | Desktop review build | Signed native AppKit/WebKit macOS window, app-owned private server, SPA route fallback and repeatable packaging command | Verified |
@@ -55,7 +55,7 @@
 | M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
 | M5 — Risks | 28 Aug | Persistent validated CRUD, derived residual score, prioritised register and heatmap | Inherent score, filters, control/escalation workflow and remaining boundary tests |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
-| M7 — Weekly report | 13 Sep | Deterministic snapshot builder, current/cumulative, forecast and baseline-history reconciliation, signed-analysis/named-authority publication gates, exception narrative, accessible HTML preview and print styles | Editable management summary, persisted snapshots, fewer-than-five-actions journey and print/PDF visual QA |
+| M7 — Weekly report | 13 Sep | Deterministic builder, editable decision narrative, full-evidence fingerprint, source-bound draft, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, accessible HTML and print styles | Formal two-to-four-page PDF approval, clipping/page-break verification and fewer-than-five-actions usability evidence |
 | M8 — Release gate | 25 Sep | Build pipeline and initial browser QA | Full browser/a11y/security/performance evidence and portfolio assets |
 
 ## Next implementation slice
@@ -63,7 +63,7 @@
 1. Make the selected work package a true cross-view scope rather than an
    Overview row highlight.
 2. Run the M2 moderated comprehension study and record the findings.
-3. Persist an approved report snapshot and complete print/PDF visual QA.
+3. Complete formal A4 print/PDF visual QA for persisted report revisions.
 4. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
 
@@ -80,10 +80,11 @@
   currently treats entered schedule-impact days as calendar days because the
   imported calendar registry identifies calendars but does not define working
   time.
-- Weekly reporting is a working preview: its HTML output is authoritative and
-  print uses the same snapshot, but reports are not yet persisted, editable or
-  print/PDF visually approved. Variance analysis remains outside active-
-  generation JSON backups and is not yet linked to approved baseline revisions.
+- Weekly reporting now persists editable source-bound drafts and append-only
+  publications, and printing is limited to a selected stored revision. Formal
+  two-to-four-page PDF/clipping approval remains. Report records, variance
+  analysis and management registers remain outside active-generation JSON
+  backups and variance sign-off is not yet linked to approved baseline revisions.
 - Browser QA covers the in-app Chromium surface at desktop and 390 px, and the
   native macOS WKWebView host has a verified desktop window and server lifecycle;
   the full Chromium/Firefox/WebKit matrix belongs to M8.

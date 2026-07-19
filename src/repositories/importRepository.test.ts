@@ -196,7 +196,7 @@ describe("generation and active-pointer repository", () => {
       ]),
       configuration: { source: "active" },
     });
-    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "4" });
+    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "5" });
     expect(await db.manifests.count()).toBe(1);
     expect(await db.projectConfigurations.get("ASTER")).toMatchObject({
       revision: 1,
@@ -510,6 +510,23 @@ describe("generation and active-pointer repository", () => {
     for (const generation of generations) {
       await repository.commitGeneration(generation);
     }
+    await db.reportPublications.put({
+      recordId: "REPORT-PUBLISHED::ASTER|B0|2026-06-14::1",
+      recordType: "published",
+      contextKey: "ASTER|B0|2026-06-14",
+      projectId: "ASTER",
+      baselineVersion: "B0",
+      reportingPeriod: "2026-06-14",
+      sourceImportId: "IMPORT-001",
+      sourceFingerprint: "retained-report-source",
+      report: {},
+      sourceEvidence: {},
+      narrative: {},
+      revision: 1,
+      createdAt: "2026-07-18T12:30:00.000Z",
+      updatedAt: "2026-07-18T12:30:00.000Z",
+      publishedAt: "2026-07-18T12:30:00.000Z",
+    } as never);
 
     const removed = await repository.garbageCollectGenerations(2);
 
@@ -528,6 +545,7 @@ describe("generation and active-pointer repository", () => {
     );
     expect(await db.manifests.count()).toBe(4);
     expect(await db.baselineSnapshots.count()).toBe(4);
+    expect(await db.reportPublications.count()).toBe(1);
     expect(
       await repository.findDuplicateChecksums("ASTER", ["a".repeat(64)]),
     ).toEqual([

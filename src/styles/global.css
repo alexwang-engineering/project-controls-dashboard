@@ -2838,6 +2838,183 @@ tfoot td {
   font-size: 0.66rem;
 }
 
+.report-publication {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #b8d6d8;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgb(15 139 141 / 7%), transparent 58%),
+    white;
+  box-shadow: var(--shadow);
+}
+
+.report-publication > p {
+  max-width: 960px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.report-publication__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.report-publication__form label {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  color: var(--navy-950);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.report-publication__form input,
+.report-publication__form textarea {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.report-publication__form input {
+  min-height: 40px;
+  padding: 0.55rem 0.65rem;
+}
+
+.report-publication__form textarea {
+  resize: vertical;
+  padding: 0.65rem;
+}
+
+.report-publication__form input:focus,
+.report-publication__form textarea:focus {
+  border-color: var(--teal-600);
+  outline: 3px solid rgb(15 139 141 / 18%);
+}
+
+.report-publication__form small {
+  min-height: 1em;
+  color: var(--adverse);
+  font-size: 0.62rem;
+  font-weight: 650;
+}
+
+.report-publication__wide {
+  grid-column: 1 / -1;
+}
+
+.report-publication__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.report-publication__actions .checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex: 1 1 360px;
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.report-publication__actions .checkbox-row input {
+  flex: 0 0 auto;
+  margin-top: 0.12rem;
+}
+
+.report-publication .form-status,
+.report-publication .control-note {
+  margin-top: 0.75rem;
+  color: var(--teal-700);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.report-publication__history {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  color: var(--teal-700);
+}
+
+.button--small {
+  min-height: 32px;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: white;
+  color: var(--navy-800);
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.button--small:hover,
+.button--small.button--active {
+  border-color: var(--teal-600);
+  background: #eef8f7;
+  color: var(--teal-700);
+}
+
+.report-publication-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.5rem;
+  border-bottom: 1px solid #b8d6d8;
+  background: #eaf7f5;
+  color: var(--teal-700);
+  font-size: 0.68rem;
+}
+
+.report-publication-banner strong {
+  color: var(--navy-950);
+}
+
+.report-management-narrative {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.report-management-narrative > div {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+}
+
+.report-management-narrative strong {
+  color: var(--navy-950);
+  font-size: 0.7rem;
+}
+
+.report-management-narrative p {
+  margin-top: 0.25rem;
+  color: var(--ink);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
 .report-document {
   overflow: hidden;
   border: 1px solid var(--border);
@@ -3289,6 +3466,15 @@ tfoot td {
 
 @media (max-width: 900px) {
 
+  .report-publication__form,
+  .report-management-narrative {
+    grid-template-columns: 1fr;
+  }
+
+  .report-publication__wide {
+    grid-column: auto;
+  }
+
   .eac-scenarios,
   .eac-selection-summary dl,
   .variance-facts {
@@ -3423,6 +3609,29 @@ tfoot td {
   .report-document__header,
   .report-section {
     padding: 1rem;
+  }
+
+  .report-publication {
+    padding: 1rem;
+  }
+
+  .report-publication__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-publication__actions .checkbox-row {
+    flex-basis: auto;
+  }
+
+  .report-publication__actions .button {
+    width: 100%;
+  }
+
+  .report-publication-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0.65rem 1rem;
   }
 
   .report-gate {

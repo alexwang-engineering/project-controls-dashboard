@@ -3,6 +3,7 @@ import { ProjectControlsDb } from "./db";
 import { ImportRepository } from "./importRepository";
 import { BackupRepository } from "./backupRepository";
 import { ProjectConfigurationRepository } from "./projectConfigurationRepository";
+import { ReportPublicationRepository } from "./reportPublicationRepository";
 
 let browserRepositories:
   | {
@@ -11,6 +12,7 @@ let browserRepositories:
       imports: ImportRepository;
       backups: BackupRepository;
       configurations: ProjectConfigurationRepository;
+      reportPublications: ReportPublicationRepository;
     }
   | undefined;
 
@@ -25,6 +27,7 @@ export function getBrowserRepositories() {
     imports,
     backups: new BackupRepository(db, imports),
     configurations: new ProjectConfigurationRepository(db),
+    reportPublications: new ReportPublicationRepository(db),
   };
   return browserRepositories;
 }

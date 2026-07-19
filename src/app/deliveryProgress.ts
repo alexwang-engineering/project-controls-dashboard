@@ -60,8 +60,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M7",
     title: "Weekly report",
     plannedHours: 11,
-    completionPercent: 45,
-    evidence: "A deterministic snapshot, publication controls, signed-analysis and baseline-history reconciliation, named change authority, accessible HTML preview and print styles work; editable narrative, persisted snapshots and print/PDF visual QA remain.",
+    completionPercent: 75,
+    evidence: "Editable management narrative, exact source fingerprints, one current draft, append-only published revisions, active-generation compare-and-set protection, persisted-history selection and snapshot-only printing now extend the deterministic accessible report; formal print/PDF page approval remains.",
   },
   {
     id: "M8",

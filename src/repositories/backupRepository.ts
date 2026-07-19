@@ -103,6 +103,7 @@ export interface BackupLifecycleStatus {
   activityCount: number;
   performanceCount: number;
   varianceAnalysisCount: number;
+  publishedReportCount: number;
 }
 
 export class BackupRepository {
@@ -221,12 +222,19 @@ export class BackupRepository {
   }
 
   async getLifecycleStatus(): Promise<BackupLifecycleStatus> {
-    const [meta, active, manifestCount, varianceAnalysisCount] =
+    const [meta, active, manifestCount, varianceAnalysisCount, publishedReportCount] =
       await Promise.all([
         this.db.meta.toArray(),
         this.datasets.getActiveDataset(),
         this.db.manifests.count(),
         this.db.varianceAnalyses.count(),
+        this.db.reportPublications
+          .toArray()
+          .then(
+            (records) =>
+              records.filter(({ recordType }) => recordType === "published")
+                .length,
+          ),
       ]);
     const metaValue = (key: string) =>
       meta.find((record) => record.key === key)?.value;
@@ -240,6 +248,7 @@ export class BackupRepository {
       activityCount: active?.activities.length ?? 0,
       performanceCount: active?.performance.length ?? 0,
       varianceAnalysisCount,
+      publishedReportCount,
     };
   }
 
@@ -255,6 +264,7 @@ export class BackupRepository {
         this.db.projectConfigurationHistory,
         this.db.varianceAnalyses,
         this.db.baselineSnapshots,
+        this.db.reportPublications,
       ],
       () =>
         this.db.performance
@@ -265,6 +275,7 @@ export class BackupRepository {
           .then(() => this.db.projectConfigurationHistory.clear())
           .then(() => this.db.varianceAnalyses.clear())
           .then(() => this.db.baselineSnapshots.clear())
+          .then(() => this.db.reportPublications.clear())
           .then(() => this.db.meta.clear())
           .then(() =>
             this.db.meta.add({
