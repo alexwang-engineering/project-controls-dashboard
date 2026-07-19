@@ -32,8 +32,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M3",
     title: "Calculation engine",
     plannedHours: 10,
-    completionPercent: 85,
-    evidence: "Core EVM calculations, imported-data aggregation, three explicit EAC scenarios and a revisioned variance-analysis workflow work; report integration and baseline-revision reconciliation remain.",
+    completionPercent: 95,
+    evidence: "Core EVM calculations, imported-data aggregation, three explicit EAC scenarios, revisioned variance analysis and weekly-report reconciliation work; the independent M3 closure review remains.",
   },
   {
     id: "M4",
@@ -60,8 +60,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M7",
     title: "Weekly report",
     plannedHours: 11,
-    completionPercent: 5,
-    evidence: "The delivery scope is defined; report generation and accessible output remain.",
+    completionPercent: 35,
+    evidence: "A deterministic snapshot, publication controls, signed-analysis reconciliation, accessible HTML preview and print styles work; editable narrative, persisted snapshots and print/PDF visual QA remain.",
   },
   {
     id: "M8",

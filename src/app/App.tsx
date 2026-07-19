@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
-import { ModulePage } from "../features/modules/ModulePage";
 import { ActiveDatasetProvider } from "./ActiveDatasetContext";
 
 const OverviewPage = lazy(() =>
@@ -39,6 +38,11 @@ const SettingsPage = lazy(() =>
     default: module.SettingsPage,
   })),
 );
+const ReportPage = lazy(() =>
+  import("../features/report/ReportPage").then((module) => ({
+    default: module.ReportPage,
+  })),
+);
 
 export function App() {
   return (
@@ -59,39 +63,7 @@ export function App() {
             <Route path="milestones" element={<MilestonesPage />} />
             <Route path="risks" element={<RisksPage />} />
             <Route path="changes" element={<ChangesPage />} />
-            <Route
-              path="report"
-              element={
-                <ModulePage
-                  eyebrow="M7 reporting"
-                  title="Weekly management report"
-                  description="Build a frozen, decision-first HTML snapshot from the same dashboard view model."
-                  items={[
-                    "Executive position and material movement",
-                    "KPI, milestone, risk and change exceptions",
-                    "Owned decisions and actions",
-                    "Accessible HTML and secondary print output",
-                  ]}
-                  guide={{
-                    purpose: "Use this planned workflow to turn the frozen dashboard snapshot into a concise weekly decision pack.",
-                    steps: [
-                      {
-                        title: "Freeze the snapshot",
-                        detail: "Select the reporting date and confirm the data-quality position.",
-                      },
-                      {
-                        title: "Review exceptions",
-                        detail: "Check the suggested narrative, decisions, actions, owners and due dates.",
-                      },
-                      {
-                        title: "Publish and verify",
-                        detail: "Generate accessible HTML first, then inspect the secondary PDF before sharing.",
-                      },
-                    ],
-                  }}
-                />
-              }
-            />
+            <Route path="report" element={<ReportPage />} />
             <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

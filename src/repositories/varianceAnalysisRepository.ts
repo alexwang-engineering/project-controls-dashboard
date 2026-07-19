@@ -49,6 +49,12 @@ export interface VarianceAnalysisContextState {
   retainedDraftCount: number;
 }
 
+export interface SignedReportAnalysisQuery {
+  projectId: string;
+  baselineVersion: string;
+  reportingPeriod: string;
+}
+
 const draftRecordId = (contextKey: string, sourceImportId: string) =>
   `DRAFT::${contextKey}::${sourceImportId}`;
 
@@ -86,6 +92,28 @@ const commonRecord = (
 
 export class VarianceAnalysisRepository {
   constructor(private readonly db: ProjectControlsDb) {}
+
+  loadSignedForReport(
+    query: SignedReportAnalysisQuery,
+  ): Promise<readonly VarianceAnalysisRecord[]> {
+    return this.db.varianceAnalyses
+      .where("projectId")
+      .equals(query.projectId)
+      .toArray()
+      .then((records) =>
+        records
+          .filter(
+            (record) =>
+              record.recordType === "signed" &&
+              record.baselineVersion === query.baselineVersion &&
+              record.reportingPeriod === query.reportingPeriod,
+          )
+          .sort(
+            (left, right) =>
+              (right.revision ?? 0) - (left.revision ?? 0),
+          ),
+      );
+  }
 
   loadContext(
     contextKey: string,

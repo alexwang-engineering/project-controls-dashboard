@@ -171,4 +171,37 @@ describe("variance analysis repository", () => {
     expect(await db.varianceAnalyses.count()).toBe(1);
     expect((await db.varianceAnalyses.toArray())[0]?.recordType).toBe("draft");
   });
+
+  it("loads only signed analyses for the requested report baseline and period", async () => {
+    await repository.saveDraft({
+      context: context(),
+      details,
+      savedAt: "2026-07-19T13:00:00.000Z",
+    });
+    await repository.signOff({
+      context: context(),
+      details,
+      signedAt: "2026-07-19T13:05:00.000Z",
+    });
+    await repository.saveDraft({
+      context: {
+        ...context(),
+        contextKey: "ASTER|B0|work-package|WP300|2026-06-14",
+        scopeType: "work-package",
+        scopeId: "WP300",
+      },
+      details: emptyVarianceAnalysisDetails,
+      savedAt: "2026-07-19T13:10:00.000Z",
+    });
+
+    const reportRecords = await repository.loadSignedForReport({
+      projectId: "ASTER",
+      baselineVersion: "B0",
+      reportingPeriod: "2026-06-14",
+    });
+
+    expect(reportRecords).toHaveLength(1);
+    expect(reportRecords[0]?.recordType).toBe("signed");
+    expect(reportRecords[0]?.scopeId).toBe("all");
+  });
 });

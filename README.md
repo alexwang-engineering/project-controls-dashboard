@@ -44,6 +44,13 @@ release.
 - A generation-aware variance-analysis workflow with read-only facts, structured
   causes/impacts/actions, draft persistence, explicit ownership, sign-off gates,
   and immutable revision history.
+- A deterministic weekly management-report preview that keeps current-period
+  and cumulative facts distinct, presents three EAC sensitivities, requires a
+  current signed variance analysis for every threshold breach, and separates
+  approved-but-unincorporated changes from the active baseline.
+- Accessible HTML is the authoritative report format. The secondary print/PDF
+  action uses the same timestamped snapshot and remains disabled while source,
+  variance, baseline or decision-authority controls are blocking publication.
 - An explicit synthetic-fallback label whenever no validated import is active.
 - A Settings & Data workflow with browser storage health, persistence requests,
   versioned active-generation backup, schema/domain-validated atomic restore,
@@ -60,8 +67,8 @@ The M1 closure increment was independently reviewed by Hermes and Claude in
 isolated checkouts and approved with no blocking findings; the post-review
 ratification and process-flag resolution are recorded in
 [`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Editable registers,
-variance-to-report integration, and weekly report generation remain to be
-completed.
+persisted report snapshots, editable report narrative, and print/PDF visual QA
+remain to be completed.
 
 ## Fixed Week 10 control fixture
 
