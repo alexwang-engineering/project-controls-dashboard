@@ -218,13 +218,22 @@ describe("browser import workflow", () => {
       imports,
     );
     const changedSchedule = new File(
-      [(await firstFiles.schedule.text()).replace(",WP100,", ",WP600,")],
+      [
+        (await firstFiles.schedule.text())
+          .replaceAll(",B0,", ",B1,")
+          .replace(",WP100,", ",WP600,"),
+      ],
       "aster-schedule-registry-change.csv",
+      { type: "text/csv" },
+    );
+    const changedPerformance = new File(
+      [(await firstFiles.performance.text()).replaceAll(",B0,", ",B1,")],
+      "aster-performance-registry-change.csv",
       { type: "text/csv" },
     );
     const blocked = await reviewImportFiles(
       changedSchedule,
-      firstFiles.performance,
+      changedPerformance,
       { datasets, imports, configurations },
     );
 
@@ -254,7 +263,7 @@ describe("browser import workflow", () => {
 
     const revalidated = await reviewImportFiles(
       changedSchedule,
-      firstFiles.performance,
+      changedPerformance,
       { datasets, imports, configurations },
     );
     expect(revalidated.preview?.canCommit).toBe(true);

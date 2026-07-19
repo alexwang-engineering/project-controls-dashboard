@@ -385,11 +385,16 @@ function ReportWorkspace({
           <section className="report-section" aria-labelledby="report-baseline-title">
             <div className="report-section__heading"><div><p className="eyebrow">Change integrity</p><h2 id="report-baseline-title">Baseline and change reconciliation</h2></div><FileCheck2 size={22} aria-hidden="true" /></div>
             <div className="report-baseline-grid">
+              <div><span>Original baseline</span><strong>{report.baseline.originalVersion ?? "Unavailable"}</strong><small>{report.baseline.originalBac === null ? "No retained BAC" : `${formatCurrency(report.baseline.originalBac)} BAC`}</small></div>
               <div><span>Active baseline</span><strong>{report.baseline.activeVersion}</strong><small>{formatCurrency(report.baseline.activeBac)} BAC</small></div>
               <div><span>Incorporated in active baseline</span><strong>{formatCurrency(report.baseline.incorporatedInActiveBaseline)}</strong></div>
+              <div><span>Expected current BAC</span><strong>{report.baseline.expectedActiveBac === null ? "Unavailable" : formatCurrency(report.baseline.expectedActiveBac)}</strong><small>{report.baseline.reconciliationVariance === null ? "Not calculated" : `${formatCurrency(report.baseline.reconciliationVariance)} difference`}</small></div>
               <div><span>Approved, not incorporated</span><strong>{formatCurrency(report.baseline.approvedNotIncorporated)}</strong></div>
+              <div><span>Expected / active finish</span><strong>{report.baseline.expectedBaselineFinish === null ? "Unavailable" : formatDate(report.baseline.expectedBaselineFinish)}</strong><small>{formatDate(report.baseline.activeBaselineFinish)} active · {report.baseline.scheduleVarianceDays ?? "?"} days difference</small></div>
+              <div><span>Historical PV / EV / AC</span><strong>{report.baseline.historicalPerformancePreserved ? "Preserved" : "Rewritten — blocked"}</strong><small>{report.baseline.effectiveChangeIds.length} effective changes</small></div>
               <div><span>Other referenced baselines</span><strong>{report.baseline.otherBaselineVersions.length === 0 ? "None" : report.baseline.otherBaselineVersions.join(", ")}</strong></div>
             </div>
+            {report.baseline.changeComparisons.length > 0 ? <div className="table-scroll"><table><caption>Pre-change variance retained after implementation</caption><thead><tr><th scope="col">Change</th><th scope="col">Effective</th><th scope="col">Versions</th><th scope="col">Pre-change SV / CV</th><th scope="col">Post-change SV / CV</th></tr></thead><tbody>{report.baseline.changeComparisons.map((comparison) => <tr key={comparison.changeId}><th scope="row">{comparison.changeId}</th><td>{formatDate(comparison.effectiveDate)}</td><td>{comparison.fromVersion} → {comparison.toVersion}</td><td>{formatCurrency(comparison.preChange.metrics.sv)} / {formatCurrency(comparison.preChange.metrics.cv)}</td><td>{formatCurrency(comparison.postChange.metrics.sv)} / {formatCurrency(comparison.postChange.metrics.cv)}</td></tr>)}</tbody></table></div> : null}
           </section>
 
           <section className="report-section report-sources" aria-labelledby="report-sources-title">

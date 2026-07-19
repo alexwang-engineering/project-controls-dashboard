@@ -4,6 +4,7 @@ import type {
   ProjectConfigurationInput,
   SourcedRecord,
 } from "../domain/records";
+import { buildStoredBaselineSnapshot } from "../domain/baselineSnapshot";
 import {
   importManifestDraftSchema,
   importManifestSchema,
@@ -36,6 +37,15 @@ export class ProjectConfigurationMismatchError extends Error {
   constructor() {
     super("Candidate configuration does not match the active project registry.");
     this.name = "ProjectConfigurationMismatchError";
+  }
+}
+
+export class BaselineDefinitionConflictError extends Error {
+  constructor() {
+    super(
+      "The candidate changes authorised schedule or budget facts without a new baseline version.",
+    );
+    this.name = "BaselineDefinitionConflictError";
   }
 }
 
@@ -183,6 +193,11 @@ export class ImportRepository {
       storedPerformance.slice(performanceMiddle),
     ] as const;
     const checksums = new Set(draft.files.map((file) => file.checksumSha256));
+    const baselineSnapshot = buildStoredBaselineSnapshot({
+      manifest: draft,
+      activities: prepared.activities.map(({ value }) => value),
+      performance: prepared.performance.map(({ value }) => value),
+    });
     let committedManifest: ImportManifest | undefined;
 
     // This transaction intentionally uses only Dexie-returned promises and
@@ -198,6 +213,7 @@ export class ImportRepository {
           this.db.performance,
           this.db.projectConfigurations,
           this.db.projectConfigurationHistory,
+          this.db.baselineSnapshots,
         ],
         () =>
           this.db.meta
@@ -263,6 +279,26 @@ export class ImportRepository {
               }
               return { activeImportId, matches };
             })
+            .then((context) =>
+              this.db.baselineSnapshots
+                .where("[projectId+baselineVersion]")
+                .equals([draft.projectId, draft.baselineVersion])
+                .toArray()
+                .then((existing) => {
+                  if (
+                    existing.some(
+                      ({ definitionSignature }) =>
+                        definitionSignature !==
+                        baselineSnapshot.definitionSignature,
+                    )
+                  ) {
+                    throw new BaselineDefinitionConflictError();
+                  }
+                  return this.db.baselineSnapshots
+                    .add(baselineSnapshot)
+                    .then(() => context);
+                }),
+            )
             .then((context) =>
               this.db.activities.bulkAdd(activityHalves[0]).then(() => context),
             )

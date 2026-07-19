@@ -3,9 +3,9 @@
 **Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Controlled change workflow and report authority
+**Current increment:** Immutable baseline history and effective-period reconciliation
 
-**Evidence-weighted MVP progress:** 70% (65.8 of 94 planned hours)
+**Evidence-weighted MVP progress:** 73% (68.2 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -18,10 +18,10 @@
 | Schedule and cost | Period/scope filters, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
 | Milestones | Validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
 | Risks | Validated add/edit/delete input, derived residual score/rating, local persistence, prioritisation, triggers and 5 × 5 heatmap | Working slice |
-| Changes | Complete impact input, enforced state machine, decision authority, immutable history, controlled deletion, implementation/rebaseline evidence and report integration | Working slice |
+| Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 226 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 238 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -29,6 +29,7 @@
 | M1 schedule graph | Self/missing links, exact cycle members, lag/open-end/constraint warnings, iterative 10,000-node proof | Tested increment |
 | M1 import orchestration | Accepted-row stage isolation, explicit quarantine loop, manifest/count reconciliation | Tested increment |
 | M1 generation repository | Pointer-last Dexie commit, active reads, rollback/quota injection, confirmation, duplicate history, revert and GC | Tested increment |
+| Baseline evidence repository | Every committed generation retains compact authorised-definition and period evidence; reused versions cannot change schedule/budget facts and GC never removes snapshots | Tested increment |
 | M1 import interface | Guided manual two-file selection, blank header templates, validation evidence, first-registry/repeated-checksum confirmation and atomic receipt | Working |
 | M1 worker boundary | Versioned module-worker protocol and structurally identical pure fallback result | Tested |
 | M1 complete import pair | 60 activities, 8 schedule milestones and 960 performance rows across 16 periods | Tested |
@@ -53,18 +54,18 @@
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
 | M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
 | M5 — Risks | 28 Aug | Persistent validated CRUD, derived residual score, prioritised register and heatmap | Inherent score, filters, control/escalation workflow and remaining boundary tests |
-| M6 — Changes | 4 Sep | Complete impact case, enforced transitions, decision authority/history, submitted-case locking and implementation evidence | Pre/post change baseline reconciliation and effective-period comparison |
-| M7 — Weekly report | 13 Sep | Deterministic snapshot builder, current/cumulative and forecast reconciliation, signed-analysis and named-authority publication gates, exception narrative, accessible HTML preview and print styles | Editable management summary, persisted snapshots, fewer-than-five-actions journey and print/PDF visual QA |
+| M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
+| M7 — Weekly report | 13 Sep | Deterministic snapshot builder, current/cumulative, forecast and baseline-history reconciliation, signed-analysis/named-authority publication gates, exception narrative, accessible HTML preview and print styles | Editable management summary, persisted snapshots, fewer-than-five-actions journey and print/PDF visual QA |
 | M8 — Release gate | 25 Sep | Build pipeline and initial browser QA | Full browser/a11y/security/performance evidence and portfolio assets |
 
 ## Next implementation slice
 
-1. Add pre-change/post-change baseline reconciliation without rewriting
-   historical PV, EV, AC or original BAC.
-2. Make the selected work package a true cross-view scope rather than an
+1. Make the selected work package a true cross-view scope rather than an
    Overview row highlight.
-3. Run the M2 moderated comprehension study and record the findings.
-4. Persist an approved report snapshot and complete print/PDF visual QA.
+2. Run the M2 moderated comprehension study and record the findings.
+3. Persist an approved report snapshot and complete print/PDF visual QA.
+4. Add project-calendar definitions so schedule-change reconciliation can
+   move from explicit calendar-day arithmetic to source working days.
 
 ## Known limitations
 
@@ -72,10 +73,13 @@
   Schedule & Cost control performs the scoped recalculation. A shared global
   scope remains to be implemented.
 - Milestone, risk and change inputs persist locally and feed the Overview and
-  report, but the active-generation JSON backup does not yet include them.
+  report, but the active-generation JSON backup does not yet include them or
+  the multi-generation baseline evidence ledger.
 - Risk and milestone workflows do not yet include escalation, predecessor-chain
-  credibility or full recovery-action trace. Change decisions now retain
-  immutable transition evidence, but full baseline comparison remains open.
+  credibility or full recovery-action trace. Baseline finish reconciliation
+  currently treats entered schedule-impact days as calendar days because the
+  imported calendar registry identifies calendars but does not define working
+  time.
 - Weekly reporting is a working preview: its HTML output is authoritative and
   print uses the same snapshot, but reports are not yet persisted, editable or
   print/PDF visually approved. Variance analysis remains outside active-

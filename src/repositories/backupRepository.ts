@@ -254,6 +254,7 @@ export class BackupRepository {
         this.db.projectConfigurations,
         this.db.projectConfigurationHistory,
         this.db.varianceAnalyses,
+        this.db.baselineSnapshots,
       ],
       () =>
         this.db.performance
@@ -263,6 +264,7 @@ export class BackupRepository {
           .then(() => this.db.projectConfigurations.clear())
           .then(() => this.db.projectConfigurationHistory.clear())
           .then(() => this.db.varianceAnalyses.clear())
+          .then(() => this.db.baselineSnapshots.clear())
           .then(() => this.db.meta.clear())
           .then(() =>
             this.db.meta.add({

@@ -6,8 +6,12 @@ import type {
 } from "../domain/records";
 import type { ImportManifest } from "../schemas/manifest";
 import type { VarianceAnalysisRecord } from "../domain/varianceAnalysis";
+import {
+  buildStoredBaselineSnapshot,
+  type StoredBaselineSnapshot,
+} from "../domain/baselineSnapshot";
 
-export const DATABASE_SCHEMA_VERSION = "3" as const;
+export const DATABASE_SCHEMA_VERSION = "4" as const;
 
 export interface MetaRecord {
   key:
@@ -54,6 +58,7 @@ export class ProjectControlsDb extends Dexie {
     [string, number]
   >;
   varianceAnalyses!: Table<VarianceAnalysisRecord, string>;
+  baselineSnapshots!: Table<StoredBaselineSnapshot, string>;
 
   constructor(name = "project-controls-dashboard", options?: DexieOptions) {
     super(name, options);
@@ -123,6 +128,72 @@ export class ProjectControlsDb extends Dexie {
           key: "schemaVersion",
           value: DATABASE_SCHEMA_VERSION,
         }),
+      );
+    this.version(4)
+      .stores({
+        meta: "&key",
+        manifests: "&importId, projectId, importedAt",
+        activities: "[importId+activityId], importId, activityId",
+        performance:
+          "[importId+activityId+periodEnd], importId, [importId+activityId], periodEnd",
+        projectConfigurations: "&projectId",
+        projectConfigurationHistory:
+          "[projectId+revision], projectId, recordedAt",
+        varianceAnalyses:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, signedAt",
+        baselineSnapshots:
+          "&importId, projectId, [projectId+baselineVersion], importedAt",
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table("manifests")
+          .toArray()
+          .then((manifests) =>
+            transaction
+              .table("activities")
+              .toArray()
+              .then((activities: StoredActivity[]) =>
+                transaction
+                  .table("performance")
+                  .toArray()
+                  .then((performance: StoredPerformanceRecord[]) => {
+                    const snapshots = manifests.flatMap((manifest) => {
+                      const generationActivities = activities.filter(
+                        ({ importId }) => importId === manifest.importId,
+                      );
+                      const generationPerformance = performance.filter(
+                        ({ importId }) => importId === manifest.importId,
+                      );
+                      if (
+                        generationActivities.length === 0 ||
+                        generationPerformance.length === 0
+                      ) {
+                        return [];
+                      }
+                      return [
+                        buildStoredBaselineSnapshot({
+                          manifest,
+                          activities: generationActivities.map(
+                            ({ importId: _importId, ...activity }) => activity,
+                          ),
+                          performance: generationPerformance.map(
+                            ({ importId: _importId, ...record }) => record,
+                          ),
+                        }),
+                      ];
+                    });
+                    return transaction
+                      .table("baselineSnapshots")
+                      .bulkPut(snapshots)
+                      .then(() =>
+                        transaction.table("meta").put({
+                          key: "schemaVersion",
+                          value: DATABASE_SCHEMA_VERSION,
+                        }),
+                      );
+                  }),
+              ),
+          ),
       );
     this.on("populate", () =>
       this.meta.add({ key: "schemaVersion", value: DATABASE_SCHEMA_VERSION }),

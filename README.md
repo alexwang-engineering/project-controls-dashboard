@@ -29,6 +29,11 @@ presented as project data.
 - A controlled change state machine that prevents skipped decisions, locks the
   submitted impact case, retains authority/actor/date/rationale/evidence for
   each transition, and requires rebaseline evidence before implementation.
+- Immutable compact evidence for every imported baseline generation, with a
+  hard guard against changing authorised schedule/budget facts under a reused
+  version and GC-safe original-to-current reconciliation.
+- Effective-period before/after comparisons that preserve pre-change variance
+  and block weekly-report publication if historical PV, EV or AC was rewritten.
 - Route-level code splitting, semantic chart alternatives, reduced-motion and
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-

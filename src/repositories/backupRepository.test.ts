@@ -253,7 +253,7 @@ describe("versioned backup and validated restore", () => {
     await backups.resetAllLocalData();
     const status = await backups.getLifecycleStatus();
     expect(status).toMatchObject({
-      schemaVersion: "3",
+      schemaVersion: "4",
       manifestCount: 0,
       activityCount: 0,
       performanceCount: 0,

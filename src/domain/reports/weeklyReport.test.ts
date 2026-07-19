@@ -11,6 +11,8 @@ import {
   type ProjectPerformanceSnapshot,
 } from "../viewModels/projectPerformance";
 import { buildWeeklyReportSnapshot } from "./weeklyReport";
+import type { BaselineGenerationSnapshot } from "../baselineReconciliation";
+import type { ChangeRequest } from "../types";
 
 const completeDetails: VarianceAnalysisDetails = {
   rootCause: "Late control-panel release constrained installation.",
@@ -122,6 +124,78 @@ const signedProjectAnalysis = (
     signedAt: "2026-07-19T13:05:00.000Z",
   };
 };
+
+const controlledImplementedChange = (): ChangeRequest => ({
+  id: "CR-BASELINE-001",
+  title: "Add authorised inspection platform",
+  reason: "Provide permanent access for mandatory inspections.",
+  requester: "Engineering Manager",
+  wbsId: "WP300",
+  scopeDescription: "Add one permanent inspection platform.",
+  costImpact: 150,
+  scheduleImpactDays: 5,
+  technicalQualityImpact: "Structural verification is required.",
+  riskImpact: "Reduces repeated temporary-access exposure.",
+  benefit: "Safer and faster inspections.",
+  assumptions: "Existing steelwork supports the verified design.",
+  alternatives: "Mobile access was rejected after assessment.",
+  recommendation: "Implement the permanent platform.",
+  decisionDue: "2026-06-10",
+  status: "implemented",
+  submittedDate: "2026-06-01",
+  decisionAuthority: "Project Change Board",
+  approver: "Programme Director",
+  decisionDate: "2026-06-08",
+  decisionRationale: "The safety and access benefits justify the change.",
+  evidenceReference: "CCB-PACK-001",
+  effectiveDate: "2026-06-15",
+  incorporatedBaselineVersion: "B1",
+  rebaselineJustification: "Authorised scope changed after baseline approval.",
+  preventionCorrectiveMeasures: "Future access reviews occur during design.",
+});
+
+const reconciledBaselineSnapshots = (): BaselineGenerationSnapshot[] => [
+  {
+    importId: "IMPORT-B0",
+    projectId: "ONE",
+    baselineVersion: "B0",
+    importedAt: "2026-06-14T17:00:00.000Z",
+    dataDate: "2026-06-14",
+    bac: 1_000,
+    baselineFinish: "2026-07-01",
+    periods: [{ period: "2026-06-14", pv: 600, ev: 500, ac: 550 }],
+  },
+  {
+    importId: "IMPORT-B1",
+    projectId: "ONE",
+    baselineVersion: "B1",
+    importedAt: "2026-06-21T17:00:00.000Z",
+    dataDate: "2026-06-21",
+    bac: 1_150,
+    baselineFinish: "2026-07-06",
+    periods: [
+      { period: "2026-06-14", pv: 600, ev: 500, ac: 550 },
+      { period: "2026-06-21", pv: 100, ev: 90, ac: 95 },
+    ],
+  },
+];
+
+const revisedBaselineFixture = (): ProjectPerformanceSnapshot => ({
+  ...singleScopeFixture(),
+  importId: "IMPORT-B1",
+  project: {
+    ...singleScopeFixture().project,
+    reportingDate: "2026-06-21",
+    baselineVersion: "B1",
+    originalBac: 1_150,
+    baselineFinish: "2026-07-06",
+  },
+  periods: [
+    { period: "2026-06-14", label: "P1", pv: 600, ev: 500, ac: 550 },
+    { period: "2026-06-21", label: "P2", pv: 100, ev: 90, ac: 95 },
+  ],
+  baselineSnapshots: reconciledBaselineSnapshots(),
+});
 
 describe("weekly report snapshot", () => {
   it("reconciles current-period, cumulative and forecast values to the dashboard fixture", () => {
@@ -323,6 +397,60 @@ describe("weekly report snapshot", () => {
     expect(report.baseline.otherBaselineVersions).toEqual(["B1"]);
     expect(report.controls.map(({ code }) => code)).toContain(
       "BASELINE_VERSION_MISMATCH",
+    );
+  });
+
+  it("publishes the exact original-to-current baseline reconciliation", () => {
+    const performance = revisedBaselineFixture();
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [],
+      risks: [],
+      changes: [controlledImplementedChange()],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.baseline).toMatchObject({
+      originalVersion: "B0",
+      originalBac: 1_000,
+      activeVersion: "B1",
+      activeBac: 1_150,
+      incorporatedInActiveBaseline: 150,
+      expectedActiveBac: 1_150,
+      reconciliationVariance: 0,
+      historicalPerformancePreserved: true,
+      effectiveChangeIds: ["CR-BASELINE-001"],
+    });
+    expect(report.controls.map(({ code }) => code)).not.toContain(
+      "BASELINE_COST_MISMATCH",
+    );
+  });
+
+  it("blocks publication when revised history rewrites pre-effective PV", () => {
+    const performance = revisedBaselineFixture();
+    performance.baselineSnapshots = [
+      reconciledBaselineSnapshots()[0]!,
+      {
+        ...reconciledBaselineSnapshots()[1]!,
+        periods: [
+          { period: "2026-06-14", pv: 610, ev: 500, ac: 550 },
+          { period: "2026-06-21", pv: 100, ev: 90, ac: 95 },
+        ],
+      },
+    ];
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [],
+      risks: [],
+      changes: [controlledImplementedChange()],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.canPublish).toBe(false);
+    expect(report.controls.map(({ code }) => code)).toContain(
+      "HISTORICAL_PERFORMANCE_REWRITTEN",
     );
   });
 });

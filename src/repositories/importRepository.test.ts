@@ -13,6 +13,7 @@ import {
 import { DatasetRepository } from "./datasetRepository";
 import { ProjectControlsDb } from "./db";
 import {
+  BaselineDefinitionConflictError,
   DuplicateChecksumConfirmationRequiredError,
   ImportRepository,
   ProjectConfigurationConfirmationRequiredError,
@@ -34,17 +35,23 @@ interface PreparedOptions {
   configurationConfirmed?: boolean;
   duplicateChecksumConfirmed?: boolean;
   activityName?: string;
+  baselineVersion?: string;
+  baselineBudget?: string;
 }
 
 const preparedGeneration = (options: PreparedOptions): PreparedImportGeneration => {
   const activities = [
     sourcedActivity({
+      baseline_version: options.baselineVersion ?? "B0",
+      baseline_budget: options.baselineBudget ?? "100000",
       activity_id: "A-001",
       activity_name: options.activityName ?? "Confirm design requirements",
       predecessor_links: "",
     }),
     sourcedActivity(
       {
+        baseline_version: options.baselineVersion ?? "B0",
+        baseline_budget: options.baselineBudget ?? "100000",
         activity_id: "A-002",
         activity_name: "Complete design review",
         predecessor_links: "A-001|FS|0",
@@ -53,8 +60,17 @@ const preparedGeneration = (options: PreparedOptions): PreparedImportGeneration 
     ),
   ];
   const performance = [
-    sourcedPerformance({ activity_id: "A-001" }),
-    sourcedPerformance({ activity_id: "A-002" }, 3),
+    sourcedPerformance({
+      baseline_version: options.baselineVersion ?? "B0",
+      activity_id: "A-001",
+    }),
+    sourcedPerformance(
+      {
+        baseline_version: options.baselineVersion ?? "B0",
+        activity_id: "A-002",
+      },
+      3,
+    ),
   ];
   const configuration = projectConfiguration(activities, {
     source: options.configurationSource,
@@ -72,7 +88,7 @@ const preparedGeneration = (options: PreparedOptions): PreparedImportGeneration 
     importId: options.importId,
     schemaVersion: IMPORT_SCHEMA_VERSION,
     projectId: "ASTER",
-    baselineVersion: "B0",
+    baselineVersion: options.baselineVersion ?? "B0",
     dataDate: "2026-04-12",
     importedAt: options.importedAt,
     files: [
@@ -180,7 +196,7 @@ describe("generation and active-pointer repository", () => {
       ]),
       configuration: { source: "active" },
     });
-    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "3" });
+    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "4" });
     expect(await db.manifests.count()).toBe(1);
     expect(await db.projectConfigurations.get("ASTER")).toMatchObject({
       revision: 1,
@@ -191,6 +207,67 @@ describe("generation and active-pointer repository", () => {
         revision: 1,
         activeImportId: "IMPORT-001",
         reason: "created",
+      }),
+    ]);
+    expect(active?.baselineSnapshots).toEqual([
+      expect.objectContaining({
+        importId: "IMPORT-001",
+        baselineVersion: "B0",
+        bac: 200_000,
+        baselineFinish: "2026-04-10",
+        periods: [
+          expect.objectContaining({
+            period: "2026-04-12",
+            pv: 50_000,
+            ev: 50_000,
+            ac: 48_000,
+          }),
+        ],
+      }),
+    ]);
+  });
+
+  it("rejects a changed baseline definition under an existing version", async () => {
+    await repository.commitGeneration(firstGeneration());
+    const changedB0 = laterGeneration(
+      "IMPORT-002",
+      "2026-07-18T13:00:00.000Z",
+      "c",
+      "d",
+      "IMPORT-001",
+      { baselineBudget: "110000" },
+    );
+
+    await expect(repository.commitGeneration(changedB0)).rejects.toBeInstanceOf(
+      BaselineDefinitionConflictError,
+    );
+    expect(await datasets.getActiveImportId()).toBe("IMPORT-001");
+    expect(await db.baselineSnapshots.count()).toBe(1);
+  });
+
+  it("retains a separately versioned revised baseline snapshot", async () => {
+    await repository.commitGeneration(firstGeneration());
+    await repository.commitGeneration(
+      laterGeneration(
+        "IMPORT-002",
+        "2026-07-18T13:00:00.000Z",
+        "c",
+        "d",
+        "IMPORT-001",
+        { baselineVersion: "B1", baselineBudget: "110000" },
+      ),
+    );
+
+    expect((await datasets.getActiveDataset())?.baselineSnapshots).toEqual([
+      expect.objectContaining({
+        importId: "IMPORT-001",
+        baselineVersion: "B0",
+        bac: 200_000,
+      }),
+      expect.objectContaining({
+        importId: "IMPORT-002",
+        baselineVersion: "B1",
+        bac: 220_000,
       }),
     ]);
   });
@@ -450,6 +527,7 @@ describe("generation and active-pointer repository", () => {
       2,
     );
     expect(await db.manifests.count()).toBe(4);
+    expect(await db.baselineSnapshots.count()).toBe(4);
     expect(
       await repository.findDuplicateChecksums("ASTER", ["a".repeat(64)]),
     ).toEqual([

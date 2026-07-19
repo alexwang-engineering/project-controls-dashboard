@@ -71,6 +71,12 @@ describe("input-first management registers", () => {
     const user = userEvent.setup();
     render(<ChangesPage />);
 
+    expect(
+      screen.getByRole("heading", { name: "Original-to-current baseline reconciliation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Import a validated schedule and performance pair/),
+    ).toBeInTheDocument();
     expect(screen.getByText("No change requests have been entered.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add change request" }));
 

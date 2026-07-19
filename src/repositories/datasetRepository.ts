@@ -4,6 +4,10 @@ import type {
   ProjectConfigurationInput,
 } from "../domain/records";
 import type { ImportManifest } from "../schemas/manifest";
+import {
+  toBaselineGenerationSnapshot,
+} from "../domain/baselineSnapshot";
+import type { BaselineGenerationSnapshot } from "../domain/baselineReconciliation";
 import { ProjectControlsDb } from "./db";
 
 export interface ActiveDataset {
@@ -12,6 +16,7 @@ export interface ActiveDataset {
   activities: readonly NormalisedActivity[];
   performance: readonly PerformanceRecord[];
   configuration: ProjectConfigurationInput;
+  baselineSnapshots?: readonly BaselineGenerationSnapshot[];
 }
 
 export class DatasetRepository {
@@ -28,6 +33,7 @@ export class DatasetRepository {
     let manifest: ImportManifest | undefined;
     let activities: readonly NormalisedActivity[] = [];
     let performance: readonly PerformanceRecord[] = [];
+    let baselineSnapshots: readonly BaselineGenerationSnapshot[] = [];
 
     return this.db.transaction(
       "r",
@@ -37,6 +43,7 @@ export class DatasetRepository {
         this.db.activities,
         this.db.performance,
         this.db.projectConfigurations,
+        this.db.baselineSnapshots,
       ],
       () =>
         this.db.meta
@@ -62,6 +69,20 @@ export class DatasetRepository {
           })
           .then((storedPerformance) => {
             performance = storedPerformance.map(({ importId: _, ...value }) => value);
+            if (manifest === undefined) return [];
+            return this.db.baselineSnapshots
+              .where("projectId")
+              .equals(manifest.projectId)
+              .toArray();
+          })
+          .then((storedBaselineSnapshots) => {
+            baselineSnapshots = storedBaselineSnapshots
+              .map(toBaselineGenerationSnapshot)
+              .sort((left, right) =>
+                left.importedAt === right.importedAt
+                  ? left.importId.localeCompare(right.importId)
+                  : left.importedAt.localeCompare(right.importedAt),
+              );
             if (manifest === undefined) return undefined;
             return this.db.projectConfigurations.get(manifest.projectId);
           })
@@ -80,6 +101,7 @@ export class DatasetRepository {
               activities,
               performance,
               configuration: configurationRecord.configuration,
+              baselineSnapshots,
             };
           }),
     );

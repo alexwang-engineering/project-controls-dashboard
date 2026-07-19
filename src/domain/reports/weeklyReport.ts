@@ -19,6 +19,12 @@ import {
 } from "../varianceAnalysis";
 import { missingChangeControlFields } from "../changes";
 import {
+  buildBaselineReconciliation,
+  type BaselineChangeComparison,
+  type BaselineControlCode,
+  type BaselineGenerationSnapshot,
+} from "../baselineReconciliation";
+import {
   periodicPerformanceForScope,
   type ProjectPerformanceSnapshot,
 } from "../viewModels/projectPerformance";
@@ -30,7 +36,8 @@ export type ReportControlCode =
   | "VARIANCE_ANALYSIS_STALE"
   | "BASELINE_VERSION_MISMATCH"
   | "DECISION_AUTHORITY_REQUIRED"
-  | "CHANGE_RECORD_INCOMPLETE";
+  | "CHANGE_RECORD_INCOMPLETE"
+  | BaselineControlCode;
 
 export interface ReportControl {
   code: ReportControlCode;
@@ -114,11 +121,21 @@ export interface WeeklyReportSnapshot {
     evidence: string;
   }>;
   baseline: {
+    originalVersion: string | null;
+    originalBac: number | null;
     activeVersion: string;
     activeBac: number;
     approvedNotIncorporated: number;
     incorporatedInActiveBaseline: number;
     otherBaselineVersions: readonly string[];
+    expectedActiveBac: number | null;
+    reconciliationVariance: number | null;
+    expectedBaselineFinish: string | null;
+    activeBaselineFinish: string;
+    scheduleVarianceDays: number | null;
+    historicalPerformancePreserved: boolean;
+    effectiveChangeIds: readonly string[];
+    changeComparisons: readonly BaselineChangeComparison[];
   };
   controls: readonly ReportControl[];
   canPublish: boolean;
@@ -337,6 +354,31 @@ const buildExecutiveText = (
 export function buildWeeklyReportSnapshot(
   input: BuildWeeklyReportInput,
 ): WeeklyReportSnapshot {
+  const activeBaselineSnapshot: BaselineGenerationSnapshot = {
+    importId: input.performance.importId,
+    projectId: input.performance.project.id,
+    baselineVersion: input.performance.project.baselineVersion,
+    importedAt: input.performance.importedAt,
+    dataDate: input.performance.project.reportingDate,
+    bac: input.performance.project.originalBac,
+    baselineFinish: input.performance.project.baselineFinish,
+    periods: input.performance.periods.map(({ period, pv, ev, ac }) => ({
+      period,
+      pv,
+      ev,
+      ac,
+    })),
+  };
+  const baselineReconciliation = buildBaselineReconciliation({
+    projectId: input.performance.project.id,
+    activeImportId: input.performance.importId,
+    reportingDate: input.performance.project.reportingDate,
+    snapshots:
+      input.performance.baselineSnapshots?.length
+        ? input.performance.baselineSnapshots
+        : [activeBaselineSnapshot],
+    changes: input.changes,
+  });
   const acceptedProjectPeriods = periodicPerformanceForScope(
     input.performance,
     "all",
@@ -375,6 +417,14 @@ export function buildWeeklyReportSnapshot(
     .map(({ value }) => value);
 
   const controls: ReportControl[] = [];
+  controls.push(
+    ...baselineReconciliation.controls.map((control) => ({
+      code: control.code,
+      severity: control.severity,
+      message: control.message,
+      ...(control.changeId === undefined ? {} : { scopeId: control.changeId }),
+    })),
+  );
   if (input.performance.source !== "active-import") {
     controls.push({
       code: "ACTIVE_IMPORT_REQUIRED",
@@ -568,6 +618,8 @@ export function buildWeeklyReportSnapshot(
     })),
     actions,
     baseline: {
+      originalVersion: baselineReconciliation.original?.version ?? null,
+      originalBac: baselineReconciliation.original?.bac ?? null,
       activeVersion: input.performance.project.baselineVersion,
       activeBac: input.performance.project.originalBac,
       approvedNotIncorporated: approvedNotIncorporated.reduce(
@@ -579,6 +631,19 @@ export function buildWeeklyReportSnapshot(
         0,
       ),
       otherBaselineVersions,
+      expectedActiveBac: baselineReconciliation.cost?.expected ?? null,
+      reconciliationVariance: baselineReconciliation.cost?.variance ?? null,
+      expectedBaselineFinish:
+        baselineReconciliation.schedule?.expectedFinish ?? null,
+      activeBaselineFinish: input.performance.project.baselineFinish,
+      scheduleVarianceDays:
+        baselineReconciliation.schedule?.varianceDays ?? null,
+      historicalPerformancePreserved:
+        !baselineReconciliation.controls.some(
+          ({ code }) => code === "HISTORICAL_PERFORMANCE_REWRITTEN",
+        ),
+      effectiveChangeIds: baselineReconciliation.effectiveChangeIds,
+      changeComparisons: baselineReconciliation.changeComparisons,
     },
     controls,
     canPublish: controls.every(({ severity }) => severity !== "blocking"),
@@ -587,6 +652,7 @@ export function buildWeeklyReportSnapshot(
         ? `Schedule and cost: active validated import ${input.performance.importId}.`
         : "Schedule and cost: labelled synthetic fallback; publication is blocked.",
       `${input.registerSource ?? "Supplied management registers"}: ${String(input.milestones.length)} milestones, ${String(input.risks.length)} risks and ${String(input.changes.length)} changes.`,
+      `Baseline evidence: ${String(input.performance.baselineSnapshots?.length ?? 0)} retained generation snapshot${(input.performance.baselineSnapshots?.length ?? 0) === 1 ? "" : "s"}; original and pre-effective performance are compared without rewriting source rows.`,
       ...(acceptedProjectPeriods.length === 1
         ? [
             "Performance history contains one accepted period; current-period and cumulative columns therefore reconcile to the same values.",

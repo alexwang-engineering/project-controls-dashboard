@@ -2,6 +2,7 @@ import type { NormalisedActivity, PerformanceRecord } from "../records";
 import type { TrendPoint, WorkPackageSnapshot } from "../types";
 import type { ActiveDataset } from "../../repositories/datasetRepository";
 import { demoSnapshot } from "../../data/demo";
+import type { BaselineGenerationSnapshot } from "../baselineReconciliation";
 
 const penceToPounds = (value: number) => value / 100;
 
@@ -43,6 +44,7 @@ export interface ProjectPerformanceSnapshot {
   periods: readonly PeriodicPerformance[];
   activities: readonly PerformanceActivity[];
   performance: readonly PerformanceRecord[];
+  baselineSnapshots?: readonly BaselineGenerationSnapshot[];
 }
 
 const maximumDate = (values: readonly string[]) =>
@@ -184,6 +186,7 @@ export function buildImportedPerformanceSnapshot(
     periods,
     activities,
     performance: dataset.performance,
+    baselineSnapshots: dataset.baselineSnapshots,
   };
 }
 
@@ -223,6 +226,7 @@ export function buildSyntheticPerformanceSnapshot(): ProjectPerformanceSnapshot 
       commentary: "Synthetic planning activity; import a performance pair for source-period trace.",
     })),
     performance: [],
+    baselineSnapshots: [],
   };
 }
 

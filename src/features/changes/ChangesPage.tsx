@@ -1,6 +1,7 @@
-import { History, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { FileCheck2, History, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useProjectStore } from "../../app/store";
+import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
@@ -9,6 +10,10 @@ import {
   applyChangeTransition,
   canDeleteChange,
 } from "../../domain/changes";
+import {
+  buildBaselineReconciliation,
+  type BaselineGenerationSnapshot,
+} from "../../domain/baselineReconciliation";
 import {
   changeInputSchema,
   registerErrorSummary,
@@ -48,6 +53,7 @@ const decisionStatuses: readonly ChangeStatus[] = [
 
 export function ChangesPage() {
   const { changes, upsertChange, removeChange } = useProjectStore();
+  const { snapshot: performance } = useProjectPerformance();
   const [editing, setEditing] = useState<ChangeRequest>();
   const [isAdding, setIsAdding] = useState(false);
   const [formStatus, setFormStatus] = useState<ChangeStatus>("draft");
@@ -74,6 +80,33 @@ export function ChangesPage() {
     (editing?.status === "submitted" && formStatus === "draft");
   const requiresImplementationEvidence = formStatus === "implemented";
   const requestLocked = editing !== undefined && editing.status !== "draft";
+  const baselineReconciliation = useMemo(() => {
+    if (performance?.source !== "active-import") return undefined;
+    const activeSnapshot: BaselineGenerationSnapshot = {
+      importId: performance.importId,
+      projectId: performance.project.id,
+      baselineVersion: performance.project.baselineVersion,
+      importedAt: performance.importedAt,
+      dataDate: performance.project.reportingDate,
+      bac: performance.project.originalBac,
+      baselineFinish: performance.project.baselineFinish,
+      periods: performance.periods.map(({ period, pv, ev, ac }) => ({
+        period,
+        pv,
+        ev,
+        ac,
+      })),
+    };
+    return buildBaselineReconciliation({
+      projectId: performance.project.id,
+      activeImportId: performance.importId,
+      reportingDate: performance.project.reportingDate,
+      snapshots: performance.baselineSnapshots?.length
+        ? performance.baselineSnapshots
+        : [activeSnapshot],
+      changes,
+    });
+  }, [changes, performance]);
 
   const closeEditor = () => {
     setEditing(undefined);
@@ -334,6 +367,113 @@ export function ChangesPage() {
           <p>{approvedNotIncorporated.length} approved change{approvedNotIncorporated.length === 1 ? "" : "s"} worth {formatCurrency(approvedCost)} have not been incorporated into a controlled baseline version.</p>
         </aside>
       ) : null}
+
+      <section className="panel" aria-labelledby="baseline-reconciliation-title">
+        <div className="panel__header">
+          <div>
+            <p className="eyebrow">Immutable baseline evidence</p>
+            <h2 id="baseline-reconciliation-title">
+              Original-to-current baseline reconciliation
+            </h2>
+            <p className="panel__description">
+              Original BAC and historical performance remain fixed; only implemented,
+              version-linked changes may explain the active baseline.
+            </p>
+          </div>
+          <FileCheck2 size={22} aria-hidden="true" />
+        </div>
+        {baselineReconciliation === undefined ? (
+          <div className="register-empty">
+            <strong>No controlled baseline is active.</strong>
+            <span>
+              Import a validated schedule and performance pair to retain the original
+              baseline and calculate the before/after reconciliation.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="baseline-reconciliation-grid">
+              <div>
+                <span>Original baseline</span>
+                <strong>{baselineReconciliation.original?.version ?? "Unavailable"}</strong>
+                <small>{baselineReconciliation.original ? formatCurrency(baselineReconciliation.original.bac) : "No retained BAC"}</small>
+              </div>
+              <div>
+                <span>Implemented change</span>
+                <strong>{formatCurrency(baselineReconciliation.incorporated.costImpact)}</strong>
+                <small>{baselineReconciliation.incorporated.scheduleImpactDays >= 0 ? "+" : ""}{baselineReconciliation.incorporated.scheduleImpactDays} calendar days</small>
+              </div>
+              <div>
+                <span>Expected current BAC</span>
+                <strong>{baselineReconciliation.cost ? formatCurrency(baselineReconciliation.cost.expected) : "Unavailable"}</strong>
+                <small>Original plus incorporated changes</small>
+              </div>
+              <div>
+                <span>Active imported BAC</span>
+                <strong>{baselineReconciliation.active ? formatCurrency(baselineReconciliation.active.bac) : "Unavailable"}</strong>
+                <small>{baselineReconciliation.active?.version ?? "No active version"}</small>
+              </div>
+              <div>
+                <span>BAC difference</span>
+                <strong>{baselineReconciliation.cost ? formatCurrency(baselineReconciliation.cost.variance) : "Unavailable"}</strong>
+                <small>{baselineReconciliation.cost?.reconciles ? "Reconciled" : "Blocking mismatch"}</small>
+              </div>
+              <div>
+                <span>Baseline finish</span>
+                <strong>{baselineReconciliation.schedule ? formatDate(baselineReconciliation.schedule.actualFinish) : "Unavailable"}</strong>
+                <small>{baselineReconciliation.schedule ? `Expected ${formatDate(baselineReconciliation.schedule.expectedFinish)}` : "No retained schedule evidence"}</small>
+              </div>
+            </div>
+            {baselineReconciliation.controls.length > 0 ? (
+              <aside className="control-note" aria-label="Baseline reconciliation blockers">
+                <strong>Baseline reconciliation is blocked</strong>
+                <ul>
+                  {baselineReconciliation.controls.map((control) => (
+                    <li key={`${control.code}-${control.changeId ?? "project"}`}>
+                      {control.message}
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+            ) : (
+              <p className="baseline-reconciliation-pass">
+                Reconciled: active BAC and finish match the immutable original plus
+                incorporated change, and pre-effective PV, EV and AC are unchanged.
+              </p>
+            )}
+            {baselineReconciliation.changeComparisons.length > 0 ? (
+              <div className="table-scroll">
+                <table>
+                  <caption>Pre-change variance and post-change performance</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Change / effective date</th>
+                      <th scope="col">Versions</th>
+                      <th scope="col">Pre-change SV / CV</th>
+                      <th scope="col">Post-change SV / CV</th>
+                      <th scope="col">Historical values</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {baselineReconciliation.changeComparisons.map((comparison) => (
+                      <tr key={comparison.changeId}>
+                        <th scope="row">
+                          <span className="table-primary">{comparison.changeId}</span>
+                          <span className="table-secondary">{formatDate(comparison.effectiveDate)}</span>
+                        </th>
+                        <td>{comparison.fromVersion} → {comparison.toVersion}</td>
+                        <td>{formatCurrency(comparison.preChange.metrics.sv)} / {formatCurrency(comparison.preChange.metrics.cv)}</td>
+                        <td>{formatCurrency(comparison.postChange.metrics.sv)} / {formatCurrency(comparison.postChange.metrics.cv)}</td>
+                        <td>{comparison.historicalPerformancePreserved ? "Preserved" : "Rewritten — blocked"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </>
+        )}
+      </section>
 
       <section className="panel" aria-labelledby="change-register-title">
         <div className="panel__header">
