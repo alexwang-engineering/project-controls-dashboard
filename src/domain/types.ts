@@ -94,15 +94,45 @@ export type ChangeStatus =
   | "implemented"
   | "withdrawn";
 
+export interface ChangeDecisionHistoryEntry {
+  sequence: number;
+  fromStatus: ChangeStatus;
+  toStatus: ChangeStatus;
+  actor: string;
+  authority: string;
+  date: string;
+  rationale: string;
+  evidenceReference: string;
+}
+
 export interface ChangeRequest {
   id: string;
   title: string;
+  reason?: string;
+  requester?: string;
   wbsId: string;
-  status: ChangeStatus;
+  scopeDescription?: string;
   costImpact: number;
   scheduleImpactDays: number;
+  technicalQualityImpact?: string;
+  riskImpact?: string;
+  benefit?: string;
+  assumptions?: string;
+  alternatives?: string;
+  recommendation?: string;
   decisionDue: string;
+  status: ChangeStatus;
+  submittedDate?: string;
+  decisionAuthority?: string;
+  approver?: string;
+  decisionDate?: string;
+  decisionRationale?: string;
+  evidenceReference?: string;
+  effectiveDate?: string;
   incorporatedBaselineVersion?: string;
+  rebaselineJustification?: string;
+  preventionCorrectiveMeasures?: string;
+  decisionHistory?: readonly ChangeDecisionHistoryEntry[];
 }
 
 export interface DemoSnapshot {

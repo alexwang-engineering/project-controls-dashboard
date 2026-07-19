@@ -67,7 +67,7 @@ describe("input-first management registers", () => {
     expect(within(row).getByText("Critical")).toBeInTheDocument();
   });
 
-  it("stores an entered change without incorporating it into the baseline", async () => {
+  it("creates a draft and exposes only the controlled next transition", async () => {
     const user = userEvent.setup();
     render(<ChangesPage />);
 
@@ -77,7 +77,6 @@ describe("input-first management registers", () => {
     await user.type(screen.getByLabelText("Change ID"), "CR-001");
     await user.type(screen.getByLabelText("Change title"), "Add inspection platform");
     await user.type(screen.getByLabelText("Work package ID"), "WP300");
-    await user.selectOptions(screen.getByLabelText("Change status"), "submitted");
     await user.type(screen.getByLabelText("Cost impact (£)"), "25000");
     await user.type(screen.getByLabelText("Schedule impact (days)"), "3");
     await user.type(screen.getByLabelText("Decision due"), "2026-08-05");
@@ -86,6 +85,66 @@ describe("input-first management registers", () => {
     const row = screen.getByRole("row", { name: /Add inspection platform/ });
     expect(within(row).getByText("£25,000")).toBeInTheDocument();
     expect(within(row).getByText("Not incorporated")).toBeInTheDocument();
-    expect(useProjectStore.getState().changes[0]?.status).toBe("submitted");
+    expect(useProjectStore.getState().changes[0]?.status).toBe("draft");
+
+    await user.click(screen.getByRole("button", { name: "Edit CR-001" }));
+    const status = screen.getByLabelText("Change status");
+    expect(within(status).getByRole("option", { name: "Draft" })).toBeInTheDocument();
+    expect(within(status).getByRole("option", { name: "Submitted" })).toBeInTheDocument();
+    expect(within(status).queryByRole("option", { name: "Approved" })).not.toBeInTheDocument();
+
+    await user.selectOptions(status, "submitted");
+    await user.type(screen.getByLabelText("Requester"), "Engineering Manager");
+    await user.type(
+      screen.getByLabelText("Reason for change"),
+      "Improve safe access for mandatory inspection work.",
+    );
+    await user.type(
+      screen.getByLabelText("Scope description"),
+      "Add one permanent access platform and associated guarding.",
+    );
+    await user.type(
+      screen.getByLabelText("Technical and quality impact"),
+      "Inspection access improves and loading requires design verification.",
+    );
+    await user.type(
+      screen.getByLabelText("Risk impact"),
+      "Reduces access risk and introduces a design interface risk.",
+    );
+    await user.type(
+      screen.getByLabelText("Benefit"),
+      "Safer repeat inspection with a shorter planned outage.",
+    );
+    await user.type(
+      screen.getByLabelText("Assumptions"),
+      "Existing steelwork can carry the verified platform loads.",
+    );
+    await user.type(
+      screen.getByLabelText("Alternatives considered"),
+      "Mobile access equipment was assessed and rejected for repeat use.",
+    );
+    await user.type(
+      screen.getByLabelText("Recommendation"),
+      "Submit the permanent platform for Change Board approval.",
+    );
+    await user.type(screen.getByLabelText("Submitted date"), "2026-07-20");
+    await user.type(
+      screen.getByLabelText("Decision authority"),
+      "Project Change Board",
+    );
+    await user.type(
+      screen.getByLabelText("Evidence reference"),
+      "CCB-PACK-001",
+    );
+    await user.click(screen.getByRole("button", { name: "Save change request" }));
+
+    expect(useProjectStore.getState().changes[0]).toMatchObject({
+      status: "submitted",
+      decisionAuthority: "Project Change Board",
+    });
+    expect(useProjectStore.getState().changes[0]?.decisionHistory).toHaveLength(1);
+    expect(screen.getByRole("row", { name: /Add inspection platform/ })).toHaveTextContent(
+      "Project Change Board",
+    );
   });
 });

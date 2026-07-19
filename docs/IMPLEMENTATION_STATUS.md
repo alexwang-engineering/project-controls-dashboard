@@ -3,9 +3,9 @@
 **Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Input-first management workspace and register CRUD
+**Current increment:** Controlled change workflow and report authority
 
-**Evidence-weighted MVP progress:** 67% (63 of 94 planned hours)
+**Evidence-weighted MVP progress:** 70% (65.8 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -18,10 +18,10 @@
 | Schedule and cost | Period/scope filters, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
 | Milestones | Validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
 | Risks | Validated add/edit/delete input, derived residual score/rating, local persistence, prioritisation, triggers and 5 × 5 heatmap | Working slice |
-| Changes | Validated add/edit/delete input, local persistence, signed impacts, baseline-incorporation guard, exposure summary and warning | Working slice |
+| Changes | Complete impact input, enforced state machine, decision authority, immutable history, controlled deletion, implementation/rebaseline evidence and report integration | Working slice |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 216 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 226 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -53,14 +53,14 @@
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
 | M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
 | M5 — Risks | 28 Aug | Persistent validated CRUD, derived residual score, prioritised register and heatmap | Inherent score, filters, control/escalation workflow and remaining boundary tests |
-| M6 — Changes | 4 Sep | Persistent validated CRUD, signed impacts and baseline-incorporation guard | Workflow/state machine, decisions, authority, history and reconciliation logic |
-| M7 — Weekly report | 13 Sep | Deterministic snapshot builder, current/cumulative and forecast reconciliation, signed-analysis publication gate, exception narrative, accessible HTML preview and print styles | Editable management summary, persisted snapshots, fewer-than-five-actions journey and print/PDF visual QA |
+| M6 — Changes | 4 Sep | Complete impact case, enforced transitions, decision authority/history, submitted-case locking and implementation evidence | Pre/post change baseline reconciliation and effective-period comparison |
+| M7 — Weekly report | 13 Sep | Deterministic snapshot builder, current/cumulative and forecast reconciliation, signed-analysis and named-authority publication gates, exception narrative, accessible HTML preview and print styles | Editable management summary, persisted snapshots, fewer-than-five-actions journey and print/PDF visual QA |
 | M8 — Release gate | 25 Sep | Build pipeline and initial browser QA | Full browser/a11y/security/performance evidence and portfolio assets |
 
 ## Next implementation slice
 
-1. Add explicit decision authority and controlled change transitions so the
-   weekly-report publication gate can be satisfied.
+1. Add pre-change/post-change baseline reconciliation without rewriting
+   historical PV, EV, AC or original BAC.
 2. Make the selected work package a true cross-view scope rather than an
    Overview row highlight.
 3. Run the M2 moderated comprehension study and record the findings.
@@ -73,8 +73,9 @@
   scope remains to be implemented.
 - Milestone, risk and change inputs persist locally and feed the Overview and
   report, but the active-generation JSON backup does not yet include them.
-- Register workflows do not yet include immutable history, decision authority,
-  escalation or full recovery-action trace.
+- Risk and milestone workflows do not yet include escalation, predecessor-chain
+  credibility or full recovery-action trace. Change decisions now retain
+  immutable transition evidence, but full baseline comparison remains open.
 - Weekly reporting is a working preview: its HTML output is authoritative and
   print uses the same snapshot, but reports are not yet persisted, editable or
   print/PDF visually approved. Variance analysis remains outside active-

@@ -374,7 +374,7 @@ function ReportWorkspace({
 
           <section className="report-section report-two-column" aria-label="Risk and decision exceptions">
             <div><p className="eyebrow">Residual exposure</p><h2>Top risks</h2>{report.topRisks.length === 0 ? <p>No high, critical or triggered risk is recorded.</p> : <ol className="report-compact-list">{report.topRisks.map((risk) => <li key={risk.id}><strong>{risk.id} · {risk.title}</strong><span>{risk.owner} · score {risk.residualScore} · trigger {risk.triggerStatus}</span></li>)}</ol>}</div>
-            <div><p className="eyebrow">Leadership input</p><h2>Decisions required</h2>{report.changeDecisions.length === 0 ? <p>No submitted change decision is due.</p> : <ol className="report-compact-list">{report.changeDecisions.map((change) => <li key={change.id}><strong>{change.id} · {change.title}</strong><span>Authority not supplied · required {formatDate(change.requiredBy)} · {formatCurrency(change.costImpact)}</span></li>)}</ol>}</div>
+            <div><p className="eyebrow">Leadership input</p><h2>Decisions required</h2>{report.changeDecisions.length === 0 ? <p>No submitted change decision is due.</p> : <ol className="report-compact-list">{report.changeDecisions.map((change) => <li key={change.id}><strong>{change.id} · {change.title}</strong><span>{change.decisionOwner ?? "Authority not supplied"} · required {formatDate(change.requiredBy)} · {formatCurrency(change.costImpact)}</span></li>)}</ol>}</div>
           </section>
 
           <section className="report-section" aria-labelledby="report-actions-title">

@@ -202,6 +202,76 @@ describe("weekly report snapshot", () => {
     );
   });
 
+  it("uses the named authority for a submitted change decision", () => {
+    const performance = singleScopeFixture();
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [],
+      risks: [],
+      changes: [
+        {
+          id: "CR-001",
+          title: "Add inspection platform",
+          reason: "Improve safe access for mandatory inspection work.",
+          requester: "Engineering Manager",
+          wbsId: "WP300",
+          scopeDescription: "Add one permanent inspection platform.",
+          status: "submitted",
+          costImpact: 25_000,
+          scheduleImpactDays: 3,
+          technicalQualityImpact: "The design requires a structural load check.",
+          riskImpact: "The change reduces repeat access risk.",
+          benefit: "Safer and faster mandatory inspection work.",
+          assumptions: "Existing steelwork can support the verified design.",
+          alternatives: "Mobile access was reviewed and rejected.",
+          recommendation: "Approve the permanent access platform.",
+          decisionDue: "2026-08-05",
+          submittedDate: "2026-07-20",
+          decisionAuthority: "Project Change Board",
+          evidenceReference: "CCB-PACK-001",
+        },
+      ],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.controls.map(({ code }) => code)).not.toContain(
+      "DECISION_AUTHORITY_REQUIRED",
+    );
+    expect(report.canPublish).toBe(true);
+    expect(report.changeDecisions[0]?.decisionOwner).toBe(
+      "Project Change Board",
+    );
+  });
+
+  it("blocks publication when a controlled change has incomplete impact evidence", () => {
+    const performance = singleScopeFixture();
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [],
+      risks: [],
+      changes: [
+        {
+          id: "CR-002",
+          title: "Incomplete submitted request",
+          wbsId: "WP300",
+          status: "submitted",
+          costImpact: 1_000,
+          scheduleImpactDays: 0,
+          decisionDue: "2026-08-05",
+          decisionAuthority: "Project Change Board",
+        },
+      ],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.canPublish).toBe(false);
+    expect(report.controls.map(({ code }) => code)).toContain(
+      "CHANGE_RECORD_INCOMPLETE",
+    );
+  });
+
   it("blocks an earlier-generation or fact-mismatched sign-off", () => {
     const performance = singleScopeFixture();
     const oldGeneration = signedProjectAnalysis(performance, "IMPORT-OLD");

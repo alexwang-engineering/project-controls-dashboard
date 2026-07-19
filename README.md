@@ -26,6 +26,9 @@ presented as project data.
   5 × 5 heatmap.
 - Validated add/edit/delete change input with signed impacts and an
   approved-but-not-baselined integrity warning.
+- A controlled change state machine that prevents skipped decisions, locks the
+  submitted impact case, retains authority/actor/date/rationale/evidence for
+  each transition, and requires rebaseline evidence before implementation.
 - Route-level code splitting, semantic chart alternatives, reduced-motion and
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { ChangeRequest, Milestone, Risk } from "../domain/types";
+import { canDeleteChange } from "../domain/changes";
 
 interface RegisterState {
   milestones: Milestone[];
@@ -84,10 +85,18 @@ export const useProjectStore = create<ProjectState>()(
           announcement: `Change ${change.id} saved.`,
         })),
       removeChange: (id) =>
-        set((state) => ({
-          changes: state.changes.filter((record) => record.id !== id),
-          announcement: `Change ${id} removed.`,
-        })),
+        set((state) => {
+          const change = state.changes.find((record) => record.id === id);
+          if (change !== undefined && !canDeleteChange(change)) {
+            return {
+              announcement: `Change ${id} is controlled and cannot be deleted.`,
+            };
+          }
+          return {
+            changes: state.changes.filter((record) => record.id !== id),
+            announcement: `Change ${id} removed.`,
+          };
+        }),
       replaceRegisters: ({ milestones, risks, changes }) =>
         set({ milestones: [...milestones], risks: [...risks], changes: [...changes] }),
       clearRegisters: () =>

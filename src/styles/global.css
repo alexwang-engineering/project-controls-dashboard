@@ -712,6 +712,30 @@ h2 {
   grid-column: 1 / -1;
 }
 
+.register-form-section {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-subtle);
+}
+
+.register-form-section legend {
+  padding: 0 0.35rem;
+  color: var(--navy-950);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.register-form-section > p {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
 .register-form-actions {
   display: flex;
   justify-content: flex-end;
@@ -774,6 +798,56 @@ h2 {
 .register-row-actions button:hover {
   border-color: var(--teal-600);
   background: var(--surface-subtle);
+}
+
+.change-history {
+  min-width: 220px;
+}
+
+.change-history summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--teal-700);
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.change-history ol {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.change-history li {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.55rem;
+  border-left: 3px solid var(--teal-600);
+  border-radius: 0 8px 8px 0;
+  background: var(--surface-subtle);
+}
+
+.change-history li strong,
+.change-history li span,
+.change-history li p,
+.change-history li code {
+  overflow-wrap: anywhere;
+}
+
+.change-history li strong {
+  color: var(--navy-950);
+  font-size: 0.68rem;
+}
+
+.change-history li span,
+.change-history li p,
+.change-history li code {
+  color: var(--muted);
+  font-size: 0.62rem;
 }
 
 .import-template-actions {

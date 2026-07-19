@@ -17,6 +17,7 @@ import {
   type VarianceAnalysisRecord,
   type VarianceMetric,
 } from "../varianceAnalysis";
+import { missingChangeControlFields } from "../changes";
 import {
   periodicPerformanceForScope,
   type ProjectPerformanceSnapshot,
@@ -28,7 +29,8 @@ export type ReportControlCode =
   | "VARIANCE_ANALYSIS_REQUIRED"
   | "VARIANCE_ANALYSIS_STALE"
   | "BASELINE_VERSION_MISMATCH"
-  | "DECISION_AUTHORITY_REQUIRED";
+  | "DECISION_AUTHORITY_REQUIRED"
+  | "CHANGE_RECORD_INCOMPLETE";
 
 export interface ReportControl {
   code: ReportControlCode;
@@ -99,7 +101,7 @@ export interface WeeklyReportSnapshot {
     id: string;
     title: string;
     requiredBy: string;
-    decisionOwner: null;
+    decisionOwner: string | null;
     costImpact: number;
     scheduleImpactDays: number;
   }>;
@@ -435,11 +437,27 @@ export function buildWeeklyReportSnapshot(
   const submittedChanges = input.changes.filter(
     ({ status }) => status === "submitted",
   );
-  if (submittedChanges.length > 0) {
+  const submittedWithoutAuthority = submittedChanges.filter(
+    ({ decisionAuthority }) => !decisionAuthority?.trim(),
+  );
+  if (submittedWithoutAuthority.length > 0) {
     controls.push({
       code: "DECISION_AUTHORITY_REQUIRED",
       severity: "blocking",
-      message: `${submittedChanges.length} submitted change decision${submittedChanges.length === 1 ? "" : "s"} lack a recorded decision authority; M6 must supply an owner before publication.`,
+      message: `${submittedWithoutAuthority.length} submitted change decision${submittedWithoutAuthority.length === 1 ? "" : "s"} lack a recorded decision authority; assign an authorised owner before publication.`,
+    });
+  }
+
+  const incompleteControlledChanges = input.changes.filter((change) =>
+    missingChangeControlFields(change).some(
+      (field) => field !== "decisionAuthority",
+    ),
+  );
+  if (incompleteControlledChanges.length > 0) {
+    controls.push({
+      code: "CHANGE_RECORD_INCOMPLETE",
+      severity: "blocking",
+      message: `${incompleteControlledChanges.map(({ id }) => id).join(", ")} ${incompleteControlledChanges.length === 1 ? "is" : "are"} missing required impact, decision or implementation evidence.`,
     });
   }
 
@@ -544,7 +562,7 @@ export function buildWeeklyReportSnapshot(
       id: change.id,
       title: change.title,
       requiredBy: change.decisionDue,
-      decisionOwner: null,
+      decisionOwner: change.decisionAuthority ?? null,
       costImpact: change.costImpact,
       scheduleImpactDays: change.scheduleImpactDays,
     })),

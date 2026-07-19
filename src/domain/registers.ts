@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { strictIsoDateSchema } from "../schemas/fields";
+import { missingChangeControlFields } from "./changes";
 import type { ChangeRequest, Milestone, Risk, RiskRating } from "./types";
 
 const identifier = z
@@ -18,6 +19,10 @@ const shortText = (label: string) =>
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
   z.string().trim().max(120).optional(),
+);
+const optionalDetailedText = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().max(1_000).optional(),
 );
 const optionalDate = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
@@ -107,7 +112,19 @@ export const changeInputSchema = z
   .object({
     id: identifier,
     title: shortText("Change title"),
+    reason: optionalDetailedText,
+    requester: optionalText,
     wbsId: identifier,
+    scopeDescription: optionalDetailedText,
+    costImpact: z.coerce.number().finite().min(-1_000_000_000).max(1_000_000_000),
+    scheduleImpactDays: z.coerce.number().int().min(-3_650).max(3_650),
+    technicalQualityImpact: optionalDetailedText,
+    riskImpact: optionalDetailedText,
+    benefit: optionalDetailedText,
+    assumptions: optionalDetailedText,
+    alternatives: optionalDetailedText,
+    recommendation: optionalDetailedText,
+    decisionDue: strictIsoDateSchema,
     status: z.enum([
       "draft",
       "submitted",
@@ -116,13 +133,33 @@ export const changeInputSchema = z
       "implemented",
       "withdrawn",
     ]),
-    costImpact: z.coerce.number().finite().min(-1_000_000_000).max(1_000_000_000),
-    scheduleImpactDays: z.coerce.number().int().min(-3_650).max(3_650),
-    decisionDue: strictIsoDateSchema,
+    submittedDate: optionalDate,
+    decisionAuthority: optionalText,
+    approver: optionalText,
+    decisionDate: optionalDate,
+    decisionRationale: optionalDetailedText,
+    evidenceReference: optionalText,
+    effectiveDate: optionalDate,
     incorporatedBaselineVersion: optionalText,
+    rebaselineJustification: optionalDetailedText,
+    preventionCorrectiveMeasures: optionalDetailedText,
   })
   .strict()
   .superRefine((record, context) => {
+    const missingFields = missingChangeControlFields(record as ChangeRequest);
+    for (const field of missingFields) {
+      context.addIssue({
+        code: "custom",
+        path: [field],
+        message:
+          record.status === "implemented" &&
+          ["effectiveDate", "incorporatedBaselineVersion", "rebaselineJustification", "preventionCorrectiveMeasures"].includes(field)
+            ? "Implementation requires an effective date, incorporated baseline and rebaseline evidence."
+            : ["approver", "decisionDate", "decisionRationale"].includes(field)
+              ? "An approver, decision date and rationale are required for this decision."
+              : "Complete every submission impact and authority field before leaving draft.",
+      });
+    }
     if (
       record.incorporatedBaselineVersion !== undefined &&
       record.status !== "implemented"
@@ -133,14 +170,41 @@ export const changeInputSchema = z
         message: "Only an implemented change may identify an incorporated baseline.",
       });
     }
+    if (
+      record.submittedDate !== undefined &&
+      record.decisionDate !== undefined &&
+      record.decisionDate < record.submittedDate
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["decisionDate"],
+        message: "Decision date cannot be before the submitted date.",
+      });
+    }
+    if (
+      record.decisionDate !== undefined &&
+      record.effectiveDate !== undefined &&
+      record.effectiveDate < record.decisionDate
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["effectiveDate"],
+        message: "Effective date cannot be before the decision date.",
+      });
+    }
   })
   .transform(
     (value): ChangeRequest => ({
       ...value,
       incorporatedBaselineVersion:
         value.incorporatedBaselineVersion?.toUpperCase(),
+      decisionHistory: [],
     }),
   );
 
 export const firstRegisterError = (error: z.ZodError) =>
   error.issues[0]?.message ?? "Check the entered values and try again.";
+
+export const registerErrorSummary = (error: z.ZodError) =>
+  [...new Set(error.issues.map(({ message }) => message))].join(" ") ||
+  "Check the entered values and try again.";
