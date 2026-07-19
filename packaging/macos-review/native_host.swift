@@ -20,6 +20,10 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         true
     }
 
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        true
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         stopLocalServer()
     }
@@ -88,6 +92,7 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         )
         window.title = applicationName
         window.minSize = NSSize(width: 860, height: 620)
+        window.isRestorable = false
         window.contentView = webView
         window.delegate = self
         window.center()
