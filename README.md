@@ -11,6 +11,9 @@ release.
 ## What is working now
 
 - Responsive, keyboard-accessible application shell and feature navigation.
+- A compiled macOS AppKit/WebKit host that opens the dashboard in its own native
+  window and owns its localhost-only server lifecycle; it does not launch a web
+  browser.
 - Decision-first management overview with KPI status, exceptions, and source
   metadata.
 - Auditable earned-value calculations for BAC, PV, EV, AC, SV, CV, SPI, CPI,

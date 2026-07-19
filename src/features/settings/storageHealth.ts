@@ -24,7 +24,7 @@ export async function readStorageHealth(
     return {
       availability: "unavailable",
       persistenceRequestSupported: storage?.persist !== undefined,
-      message: "This browser does not expose a storage estimate.",
+      message: "This app runtime does not expose a storage estimate.",
     };
   }
   try {
@@ -46,14 +46,14 @@ export async function readStorageHealth(
       persistenceRequestSupported: storage.persist !== undefined,
       message:
         persisted === true
-          ? "The browser currently marks this origin as persistent."
-          : "Storage remains browser-managed and may be evicted; keep a current backup.",
+          ? "The app runtime currently marks this local storage as persistent."
+          : "Storage remains runtime-managed and may be evicted; keep a current backup.",
     };
   } catch {
     return {
       availability: "error",
       persistenceRequestSupported: storage.persist !== undefined,
-      message: "The browser could not report local storage health.",
+      message: "The app runtime could not report local storage health.",
     };
   }
 }
@@ -70,7 +70,7 @@ export async function requestPersistentStorage(
     return {
       availability: "error",
       persistenceRequestSupported: true,
-      message: "The browser did not complete the persistence request.",
+      message: "The app runtime did not complete the persistence request.",
     } satisfies StorageHealth;
   }
   return readStorageHealth(storage);

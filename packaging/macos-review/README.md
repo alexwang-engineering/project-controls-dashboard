@@ -1,12 +1,14 @@
 # macOS review app packaging
 
-`launcher.applescript` and `review_server.py` are the source files used to make
-the double-clickable Desktop review application.
+`native_host.swift` and `review_server.py` are the source files used to make
+the double-clickable Desktop application. The Swift host creates a native
+AppKit window and embeds the interface in `WKWebView`; it does not launch a web
+browser.
 
 The packaged app serves the production `dist/` directory only on
-`127.0.0.1:43127`, applies an SPA fallback for browser routes, writes no project
-data outside normal browser storage, and stops after 30 minutes without a page
-request.
+`127.0.0.1:43127`, applies an SPA fallback for application routes, persists
+working data in the app's WebKit data store, and terminates the private server
+with the native application process.
 
 From the repository root, package the current production build with:
 

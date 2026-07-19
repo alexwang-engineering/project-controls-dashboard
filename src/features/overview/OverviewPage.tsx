@@ -57,7 +57,7 @@ export function OverviewPage() {
   const sourceDescription =
     snapshot.source === "active-import"
       ? `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`
-      : "No validated generation is active in this browser, so the labelled synthetic demonstration snapshot is shown.";
+      : "No validated generation is active in this local app, so the labelled synthetic demonstration snapshot is shown.";
 
   return (
     <div className="page-stack">

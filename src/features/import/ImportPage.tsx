@@ -389,7 +389,7 @@ export function ImportPage({
                 <p className="eyebrow">Input pair</p>
                 <h2 id="import-files-title">Choose the reporting files</h2>
                 <p className="panel__description">
-                  Files are read in this browser only. The allowlist accepts UTF-8 .csv files.
+                  Files are read in this local app only. The allowlist accepts UTF-8 .csv files.
                 </p>
               </div>
               <button

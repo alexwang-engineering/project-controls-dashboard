@@ -234,21 +234,21 @@ export function SettingsPage({
       <PageHeader
         eyebrow="Data lifecycle"
         title="Settings and data"
-        description="Inspect browser-managed storage, protect the active generation, and restore only validated versioned backups."
+        description="Inspect local app storage, protect the active generation, and restore only validated versioned backups."
         actions={
           <div className="local-only-chip">
             <ShieldCheck size={18} aria-hidden="true" />
-            <span><small>Privacy boundary</small>Local browser data</span>
+            <span><small>Privacy boundary</small>Local app data</span>
           </div>
         }
       />
 
       <PageGuide
         pageName="Settings and data"
-        purpose="Use this page before major imports or browser maintenance: check storage, download a backup, then validate any restore before it can change the active pointer."
+        purpose="Use this page before major imports or app maintenance: check storage, download a backup, then validate any restore before it can change the active pointer."
         steps={[
           { title: "Check storage", detail: "Review estimated usage, persistence state, schema and the current active generation." },
-          { title: "Download a backup", detail: "Save the active generation as versioned JSON before replacement, reset or browser maintenance." },
+          { title: "Download a backup", detail: "Save the active generation as versioned JSON before replacement, reset or app maintenance." },
           { title: "Preview before restore", detail: "Choose a backup, validate it, inspect its identity and counts, then explicitly confirm the atomic restore." },
         ]}
       />
@@ -265,9 +265,9 @@ export function SettingsPage({
         </article>
         <article className="panel settings-health-card">
           <ShieldCheck size={21} aria-hidden="true" />
-          <span>Browser persistence</span>
+          <span>App persistence</span>
           <strong>{storage?.persisted === true ? "Persistent" : storage?.persisted === false ? "Best effort" : "Unknown"}</strong>
-          <small>{storage?.message ?? "Checking browser storage…"}</small>
+          <small>{storage?.message ?? "Checking local app storage…"}</small>
         </article>
         <article className="panel settings-health-card">
           <Database size={21} aria-hidden="true" />
@@ -285,7 +285,7 @@ export function SettingsPage({
 
       <section className="panel settings-storage" aria-labelledby="storage-control-title">
         <div className="panel__header">
-          <div><p className="eyebrow">Browser responsibility</p><h2 id="storage-control-title">Persistence and recovery position</h2><p className="panel__description">Quota is advisory. Atomic transactions protect the active generation, while a downloaded backup protects against browser clearing or eviction.</p></div>
+          <div><p className="eyebrow">Local-storage responsibility</p><h2 id="storage-control-title">Persistence and recovery position</h2><p className="panel__description">Quota is advisory. Atomic transactions protect the active generation, while a downloaded backup protects against local storage clearing or eviction.</p></div>
           {storage?.persistenceRequestSupported && storage.persisted !== true ? (
             <button className="button button--secondary" type="button" disabled={isBusy} onClick={requestPersistence}>
               {busyAction === "persist" ? <LoaderCircle aria-hidden="true" className="spin" size={17} /> : <ShieldCheck size={17} aria-hidden="true" />} Request persistence
@@ -334,7 +334,7 @@ export function SettingsPage({
       ) : null}
 
       <section className="panel settings-danger" aria-labelledby="reset-title">
-        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, registry, variance-analysis revision and lifecycle timestamp from this browser origin. The current backup does not include analysis records.</p></div>
+        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, registry, variance-analysis revision and lifecycle timestamp from this app's local storage. The current backup does not include analysis records.</p></div>
         <label className="confirmation-check"><input type="checkbox" checked={resetConfirmed} onChange={(event) => setResetConfirmed(event.target.checked)} /><span>I understand this action removes all local project-control data.</span></label>
         <button className="button button--danger" type="button" disabled={isBusy || !resetConfirmed} onClick={reset}><Trash2 size={17} aria-hidden="true" /> Reset local data</button>
       </section>

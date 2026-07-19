@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import os
 import threading
 import time
 from functools import partial
@@ -11,17 +13,11 @@ from urllib.parse import unquote, urlparse
 
 
 HOST = "127.0.0.1"
-PORT = 43127
-IDLE_SHUTDOWN_SECONDS = 30 * 60
 WEB_ROOT = Path(__file__).resolve().parent / "web"
-last_request_at = time.monotonic()
 
 
 class ReviewRequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - HTTP handler API
-        global last_request_at
-        last_request_at = time.monotonic()
-
         url_path = unquote(urlparse(self.path).path)
         relative_path = url_path.lstrip("/")
         requested_file = WEB_ROOT / relative_path
@@ -42,27 +38,44 @@ class ReviewServer(ThreadingHTTPServer):
     daemon_threads = True
 
 
-def stop_when_idle(server: ReviewServer) -> None:
+def stop_when_parent_exits(server: ReviewServer, parent_pid: int) -> None:
     while True:
-        time.sleep(60)
-        if time.monotonic() - last_request_at < IDLE_SHUTDOWN_SECONDS:
-            continue
-        server.shutdown()
-        return
+        time.sleep(2)
+        try:
+            os.kill(parent_pid, 0)
+        except ProcessLookupError:
+            server.shutdown()
+            return
+        except PermissionError:
+            server.shutdown()
+            return
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Serve the packaged dashboard locally.")
+    parser.add_argument("--port", type=int, default=43_127)
+    parser.add_argument("--parent-pid", type=int, required=True)
+    return parser.parse_args()
 
 
 def main() -> None:
+    arguments = parse_arguments()
     if not (WEB_ROOT / "index.html").is_file():
         raise SystemExit("The review bundle does not contain web/index.html.")
 
     handler = partial(ReviewRequestHandler, directory=str(WEB_ROOT))
     try:
-        server = ReviewServer((HOST, PORT), handler)
+        server = ReviewServer((HOST, arguments.port), handler)
     except OSError:
-        # A previously launched review server already owns the fixed local port.
-        return
+        raise SystemExit(
+            "The app local port is already in use. Close any older copy and reopen."
+        ) from None
 
-    watcher = threading.Thread(target=stop_when_idle, args=(server,), daemon=True)
+    watcher = threading.Thread(
+        target=stop_when_parent_exits,
+        args=(server, arguments.parent_pid),
+        daemon=True,
+    )
     watcher.start()
     server.serve_forever(poll_interval=0.5)
     server.server_close()

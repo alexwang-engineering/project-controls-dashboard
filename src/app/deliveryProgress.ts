@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 15,
-    evidence: "Automated checks and a review app exist; full accessibility, browser and release evidence remain.",
+    completionPercent: 20,
+    evidence: "Automated checks and a signed native AppKit/WebKit review app with verified child-server lifecycle exist; full accessibility, browser matrix and release evidence remain.",
   },
 ];
 

@@ -5,7 +5,7 @@
 **Release target:** 25 September 2026  
 **Current increment:** M3/M7 reconciled weekly management-report working slice
 
-**Evidence-weighted MVP progress:** 60% (56.7 of 94 planned hours)
+**Evidence-weighted MVP progress:** 61% (57.5 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -41,7 +41,7 @@
 | Weekly management report | Deterministic current/cumulative reconciliation, EAC sensitivity, signed-analysis coverage, publication controls, baseline/change separation and accessible HTML/print preview | Working slice |
 | Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
 | Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
-| Desktop review build | Signed local macOS app wrapper, SPA route fallback and repeatable packaging command | Verified |
+| Desktop review build | Signed native AppKit/WebKit macOS window, app-owned private server, SPA route fallback and repeatable packaging command | Verified |
 
 ## Milestone position against the accepted plan
 
@@ -78,8 +78,9 @@
   print uses the same snapshot, but reports are not yet persisted, editable or
   print/PDF visually approved. Variance analysis remains outside active-
   generation JSON backups and is not yet linked to approved baseline revisions.
-- Browser QA so far covers the in-app Chromium surface at desktop and 390 px; the
-  full Chromium/Firefox/WebKit matrix belongs to M8.
+- Browser QA covers the in-app Chromium surface at desktop and 390 px, and the
+  native macOS WKWebView host has a verified desktop window and server lifecycle;
+  the full Chromium/Firefox/WebKit matrix belongs to M8.
 
 ## Verification command
 

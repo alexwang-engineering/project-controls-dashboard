@@ -12,35 +12,24 @@ staged_app="$review_build_dir/Project Controls Dashboard.app"
 cd "$repository_root"
 pnpm build
 
-osacompile -o "$staged_app" "$packaging_dir/launcher.applescript"
+mkdir -p "$staged_app/Contents/MacOS" "$staged_app/Contents/Resources/web"
+cp "$packaging_dir/Info.plist" "$staged_app/Contents/Info.plist"
+swiftc \
+  -O \
+  -warnings-as-errors \
+  -target "$(uname -m)-apple-macos13.0" \
+  -framework AppKit \
+  -framework WebKit \
+  "$packaging_dir/native_host.swift" \
+  -o "$staged_app/Contents/MacOS/ProjectControlsDashboard"
+chmod 755 "$staged_app/Contents/MacOS/ProjectControlsDashboard"
 mkdir -p "$staged_app/Contents/Resources/web"
 cp -R "$repository_root/dist/." "$staged_app/Contents/Resources/web/"
 cp "$packaging_dir/review_server.py" \
   "$staged_app/Contents/Resources/review_server.py"
 
-for key in \
-  NSAppleEventsUsageDescription \
-  NSAppleMusicUsageDescription \
-  NSCalendarsUsageDescription \
-  NSCameraUsageDescription \
-  NSContactsUsageDescription \
-  NSHomeKitUsageDescription \
-  NSMicrophoneUsageDescription \
-  NSPhotoLibraryUsageDescription \
-  NSRemindersUsageDescription \
-  NSSiriUsageDescription \
-  NSSystemAdministrationUsageDescription \
-  LSRequiresCarbon; do
-  plutil -remove "$key" "$staged_app/Contents/Info.plist"
-done
-
-plutil -insert CFBundleIdentifier -string \
-  'com.alexwang.project-controls-dashboard.review' \
-  "$staged_app/Contents/Info.plist"
-plutil -insert CFBundleShortVersionString -string '0.1.0' \
-  "$staged_app/Contents/Info.plist"
-plutil -insert CFBundleVersion -string '1' \
-  "$staged_app/Contents/Info.plist"
+plutil -lint "$staged_app/Contents/Info.plist"
+file "$staged_app/Contents/MacOS/ProjectControlsDashboard" | grep -q 'Mach-O 64-bit executable'
 
 xattr -cr "$staged_app"
 codesign --force --deep --sign - "$staged_app"
