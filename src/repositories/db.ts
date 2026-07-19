@@ -8,7 +8,11 @@ import type { ImportManifest } from "../schemas/manifest";
 import { IMPORT_SCHEMA_VERSION } from "../schemas/manifest";
 
 export interface MetaRecord {
-  key: "activeImportId" | "schemaVersion";
+  key:
+    | "activeImportId"
+    | "schemaVersion"
+    | "lastBackupAt"
+    | "lastRestoreAt";
   value: string;
 }
 

@@ -18,8 +18,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M1",
     title: "Foundation and import",
     plannedHours: 15,
-    completionPercent: 85,
-    evidence: "The guided two-file import, row validation, registry confirmation, checksum control and atomic commit are tested; backup/restore remains.",
+    completionPercent: 92,
+    evidence: "The guided import, validation, atomic generation storage, versioned backup, validated restore and storage-health controls are tested; worker isolation and registry evolution remain.",
   },
   {
     id: "M2",

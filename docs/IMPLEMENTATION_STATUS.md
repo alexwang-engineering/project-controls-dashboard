@@ -3,9 +3,9 @@
 **Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Active-generation dashboard and schedule/cost trace
+**Current increment:** Versioned backup, validated restore and storage health
 
-**Evidence-weighted MVP progress:** 51% (47.7 of 94 planned hours)
+**Evidence-weighted MVP progress:** 52% (48.7 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -21,7 +21,7 @@
 | Changes | Read-only register, exposure summary, baseline warning | Working slice |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 168 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 180 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -31,6 +31,8 @@
 | M1 generation repository | Pointer-last Dexie commit, active reads, rollback/quota injection, confirmation, duplicate history, revert and GC | Tested increment |
 | M1 import interface | Guided two-file selection, validation evidence, first-registry/repeated-checksum confirmation and atomic receipt | Working |
 | Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
+| Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
+| Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
 | Desktop review build | Signed local macOS app wrapper, SPA route fallback and repeatable packaging command | Verified |
 
 ## Milestone position against the accepted plan
@@ -38,7 +40,7 @@
 | Milestone | Target | Current evidence | Remaining gate work |
 |---|---:|---|---|
 | M0 — Specification and architecture | 22 Jul | Master plan, two ADRs, data dictionary, stack, fixed fixture, independent M1 review | Record remaining governance registers and formal gate decision |
-| M1 — Foundation and import | 31 Jul | Guided import, trust-boundary ADR, exact fixtures, parser, schemas, orchestrator, graph, checksum controls and atomic generation storage | Worker boundary, backup/restore and storage-status UI |
+| M1 — Foundation and import | 31 Jul | Guided import, trust-boundary ADR, exact fixtures, parser, schemas, orchestrator, graph, atomic generation storage, versioned backup/restore and storage health | Worker boundary, full-size demo pack and controlled registry evolution |
 | M2 — Overview | 9 Aug | Active-generation overview, curve, KPIs, WP table, Schedule & Cost drill-down, source trace and labelled fallback | True global cross-view filter, empty/error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, imported aggregation, cumulative period trace and activity evidence | Three EAC scenarios, structured variance workflow and expanded help |
 | M4 — Milestones | 20 Aug | Read-only register and overview exceptions | Domain status rules/tests, filters, predecessor chain, recovery workflow |
@@ -49,9 +51,10 @@
 
 ## Next implementation slice
 
-1. Add versioned backup/validated restore and a Settings storage-health view.
-2. Move parsing/orchestration behind the typed worker boundary and verify the
+1. Move parsing/orchestration behind the typed worker boundary and verify the
    complete invalid, damaged and 1,000-row browser flow.
+2. Add a deliberate project-registry update flow and replace the five-row
+   import example with the complete ASTER demonstration pair.
 3. Add the structured variance-analysis workflow and three transparent EAC
    sensitivity scenarios to Schedule & Cost.
 4. Make the selected work package a true cross-view scope rather than an
@@ -66,8 +69,7 @@
 - Registers are demonstration views and are not editable yet.
 - Milestone, risk and change registers are explicitly labelled synthetic even
   when schedule/cost values come from an active import.
-- Weekly reporting, editable variance ownership, backup/restore and storage
-  settings remain planned workflows.
+- Weekly reporting and editable variance ownership remain planned workflows.
 - Browser QA so far covers the in-app Chromium surface at desktop and 390 px; the
   full Chromium/Firefox/WebKit matrix belongs to M8.
 

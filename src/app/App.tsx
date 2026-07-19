@@ -34,6 +34,11 @@ const ScheduleCostPage = lazy(() =>
     default: module.ScheduleCostPage,
   })),
 );
+const SettingsPage = lazy(() =>
+  import("../features/settings/SettingsPage").then((module) => ({
+    default: module.SettingsPage,
+  })),
+);
 
 export function App() {
   return (
@@ -87,39 +92,7 @@ export function App() {
                 />
               }
             />
-            <Route
-              path="settings"
-              element={
-                <ModulePage
-                  eyebrow="Data lifecycle"
-                  title="Settings and data"
-                  description="Inspect local storage, schema versions, backup state and demonstration controls."
-                  items={[
-                    "Local usage and persistence status",
-                    "Versioned backup and restore",
-                    "Calculation and schema versions",
-                    "Synthetic-data privacy boundary",
-                  ]}
-                  guide={{
-                    purpose: "Use this planned page to keep local data recoverable, versioned and clearly separated from real project information.",
-                    steps: [
-                      {
-                        title: "Check storage",
-                        detail: "Review local usage, persistence, schema and calculation versions.",
-                      },
-                      {
-                        title: "Create a backup",
-                        detail: "Export a versioned backup before imports or structural changes.",
-                      },
-                      {
-                        title: "Restore safely",
-                        detail: "Validate and preview a backup before it is allowed to replace active data.",
-                      },
-                    ],
-                  }}
-                />
-              }
-            />
+            <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>
         </Suspense>

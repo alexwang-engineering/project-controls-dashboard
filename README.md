@@ -32,9 +32,13 @@ release.
 - Period/work-package filtering plus cumulative EVM and activity-level source
   trace on Schedule & Cost.
 - An explicit synthetic-fallback label whenever no validated import is active.
+- A Settings & Data workflow with browser storage health, persistence requests,
+  versioned active-generation backup, schema/domain-validated atomic restore,
+  and an explicitly confirmed local reset.
 
-Backup/restore, the worker boundary, structured variance ownership, editable
-registers, and weekly report generation remain to be implemented.
+The worker boundary, controlled registry evolution, structured variance
+ownership, editable registers, and weekly report generation remain to be
+implemented.
 
 ## Fixed Week 10 control fixture
 

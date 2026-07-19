@@ -35,8 +35,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "51");
-    expect(screen.getByText("47.7 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "52");
+    expect(screen.getByText("48.7 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -169,5 +169,19 @@ describe("project controls application", () => {
     expect(screen.getByRole("row", { name: /A-003/ })).toHaveTextContent(
       "-£70,000",
     );
+
+    await user.click(
+      within(navigation).getByRole("link", { name: "Settings & data" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Settings and data", level: 1 }),
+    ).toBeInTheDocument();
+    const storageHealth = screen.getByRole("region", {
+      name: "Local storage health",
+    });
+    expect(within(storageHealth).getByText(/^IMPORT-/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download JSON backup" }),
+    ).toBeEnabled();
   });
 });

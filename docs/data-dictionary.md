@@ -166,6 +166,23 @@ pointer after confirming the previous generation still has rows. Garbage
 collection retains the active and previous generations, deletes only older row
 generations, and never deletes manifests or checksum history.
 
+## Versioned backup schema
+
+Backup format version 1 exports the current active generation rather than a raw
+database copy. It contains the source manifest, normalised activity and
+performance rows, confirmed project configuration, and empty reserved arrays
+for future risk, change and report-draft records. The active pointer, manifest
+identity, project identity, row counts, registry uniqueness, field rules and
+schedule relationships must all reconcile. Input is capped at 20 MiB.
+
+Restore first parses the strict versioned schema, then re-runs cross-file and
+schedule-graph domain validation. A valid preview must be explicitly confirmed.
+Commit creates a new immutable `RESTORE-*` generation through the same
+pointer-last transaction as import; it does not overwrite the source manifest.
+Malformed, unsupported, inconsistent or blocking backups write nothing. Last
+backup and last restore timestamps are lifecycle evidence, not part of the
+atomic dataset contract.
+
 ## Validation issue contract
 
 Every data problem is represented as a `ValidationIssue`; data errors do not
