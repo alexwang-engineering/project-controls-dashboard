@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DatasetRepository } from "../../repositories/datasetRepository";
 import { ProjectControlsDb } from "../../repositories/db";
 import { ImportRepository } from "../../repositories/importRepository";
+import { ProjectConfigurationRepository } from "../../repositories/projectConfigurationRepository";
 import { createSyntheticImportFiles } from "./demoImportFiles";
 import {
   commitImportReview,
@@ -26,10 +27,15 @@ describe("import page", () => {
     });
     const datasets = new DatasetRepository(db);
     const imports = new ImportRepository(db);
+    const configurations = new ProjectConfigurationRepository(db);
     dependencies = {
       createDemoFiles: createSyntheticImportFiles,
       reviewFiles: (schedule, performance) =>
-        reviewImportFiles(schedule, performance, { datasets, imports }),
+        reviewImportFiles(schedule, performance, {
+          datasets,
+          imports,
+          configurations,
+        }),
       commitReview: (review, options) =>
         commitImportReview(
           review,
@@ -40,6 +46,13 @@ describe("import page", () => {
           },
           imports,
         ),
+      updateConfiguration: async (review) => {
+        if (review.configurationUpdate === undefined) return;
+        await configurations.commitAdditiveUpdate(review.configurationUpdate, {
+          confirmed: true,
+          updatedAt: "2026-07-18T18:30:00.000Z",
+        });
+      },
       downloadIssues: vi.fn(),
     };
   });
@@ -61,7 +74,7 @@ describe("import page", () => {
     ).toBeDisabled();
 
     await user.click(
-      screen.getByRole("button", { name: "Load synthetic example" }),
+      screen.getByRole("button", { name: "Load complete ASTER example" }),
     );
 
     expect(
@@ -69,7 +82,7 @@ describe("import page", () => {
         name: "The data pair is technically valid.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("10")).toHaveLength(2);
+    expect(screen.getAllByText("1020")).toHaveLength(2);
     expect(screen.getByText("2026-06-14")).toBeInTheDocument();
     const commitButton = screen.getByRole("button", {
       name: "Commit validated import",
@@ -93,5 +106,68 @@ describe("import page", () => {
     expect(
       screen.getByRole("button", { name: "Start another import" }),
     ).toBeEnabled();
+  });
+
+  it("requires an explicit additive registry update and revalidates the files", async () => {
+    const repositories = {
+      datasets: new DatasetRepository(db),
+      imports: new ImportRepository(db),
+      configurations: new ProjectConfigurationRepository(db),
+    };
+    const initialFiles = createSyntheticImportFiles();
+    const initialReview = await reviewImportFiles(
+      initialFiles.schedule,
+      initialFiles.performance,
+      repositories,
+    );
+    await commitImportReview(
+      initialReview,
+      {
+        configurationConfirmed: true,
+        duplicateChecksumConfirmed: false,
+        importId: "IMPORT-REGISTRY-SEED",
+        importedAt: "2026-07-18T18:00:00.000Z",
+      },
+      repositories.imports,
+    );
+    const changedSchedule = new File(
+      [(await initialFiles.schedule.text()).replace(",WP100,", ",WP600,")],
+      "aster-registry-change.csv",
+      { type: "text/csv" },
+    );
+    const user = userEvent.setup();
+    render(<ImportPage dependencies={dependencies} />);
+
+    await user.upload(screen.getByLabelText("Schedule CSV"), changedSchedule);
+    await user.upload(
+      screen.getByLabelText("Performance CSV"),
+      initialFiles.performance,
+    );
+    await user.click(screen.getByRole("button", { name: "Validate both files" }));
+
+    expect(
+      await screen.findByRole("group", { name: "Controlled registry update" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("WP600")).toBeInTheDocument();
+    const updateButton = screen.getByRole("button", {
+      name: "Update registry and revalidate",
+    });
+    expect(updateButton).toBeDisabled();
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "I authorise this additive registry revision. Existing identifiers will remain active.",
+      }),
+    );
+    await user.click(updateButton);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "The data pair is technically valid.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Controlled registry update" }),
+    ).not.toBeInTheDocument();
+    expect((await db.projectConfigurations.get("ASTER"))?.revision).toBe(2);
   });
 });

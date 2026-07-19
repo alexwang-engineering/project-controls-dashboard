@@ -34,6 +34,7 @@ export interface ImportPageDependencies {
       duplicateChecksumConfirmed: boolean;
     },
   ) => Promise<ImportManifest>;
+  updateConfiguration: (review: ImportReview) => Promise<void>;
   downloadIssues: (issues: readonly ValidationIssue[]) => void;
 }
 
@@ -59,6 +60,15 @@ const defaultDependencies: ImportPageDependencies = {
   },
   commitReview: (review, options) =>
     commitImportReview(review, options, getBrowserRepositories().imports),
+  updateConfiguration: async (review) => {
+    if (review.configurationUpdate === undefined) {
+      throw new Error("There is no project-registry update to apply.");
+    }
+    await getBrowserRepositories().configurations.commitAdditiveUpdate(
+      review.configurationUpdate,
+      { confirmed: true, updatedAt: new Date().toISOString() },
+    );
+  },
   downloadIssues,
 };
 
@@ -138,7 +148,9 @@ export function ImportPage({
   const [committed, setCommitted] = useState<ImportManifest>();
   const [isReviewing, setIsReviewing] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
+  const [isUpdatingRegistry, setIsUpdatingRegistry] = useState(false);
   const [configurationConfirmed, setConfigurationConfirmed] = useState(false);
+  const [registryUpdateConfirmed, setRegistryUpdateConfirmed] = useState(false);
   const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -146,6 +158,7 @@ export function ImportPage({
     setReview(undefined);
     setCommitted(undefined);
     setConfigurationConfirmed(false);
+    setRegistryUpdateConfirmed(false);
     setDuplicateConfirmed(false);
     setErrorMessage("");
   };
@@ -165,6 +178,7 @@ export function ImportPage({
     setErrorMessage("");
     setCommitted(undefined);
     setConfigurationConfirmed(false);
+    setRegistryUpdateConfirmed(false);
     setDuplicateConfirmed(false);
     try {
       setReview(await dependencies.reviewFiles(schedule, performance));
@@ -215,6 +229,32 @@ export function ImportPage({
     }
   };
 
+  const updateRegistry = async () => {
+    if (
+      review === undefined ||
+      review.configurationUpdate === undefined ||
+      scheduleFile === undefined ||
+      performanceFile === undefined ||
+      !registryUpdateConfirmed
+    ) {
+      return;
+    }
+    setIsUpdatingRegistry(true);
+    setErrorMessage("");
+    try {
+      await dependencies.updateConfiguration(review);
+      await runReview(scheduleFile, performanceFile);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The project registry could not be updated.",
+      );
+    } finally {
+      setIsUpdatingRegistry(false);
+    }
+  };
+
   const startAgain = () => {
     setScheduleFile(undefined);
     setPerformanceFile(undefined);
@@ -243,7 +283,9 @@ export function ImportPage({
     review?.preview?.canCommit &&
       configurationReady &&
       duplicateReady &&
-      !isCommitting,
+      !isCommitting &&
+      !isUpdatingRegistry &&
+      !isReviewing,
   );
 
   return (
@@ -269,7 +311,7 @@ export function ImportPage({
         steps={[
           {
             title: "Choose both files",
-            detail: "Select matching schedule and performance CSV files, or load the safe synthetic example.",
+            detail: "Select matching CSV files, or load the complete synthetic ASTER pair with 60 activities and 16 periods.",
           },
           {
             title: "Resolve validation",
@@ -277,7 +319,7 @@ export function ImportPage({
           },
           {
             title: "Confirm and commit",
-            detail: "Approve first-project registries or repeated checksums, then make one atomic local commit.",
+            detail: "Approve first-project or additive registry revisions and repeated checksums, then make one atomic local commit.",
           },
         ]}
       />
@@ -361,7 +403,7 @@ export function ImportPage({
                 ) : (
                   <FileCheck2 size={17} aria-hidden="true" />
                 )}
-                Load synthetic example
+                Load complete ASTER example
               </button>
             </div>
 
@@ -453,6 +495,21 @@ export function ImportPage({
                 <div><span>Data date</span><strong>{review.preview?.dataDate ?? "Unavailable"}</strong></div>
               </div>
 
+              <div className={"import-runtime import-runtime--" + review.runtime.mode}>
+                <ShieldCheck size={18} aria-hidden="true" />
+                <div>
+                  <strong>
+                    {review.runtime.mode === "worker"
+                      ? "Validated in the isolated module worker"
+                      : "Validated with the deterministic fallback"}
+                  </strong>
+                  <span>
+                    Processing completed in {Math.round(review.runtime.durationMs)} ms.
+                    {review.runtime.warning ? ` ${review.runtime.warning}` : " The main interface remained available during processing."}
+                  </span>
+                </div>
+              </div>
+
               {review.configuration ? (
                 <fieldset className="confirmation-panel">
                   <legend>Project registry control</legend>
@@ -466,7 +523,7 @@ export function ImportPage({
                       <p>
                         {review.configurationRequiresConfirmation
                           ? "These values were inferred from accepted schedule rows. Confirm they are the authorised boundaries for this synthetic project."
-                          : "The candidate was checked against the immutable registry created by the first successful import."}
+                          : "The candidate was checked against the active revision-controlled registry."}
                       </p>
                     </div>
                     <span>{review.configuration.projectId}</span>
@@ -504,6 +561,50 @@ export function ImportPage({
                     />
                     <span>I intend to import these repeated file bytes.</span>
                   </label>
+                </fieldset>
+              ) : null}
+
+              {review.configurationUpdate ? (
+                <fieldset className="confirmation-panel confirmation-panel--attention">
+                  <legend>Controlled registry update</legend>
+                  <div className="confirmation-panel__header">
+                    <div>
+                      <strong>
+                        Review additive revision {review.configurationUpdate.expectedRevision + 1}
+                      </strong>
+                      <p>
+                        This action updates the confirmed registry only. It does not import either file; both files are automatically revalidated afterwards.
+                      </p>
+                    </div>
+                    <span>{review.configurationUpdate.projectId}</span>
+                  </div>
+                  <dl className="registry-grid">
+                    <div><dt>New work packages</dt><dd>{review.configurationUpdate.additions.workPackageIds.join(", ") || "None"}</dd></div>
+                    <div><dt>New calendars</dt><dd>{review.configurationUpdate.additions.calendarIds.join(", ") || "None"}</dd></div>
+                    <div><dt>New authorised starts</dt><dd>{review.configurationUpdate.additions.authorisedStartActivityIds.join(", ") || "None"}</dd></div>
+                    <div><dt>New authorised finishes</dt><dd>{review.configurationUpdate.additions.authorisedFinishActivityIds.join(", ") || "None"}</dd></div>
+                  </dl>
+                  <label className="confirmation-check">
+                    <input
+                      type="checkbox"
+                      checked={registryUpdateConfirmed}
+                      onChange={(event) => setRegistryUpdateConfirmed(event.target.checked)}
+                    />
+                    <span>I authorise this additive registry revision. Existing identifiers will remain active.</span>
+                  </label>
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    disabled={!registryUpdateConfirmed || isUpdatingRegistry || isReviewing}
+                    onClick={updateRegistry}
+                  >
+                    {isUpdatingRegistry ? (
+                      <LoaderCircle className="spin" size={17} aria-hidden="true" />
+                    ) : (
+                      <RefreshCw size={17} aria-hidden="true" />
+                    )}
+                    Update registry and revalidate
+                  </button>
                 </fieldset>
               ) : null}
 

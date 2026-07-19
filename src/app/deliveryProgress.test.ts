@@ -5,8 +5,8 @@ describe("delivery progress", () => {
   it("reconciles the evidence-weighted assessment to the 94-hour plan", () => {
     expect(deliveryMilestones).toHaveLength(9);
     expect(deliveryProgress.totalPlannedHours).toBe(94);
-    expect(deliveryProgress.evidencedPlanHours).toBe(48.7);
-    expect(deliveryProgress.completionPercent).toBe(52);
+    expect(deliveryProgress.evidencedPlanHours).toBe(49.6);
+    expect(deliveryProgress.completionPercent).toBe(53);
   });
 
   it("keeps every milestone assessment inside valid percentage bounds", () => {

@@ -1639,6 +1639,39 @@ tfoot td {
   border-right: 0;
 }
 
+.import-runtime {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid #b9d7cf;
+  border-radius: var(--radius-sm);
+  background: #f2faf7;
+  color: #194e43;
+}
+
+.import-runtime--fallback {
+  border-color: #e3cf9a;
+  background: #fff9e9;
+  color: #685018;
+}
+
+.import-runtime svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.import-runtime strong,
+.import-runtime span {
+  display: block;
+}
+
+.import-runtime span {
+  margin-top: 0.16rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .validation-summary span,
 .validation-summary strong {
   display: block;

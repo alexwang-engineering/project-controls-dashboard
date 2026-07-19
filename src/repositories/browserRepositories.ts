@@ -2,6 +2,7 @@ import { DatasetRepository } from "./datasetRepository";
 import { ProjectControlsDb } from "./db";
 import { ImportRepository } from "./importRepository";
 import { BackupRepository } from "./backupRepository";
+import { ProjectConfigurationRepository } from "./projectConfigurationRepository";
 
 let browserRepositories:
   | {
@@ -9,6 +10,7 @@ let browserRepositories:
       datasets: DatasetRepository;
       imports: ImportRepository;
       backups: BackupRepository;
+      configurations: ProjectConfigurationRepository;
     }
   | undefined;
 
@@ -22,6 +24,7 @@ export function getBrowserRepositories() {
     datasets: new DatasetRepository(db),
     imports,
     backups: new BackupRepository(db, imports),
+    configurations: new ProjectConfigurationRepository(db),
   };
   return browserRepositories;
 }

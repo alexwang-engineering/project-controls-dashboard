@@ -27,6 +27,13 @@ release.
   oriented component checks.
 - Guided schedule/performance CSV import with field-level validation, checksum
   control, explicit registry confirmation, and pointer-last atomic persistence.
+- A versioned Vite module worker for parsing and validation, with one pure
+  processor shared by the explicitly labelled compatibility fallback.
+- The complete ASTER import pair: 60 activities, eight schedule milestones and
+  960 records spanning 16 weekly periods, all processed through the real import
+  pipeline rather than loaded as a shortcut snapshot.
+- Explicit additive project-registry revisions with confirmation, compare-and-
+  set protection, revision history and mandatory post-update revalidation.
 - A shared active-generation boundary that supplies project metadata and
   reconciled performance to the shell, Overview, and Schedule & Cost pages.
 - Period/work-package filtering plus cumulative EVM and activity-level source
@@ -36,9 +43,14 @@ release.
   versioned active-generation backup, schema/domain-validated atomic restore,
   and an explicitly confirmed local reset.
 
-The worker boundary, controlled registry evolution, structured variance
-ownership, editable registers, and weekly report generation remain to be
-implemented.
+Backups intentionally contain the active generation and its confirmed registry
+only. They do not contain older manifests, checksum-detection history, or the
+rows needed by **Revert to previous**. Keep the original browser data when those
+history features are required. The backup input limit is 20 MiB; each source CSV
+remains limited to 5 MiB.
+
+Independent review of the M1 closure candidate, structured variance ownership,
+editable registers, and weekly report generation remain to be completed.
 
 ## Fixed Week 10 control fixture
 

@@ -14,6 +14,7 @@ import { BackupRepository } from "./backupRepository";
 import { DatasetRepository } from "./datasetRepository";
 import { ProjectControlsDb } from "./db";
 import { ImportRepository } from "./importRepository";
+import { ProjectConfigurationRepository } from "./projectConfigurationRepository";
 
 let sequence = 0;
 
@@ -26,10 +27,12 @@ const createDb = (label: string) =>
 const commitSynthetic = async (db: ProjectControlsDb) => {
   const datasets = new DatasetRepository(db);
   const imports = new ImportRepository(db);
+  const configurations = new ProjectConfigurationRepository(db);
   const files = createSyntheticImportFiles();
   const review = await reviewImportFiles(files.schedule, files.performance, {
     datasets,
     imports,
+    configurations,
   });
   return commitImportReview(
     review,
@@ -71,8 +74,8 @@ describe("versioned backup and validated restore", () => {
     expect(parseBackupJson(json)).toEqual(envelope);
     expect(json.endsWith("\n")).toBe(true);
     expect(envelope.dataset.activeImportId).toBe("IMPORT-BACKUP-SOURCE");
-    expect(envelope.dataset.activities).toHaveLength(5);
-    expect(envelope.dataset.performance).toHaveLength(5);
+    expect(envelope.dataset.activities).toHaveLength(60);
+    expect(envelope.dataset.performance).toHaveLength(960);
 
     const targetBackups = new BackupRepository(targetDb);
     const preview = await targetBackups.previewRestore(json, {
@@ -121,7 +124,7 @@ describe("versioned backup and validated restore", () => {
     expect(
       await sourceDb.activities.where("importId").equals("RESTORE-FAIL").count(),
     ).toBe(0);
-  });
+  }, 15_000);
 
   it.each([
     ["unknown activity", "unknown_activity_reference", (value: any) => {
@@ -202,7 +205,7 @@ describe("versioned backup and validated restore", () => {
     await backups.resetAllLocalData();
     const status = await backups.getLifecycleStatus();
     expect(status).toMatchObject({
-      schemaVersion: "1",
+      schemaVersion: "2",
       manifestCount: 0,
       activityCount: 0,
       performanceCount: 0,

@@ -180,8 +180,19 @@ describe("generation and active-pointer repository", () => {
       ]),
       configuration: { source: "active" },
     });
-    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "1" });
+    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "2" });
     expect(await db.manifests.count()).toBe(1);
+    expect(await db.projectConfigurations.get("ASTER")).toMatchObject({
+      revision: 1,
+    });
+    expect(await db.projectConfigurationHistory.toArray()).toEqual([
+      expect.objectContaining({
+        projectId: "ASTER",
+        revision: 1,
+        activeImportId: "IMPORT-001",
+        reason: "created",
+      }),
+    ]);
   });
 
   it("writes nothing when first-import configuration confirmation is absent", async () => {
@@ -192,6 +203,7 @@ describe("generation and active-pointer repository", () => {
     );
     expect(await datasets.getActiveImportId()).toBeUndefined();
     expect(await db.projectConfigurations.count()).toBe(0);
+    expect(await db.projectConfigurationHistory.count()).toBe(0);
     expect(await db.manifests.count()).toBe(0);
     expect(await db.activities.count()).toBe(0);
     expect(await db.performance.count()).toBe(0);
@@ -208,6 +220,7 @@ describe("generation and active-pointer repository", () => {
       failingRepository.commitGeneration(firstGeneration()),
     ).rejects.toThrow("injected first-import failure");
     expect(await db.projectConfigurations.count()).toBe(0);
+    expect(await db.projectConfigurationHistory.count()).toBe(0);
     expect(await db.manifests.count()).toBe(0);
     expect(await db.activities.count()).toBe(0);
     expect(await db.performance.count()).toBe(0);

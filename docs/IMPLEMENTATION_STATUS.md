@@ -3,9 +3,9 @@
 **Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Versioned backup, validated restore and storage health
+**Current increment:** M1 closure candidate — worker, full ASTER pair and registry revisions
 
-**Evidence-weighted MVP progress:** 52% (48.7 of 94 planned hours)
+**Evidence-weighted MVP progress:** 53% (49.6 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -21,7 +21,7 @@
 | Changes | Read-only register, exposure summary, baseline warning | Working slice |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 180 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 189 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -30,6 +30,11 @@
 | M1 import orchestration | Accepted-row stage isolation, explicit quarantine loop, manifest/count reconciliation | Tested increment |
 | M1 generation repository | Pointer-last Dexie commit, active reads, rollback/quota injection, confirmation, duplicate history, revert and GC | Tested increment |
 | M1 import interface | Guided two-file selection, validation evidence, first-registry/repeated-checksum confirmation and atomic receipt | Working |
+| M1 worker boundary | Versioned module-worker protocol and structurally identical pure fallback result | Tested |
+| M1 complete import pair | 60 activities, 8 schedule milestones and 960 performance rows across 16 periods | Tested |
+| M1 performance | 1,000 activities plus their performance rows processed in 41 ms on the development machine; gate is under 2 seconds | Passing |
+| M1 registry evolution | Additive-only revisions, explicit confirmation, CAS transaction, history and automatic revalidation | Tested |
+| M1 closure evidence | `docs/M1_CLOSURE_EVIDENCE.md` records the matrix, timing environment and independent-review focus | Ready for review |
 | Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
 | Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
 | Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
@@ -40,7 +45,7 @@
 | Milestone | Target | Current evidence | Remaining gate work |
 |---|---:|---|---|
 | M0 — Specification and architecture | 22 Jul | Master plan, two ADRs, data dictionary, stack, fixed fixture, independent M1 review | Record remaining governance registers and formal gate decision |
-| M1 — Foundation and import | 31 Jul | Guided import, trust-boundary ADR, exact fixtures, parser, schemas, orchestrator, graph, atomic generation storage, versioned backup/restore and storage health | Worker boundary, full-size demo pack and controlled registry evolution |
+| M1 — Foundation and import | 31 Jul | Worker/fallback validation, complete ASTER pair, controlled registry revisions, atomic generations and recovery | Independent diff review and live module-worker confirmation |
 | M2 — Overview | 9 Aug | Active-generation overview, curve, KPIs, WP table, Schedule & Cost drill-down, source trace and labelled fallback | True global cross-view filter, empty/error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, imported aggregation, cumulative period trace and activity evidence | Three EAC scenarios, structured variance workflow and expanded help |
 | M4 — Milestones | 20 Aug | Read-only register and overview exceptions | Domain status rules/tests, filters, predecessor chain, recovery workflow |
@@ -51,15 +56,14 @@
 
 ## Next implementation slice
 
-1. Move parsing/orchestration behind the typed worker boundary and verify the
-   complete invalid, damaged and 1,000-row browser flow.
-2. Add a deliberate project-registry update flow and replace the five-row
-   import example with the complete ASTER demonstration pair.
-3. Add the structured variance-analysis workflow and three transparent EAC
+1. Run the independent review and live module-worker check for the M1 closure
+   candidate.
+2. Add the structured variance-analysis workflow and three transparent EAC
    sensitivity scenarios to Schedule & Cost.
-4. Make the selected work package a true cross-view scope rather than an
+3. Make the selected work package a true cross-view scope rather than an
    Overview row highlight.
-5. Run the M2 moderated comprehension study and record the findings.
+4. Run the M2 moderated comprehension study and record the findings.
+5. Begin the weekly management-report snapshot and consistency contract.
 
 ## Known limitations
 

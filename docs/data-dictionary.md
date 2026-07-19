@@ -2,6 +2,8 @@
 
 **Contract version:** M1 / schema version 1 draft
 
+**Local database schema:** Version 2 (adds revisioned project-configuration history)
+
 **Status date:** 18 July 2026
 
 **Authority:** Master Plan Version 1.1 and ADR-0002
@@ -123,6 +125,26 @@ the confirmed proposal to an active configuration in the same transaction as
 the rows and manifest. Later commits accept only an exact active-registry input;
 they cannot update registry membership as a side effect.
 
+A later candidate may separately propose identifiers not present in the active
+registry. M1 updates are additive only: the user sees the exact work-package,
+calendar and authorised-endpoint additions, confirms a new revision, and then
+the files are revalidated. The update transaction compares both the active
+generation and registry revision before writing. It never changes the active
+dataset pointer, and every accepted revision is retained in
+`projectConfigurationHistory`. Removal and silent import-time mutation are
+forbidden.
+
+## Worker execution boundary
+
+The browser sends original file bytes and the explicit active configuration to
+a versioned Vite module worker. That worker performs checksums, parsing, row
+normalisation, cross-file validation and graph analysis through
+`processImportFiles`. If module workers are unavailable or fail, the interface
+labels the fallback and calls that same pure processor; there is no second
+validation implementation. Tests assert structurally identical worker and
+fallback results. All worker responses complete before a repository transaction
+can open.
+
 ## Import preview and quarantine
 
 Quarantine decisions are ordered, explicit records containing file name, record
@@ -153,6 +175,7 @@ Every successful import is an immutable generation keyed by `importId`.
 | `activities` | `(importId, activityId)`; normalised schedule generation rows |
 | `performance` | `(importId, activityId, periodEnd)`; normalised performance generation rows |
 | `projectConfigurations` | `projectId`; confirmed registries and authorised schedule endpoints |
+| `projectConfigurationHistory` | `(projectId, revision)`; immutable creation/additive-update evidence |
 
 The commit transaction reads the expected pointer and checksum history, verifies
 configuration, writes configuration when required, writes both row sets and the
@@ -174,6 +197,9 @@ performance rows, confirmed project configuration, and empty reserved arrays
 for future risk, change and report-draft records. The active pointer, manifest
 identity, project identity, row counts, registry uniqueness, field rules and
 schedule relationships must all reconcile. Input is capped at 20 MiB.
+Older manifests, checksum-detection history and superseded row generations are
+not included, so restoring into a fresh origin cannot reproduce the previous-
+generation revert option or the source origin's complete duplicate history.
 
 Restore first parses the strict versioned schema, then re-runs cross-file and
 schedule-graph domain validation. A valid preview must be explicitly confirmed.

@@ -14,10 +14,10 @@ import {
   parseBackupJson,
   type BackupEnvelope,
 } from "../schemas/backup";
-import { IMPORT_SCHEMA_VERSION, importManifestDraftSchema } from "../schemas/manifest";
+import { importManifestDraftSchema } from "../schemas/manifest";
 import type { ValidationIssue } from "../schemas/validationIssue";
 import { DatasetRepository } from "./datasetRepository";
-import { ProjectControlsDb } from "./db";
+import { DATABASE_SCHEMA_VERSION, ProjectControlsDb } from "./db";
 import {
   ImportRepository,
   type PreparedImportGeneration,
@@ -208,6 +208,8 @@ export class BackupRepository {
 
   async restorePreview(preview: BackupRestorePreview) {
     const manifest = await this.imports.commitGeneration(preview.prepared);
+    // The dataset is already committed at this point. A cosmetic lifecycle
+    // timestamp must not make a successful atomic restore appear to have failed.
     await this.db.meta
       .put({
         key: "lastRestoreAt",
@@ -227,7 +229,7 @@ export class BackupRepository {
     const metaValue = (key: string) =>
       meta.find((record) => record.key === key)?.value;
     return {
-      schemaVersion: metaValue("schemaVersion") ?? IMPORT_SCHEMA_VERSION,
+      schemaVersion: metaValue("schemaVersion") ?? DATABASE_SCHEMA_VERSION,
       activeImportId: active?.importId,
       lastImportAt: active?.manifest.importedAt,
       lastBackupAt: metaValue("lastBackupAt"),
@@ -247,6 +249,7 @@ export class BackupRepository {
         this.db.activities,
         this.db.performance,
         this.db.projectConfigurations,
+        this.db.projectConfigurationHistory,
       ],
       () =>
         this.db.performance
@@ -254,11 +257,12 @@ export class BackupRepository {
           .then(() => this.db.activities.clear())
           .then(() => this.db.manifests.clear())
           .then(() => this.db.projectConfigurations.clear())
+          .then(() => this.db.projectConfigurationHistory.clear())
           .then(() => this.db.meta.clear())
           .then(() =>
             this.db.meta.add({
               key: "schemaVersion",
-              value: IMPORT_SCHEMA_VERSION,
+              value: DATABASE_SCHEMA_VERSION,
             }),
           )
           .then(() => undefined),

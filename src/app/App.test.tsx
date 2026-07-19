@@ -35,8 +35,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "52");
-    expect(screen.getByText("48.7 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "53");
+    expect(screen.getByText("49.6 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -124,7 +124,7 @@ describe("project controls application", () => {
       level: 1,
     });
     await user.click(
-      screen.getByRole("button", { name: "Load synthetic example" }),
+      screen.getByRole("button", { name: "Load complete ASTER example" }),
     );
     await screen.findByRole("heading", {
       name: "The data pair is technically valid.",
@@ -167,7 +167,7 @@ describe("project controls application", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /A-003/ })).toHaveTextContent(
-      "-£70,000",
+      "WP100",
     );
 
     await user.click(
@@ -179,7 +179,7 @@ describe("project controls application", () => {
     const storageHealth = screen.getByRole("region", {
       name: "Local storage health",
     });
-    expect(within(storageHealth).getByText(/^IMPORT-/)).toBeInTheDocument();
+    expect(await within(storageHealth).findByText(/^IMPORT-/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Download JSON backup" }),
     ).toBeEnabled();

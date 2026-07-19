@@ -4,6 +4,7 @@ import { reviewImportFiles } from "../../features/import/importWorkflow";
 import { DatasetRepository } from "../../repositories/datasetRepository";
 import { ProjectControlsDb } from "../../repositories/db";
 import { ImportRepository } from "../../repositories/importRepository";
+import { ProjectConfigurationRepository } from "../../repositories/projectConfigurationRepository";
 import {
   buildImportedPerformanceSnapshot,
   periodicPerformanceForScope,
@@ -16,6 +17,7 @@ describe("imported performance view model", () => {
     const pair = await reviewImportFiles(files.schedule, files.performance, {
       datasets: new DatasetRepository(db),
       imports: new ImportRepository(db),
+      configurations: new ProjectConfigurationRepository(db),
     });
 
     expect(pair.preview).toBeDefined();
@@ -46,8 +48,8 @@ describe("imported performance view model", () => {
           },
         ],
         totals: {
-          sourceRows: 10,
-          acceptedRows: 10,
+          sourceRows: 1020,
+          acceptedRows: 1020,
           blockedRows: 0,
           quarantinedRows: 0,
           warningIssues: 0,
@@ -75,24 +77,26 @@ describe("imported performance view model", () => {
       ev: 330_000,
       ac: 355_000,
     });
-    expect(snapshot.trend).toEqual([
-      {
-        period: "2026-06-14",
-        label: "P1",
-        pv: 1_500_000,
-        ev: 1_350_000,
-        ac: 1_440_000,
-      },
-    ]);
-    expect(periodicPerformanceForScope(snapshot, "WP300")).toEqual([
-      {
-        period: "2026-06-14",
-        label: "P1",
-        pv: 400_000,
-        ev: 330_000,
-        ac: 355_000,
-      },
-    ]);
+    expect(snapshot.activities).toHaveLength(60);
+    expect(snapshot.trend).toHaveLength(16);
+    expect(snapshot.trend.at(-1)).toEqual({
+      period: "2026-06-14",
+      label: "P16",
+      pv: 1_500_000,
+      ev: 1_350_000,
+      ac: 1_440_000,
+    });
+    const wp300Periods = periodicPerformanceForScope(snapshot, "WP300");
+    expect(wp300Periods).toHaveLength(16);
+    expect(wp300Periods.reduce((total, period) => total + period.pv, 0)).toBe(
+      400_000,
+    );
+    expect(wp300Periods.reduce((total, period) => total + period.ev, 0)).toBe(
+      330_000,
+    );
+    expect(wp300Periods.reduce((total, period) => total + period.ac, 0)).toBe(
+      355_000,
+    );
     await db.delete();
   });
 });

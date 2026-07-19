@@ -1,34 +1,31 @@
-import type { ActivityId, ProjectConfigurationInput } from "../../domain/records";
+import type { ProjectConfigurationInput } from "../../domain/records";
 import {
   createImportManifestDraft,
-  orchestrateImportCandidate,
   type CandidateCsvFile,
   type ImportCandidateInput,
   type ImportCandidatePreview,
-  type ImportFileKind,
 } from "../../domain/import/orchestrateImport";
-import { parseCsvBytes } from "../../domain/import/parseCsv";
-import { proposeProjectConfiguration } from "../../domain/import/projectConfiguration";
 import type { DatasetRepository } from "../../repositories/datasetRepository";
 import type {
   DuplicateChecksumMatch,
   ImportRepository,
 } from "../../repositories/importRepository";
-import {
-  PERFORMANCE_CSV_HEADERS,
-  validatePerformanceCsvRows,
-} from "../../schemas/performanceCsv";
-import {
-  SCHEDULE_CSV_HEADERS,
-  validateScheduleCsvRows,
-} from "../../schemas/scheduleCsv";
+import type {
+  ProjectConfigurationRepository,
+  ProjectConfigurationUpdatePreview,
+} from "../../repositories/projectConfigurationRepository";
 import type { ImportManifest } from "../../schemas/manifest";
 import type { ValidationIssue } from "../../schemas/validationIssue";
 import { encodeCsv } from "../../utils/safeCsvExport";
+import {
+  executeImportProcessing,
+  type ImportRuntimeEvidence,
+} from "./importWorkerClient";
 
 export interface ImportWorkflowRepositories {
   datasets: DatasetRepository;
   imports: ImportRepository;
+  configurations: ProjectConfigurationRepository;
 }
 
 export interface ImportReview {
@@ -41,6 +38,8 @@ export interface ImportReview {
   configurationRequiresConfirmation: boolean;
   duplicateChecksumMatches: readonly DuplicateChecksumMatch[];
   expectedActiveImportId: string | null;
+  runtime: ImportRuntimeEvidence;
+  configurationUpdate?: ProjectConfigurationUpdatePreview;
 }
 
 export interface CommitImportOptions {
@@ -50,130 +49,75 @@ export interface CommitImportOptions {
   importedAt?: string;
 }
 
-const checksumHex = async (buffer: ArrayBuffer) => {
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
-
-const candidateFile = async (
-  file: File,
-  kind: ImportFileKind,
-): Promise<CandidateCsvFile> => {
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  const requiredHeaders =
-    kind === "schedule" ? SCHEDULE_CSV_HEADERS : PERFORMANCE_CSV_HEADERS;
-
-  return {
-    kind,
-    fileName: file.name,
-    byteSize: bytes.byteLength,
-    checksumSha256: await checksumHex(buffer),
-    parseResult: parseCsvBytes(bytes, {
-      fileName: file.name,
-      requiredHeaders,
-    }),
-  };
-};
-
-const proposedBoundaryIds = (
-  activities: ReturnType<typeof validateScheduleCsvRows>["records"],
-) => {
-  const predecessorIds = new Set(
-    activities.flatMap((record) =>
-      record.value.predecessorLinks.map((link) => link.activityId),
-    ),
-  );
-  const starts = activities
-    .filter((record) => record.value.predecessorLinks.length === 0)
-    .map((record) => record.value.activityId);
-  const finishes = activities
-    .filter((record) => !predecessorIds.has(record.value.activityId))
-    .map((record) => record.value.activityId);
-
-  return {
-    starts: [...new Set(starts)] as ActivityId[],
-    finishes: [...new Set(finishes)] as ActivityId[],
-  };
-};
-
-const noConfigurationIssue = (fileName: string): ValidationIssue => ({
-  severity: "blocking",
-  code: "project_configuration_unavailable",
-  fileName,
-  rule: "A project registry could not be proposed from the accepted schedule rows.",
-  suggestion: "Correct the blocking schedule fields, then validate both files again.",
-});
-
 export async function reviewImportFiles(
   scheduleFile: File,
   performanceFile: File,
   repositories: ImportWorkflowRepositories,
 ): Promise<ImportReview> {
-  const [schedule, performance, activeDataset] = await Promise.all([
-    candidateFile(scheduleFile, "schedule"),
-    candidateFile(performanceFile, "performance"),
+  const [scheduleBytes, performanceBytes, activeDataset] = await Promise.all([
+    scheduleFile.arrayBuffer(),
+    performanceFile.arrayBuffer(),
     repositories.datasets.getActiveDataset(),
   ]);
-  const scheduleRows = validateScheduleCsvRows(
-    schedule.fileName,
-    schedule.parseResult.header,
-    schedule.parseResult.records,
-  );
-  const performanceRows = validatePerformanceCsvRows(
-    performance.fileName,
-    performance.parseResult.header,
-    performance.parseResult.records,
-  );
-  const boundaries = proposedBoundaryIds(scheduleRows.records);
-  const configuration =
-    activeDataset?.configuration ??
-    proposeProjectConfiguration(
-      scheduleRows.records,
-      boundaries.starts,
-      boundaries.finishes,
-    );
+  const executed = await executeImportProcessing({
+    schedule: {
+      kind: "schedule",
+      fileName: scheduleFile.name,
+      bytes: scheduleBytes,
+    },
+    performance: {
+      kind: "performance",
+      fileName: performanceFile.name,
+      bytes: performanceBytes,
+    },
+    activeConfiguration: activeDataset?.configuration,
+  });
+  const {
+    schedule,
+    performance,
+    candidate,
+    preview,
+    issues,
+    configuration,
+    inferredConfiguration,
+  } = executed.result;
 
   if (configuration === undefined) {
     return {
       schedule,
       performance,
-      issues: [
-        ...schedule.parseResult.issues,
-        ...performance.parseResult.issues,
-        ...scheduleRows.issues,
-        ...performanceRows.issues,
-        noConfigurationIssue(schedule.fileName),
-      ],
+      issues,
       configurationRequiresConfirmation: activeDataset === undefined,
       duplicateChecksumMatches: [],
       expectedActiveImportId: activeDataset?.importId ?? null,
+      runtime: executed.runtime,
     };
   }
 
-  const candidate: ImportCandidateInput = {
-    schedule,
-    performance,
-    configuration,
-  };
-  const preview = orchestrateImportCandidate(candidate);
   const duplicateChecksumMatches = await repositories.imports.findDuplicateChecksums(
     configuration.projectId,
     [schedule.checksumSha256, performance.checksumSha256],
   );
+  const configurationUpdate =
+    activeDataset !== undefined && inferredConfiguration !== undefined
+      ? await repositories.configurations.previewAdditiveUpdate(
+          inferredConfiguration,
+          activeDataset.importId,
+        )
+      : undefined;
 
   return {
     schedule,
     performance,
     candidate,
     preview,
-    issues: preview.issues,
+    issues,
     configuration,
     configurationRequiresConfirmation: activeDataset === undefined,
     duplicateChecksumMatches,
     expectedActiveImportId: activeDataset?.importId ?? null,
+    runtime: executed.runtime,
+    configurationUpdate,
   };
 }
 

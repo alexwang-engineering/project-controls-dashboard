@@ -18,8 +18,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M1",
     title: "Foundation and import",
     plannedHours: 15,
-    completionPercent: 92,
-    evidence: "The guided import, validation, atomic generation storage, versioned backup, validated restore and storage-health controls are tested; worker isolation and registry evolution remain.",
+    completionPercent: 98,
+    evidence: "Worker-isolated validation with identical fallback, the complete ASTER pair, revisioned registry updates, atomic storage and recovery all pass; independent M1 gate review remains.",
   },
   {
     id: "M2",

@@ -11,6 +11,7 @@ import {
   type ImportManifestDraft,
 } from "../schemas/manifest";
 import type {
+  ProjectConfigurationHistoryRecord,
   ProjectConfigurationRecord,
   StoredActivity,
   StoredPerformanceRecord,
@@ -196,6 +197,7 @@ export class ImportRepository {
           this.db.activities,
           this.db.performance,
           this.db.projectConfigurations,
+          this.db.projectConfigurationHistory,
         ],
         () =>
           this.db.meta
@@ -237,9 +239,19 @@ export class ImportRepository {
                   configuration: activeConfiguration(prepared.configuration),
                   createdImportId: draft.importId,
                   updatedAt: draft.importedAt,
+                  revision: 1,
+                };
+                const history: ProjectConfigurationHistoryRecord = {
+                  projectId: draft.projectId,
+                  revision: 1,
+                  configuration: record.configuration,
+                  recordedAt: draft.importedAt,
+                  activeImportId: draft.importId,
+                  reason: "created",
                 };
                 return this.db.projectConfigurations
                   .add(record)
+                  .then(() => this.db.projectConfigurationHistory.add(history))
                   .then(() => ({ activeImportId, matches }));
               }
               if (
