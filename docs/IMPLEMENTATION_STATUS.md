@@ -1,9 +1,11 @@
 # Implementation status
 
-**Status date:** 18 July 2026  
+**Status date:** 19 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** M1 import orchestration and atomic generation repository
+**Current increment:** Active-generation dashboard and schedule/cost trace
+
+**Evidence-weighted MVP progress:** 51% (47.7 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -12,13 +14,14 @@
 | Application foundation | React 19, TypeScript 7, Vite 8, router, responsive shell | Working |
 | Synthetic dataset | 5 WPs, 60 activities, 16 periods, 8 milestones, 12 risks, 6 changes | Tested |
 | Calculation engine | Fixed Week 10 EVM fixture plus missing/zero/boundary behaviour | Tested |
-| Management overview | KPI cards, decision headline, curve, WP reconciliation, exceptions | Working |
+| Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and exceptions | Working |
+| Schedule and cost | Period/scope filters, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
 | Milestones | Read-only register, six-state presentation, calendar variance | Working slice |
 | Risks | Read-only register, prioritisation, triggers, 5 × 5 heatmap | Working slice |
 | Changes | Read-only register, exposure summary, baseline warning | Working slice |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 151 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 168 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -26,6 +29,8 @@
 | M1 schedule graph | Self/missing links, exact cycle members, lag/open-end/constraint warnings, iterative 10,000-node proof | Tested increment |
 | M1 import orchestration | Accepted-row stage isolation, explicit quarantine loop, manifest/count reconciliation | Tested increment |
 | M1 generation repository | Pointer-last Dexie commit, active reads, rollback/quota injection, confirmation, duplicate history, revert and GC | Tested increment |
+| M1 import interface | Guided two-file selection, validation evidence, first-registry/repeated-checksum confirmation and atomic receipt | Working |
+| Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
 | Desktop review build | Signed local macOS app wrapper, SPA route fallback and repeatable packaging command | Verified |
 
 ## Milestone position against the accepted plan
@@ -33,9 +38,9 @@
 | Milestone | Target | Current evidence | Remaining gate work |
 |---|---:|---|---|
 | M0 — Specification and architecture | 22 Jul | Master plan, two ADRs, data dictionary, stack, fixed fixture, independent M1 review | Record remaining governance registers and formal gate decision |
-| M1 — Foundation and import | 31 Jul | Shell, demo snapshot, trust-boundary ADR, exact fixtures, parser, schemas, orchestrator, graph and atomic generation storage | Worker UI, checksum preparation, backup/recovery |
-| M2 — Overview | 9 Aug | Core overview, curve, KPIs, WP table, responsive QA | True cross-view filtering, source-row trace, empty/error states, research round |
-| M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, fixture tests | Aggregation trace, current-period view, variance workflow, help content |
+| M1 — Foundation and import | 31 Jul | Guided import, trust-boundary ADR, exact fixtures, parser, schemas, orchestrator, graph, checksum controls and atomic generation storage | Worker boundary, backup/restore and storage-status UI |
+| M2 — Overview | 9 Aug | Active-generation overview, curve, KPIs, WP table, Schedule & Cost drill-down, source trace and labelled fallback | True global cross-view filter, empty/error browser QA and research round |
+| M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, imported aggregation, cumulative period trace and activity evidence | Three EAC scenarios, structured variance workflow and expanded help |
 | M4 — Milestones | 20 Aug | Read-only register and overview exceptions | Domain status rules/tests, filters, predecessor chain, recovery workflow |
 | M5 — Risks | 28 Aug | Read-only register and heatmap | CRUD, inherent score, filters, control/escalation workflow, boundary tests |
 | M6 — Changes | 4 Sep | Read-only register and baseline warning | Workflow/state machine, decisions, authority, reconciliation logic |
@@ -44,31 +49,25 @@
 
 ## Next implementation slice
 
-M1 import and trust boundary is next because every editable and report feature
-depends on validated, recoverable data.
-
-The normative contract decisions are recorded in
-[`ADR-0002`](architecture-decisions/ADR-0002-m1-import-trust-boundary.md).
-
-1. Move the tested parser, schemas, and orchestration into the typed module-worker
-   protocol and connect its result to the preview UI.
-2. Add raw-byte SHA-256 preparation and duplicate-confirmation UI before the
-   transaction opens.
-3. Add storage quota/persistence states plus versioned backup and validated
-   restore through the same commit path.
-4. Add the validation error-report builder through the shared safe encoder.
-5. Prove the complete valid, invalid, damaged, and 1,000-row worker/UI flow with
-   automated tests.
+1. Add versioned backup/validated restore and a Settings storage-health view.
+2. Move parsing/orchestration behind the typed worker boundary and verify the
+   complete invalid, damaged and 1,000-row browser flow.
+3. Add the structured variance-analysis workflow and three transparent EAC
+   sensitivity scenarios to Schedule & Cost.
+4. Make the selected work package a true cross-view scope rather than an
+   Overview row highlight.
+5. Run the M2 moderated comprehension study and record the findings.
 
 ## Known limitations
 
-- The work-package control currently highlights the selected row; it does not yet
-  recompute every overview element as a true global filter.
+- The Overview work-package control highlights and identifies the row; the
+  Schedule & Cost control performs the scoped recalculation. A shared global
+  scope remains to be implemented.
 - Registers are demonstration views and are not editable yet.
-- The three data-quality warnings are fixture metadata; the validation details
-  will become actionable in M1.
-- Schedule/cost trace, import, persistence, reporting, and settings are planned
-  pages, not completed features.
+- Milestone, risk and change registers are explicitly labelled synthetic even
+  when schedule/cost values come from an active import.
+- Weekly reporting, editable variance ownership, backup/restore and storage
+  settings remain planned workflows.
 - Browser QA so far covers the in-app Chromium surface at desktop and 390 px; the
   full Chromium/Firefox/WebKit matrix belongs to M8.
 

@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { deliveryProgress } from "../app/deliveryProgress";
-import { demoSnapshot } from "../data/demo";
 import { useProjectStore } from "../app/store";
+import { useProjectPerformance } from "../app/useProjectPerformance";
 import { formatDate } from "../utils/format";
 
 const navigation = [
@@ -29,6 +29,8 @@ const navigation = [
 
 export function AppShell() {
   const { announcement, reloadDemo } = useProjectStore();
+  const { snapshot, status, error } = useProjectPerformance();
+  const hasActiveImport = snapshot.source === "active-import";
 
   return (
     <div className="app-shell">
@@ -65,20 +67,20 @@ export function AppShell() {
 
         <div className="sidebar__project">
           <p className="sidebar__label">Current project</p>
-          <strong>{demoSnapshot.project.name}</strong>
+          <strong>{snapshot.project.name}</strong>
           <dl className="sidebar__meta">
             <div>
               <dt>Data date</dt>
-              <dd>{formatDate(demoSnapshot.project.reportingDate)}</dd>
+              <dd>{formatDate(snapshot.project.reportingDate)}</dd>
             </div>
             <div>
               <dt>Baseline</dt>
-              <dd>{demoSnapshot.project.baselineVersion}</dd>
+              <dd>{snapshot.project.baselineVersion}</dd>
             </div>
           </dl>
           <button className="button button--sidebar" type="button" onClick={reloadDemo}>
             <RefreshCw size={16} aria-hidden="true" />
-            Reload demo
+            Reset view
           </button>
         </div>
       </aside>
@@ -86,12 +88,12 @@ export function AppShell() {
       <div className="workspace">
         <div className="workspace__topbar">
           <div>
-            <span className="topbar__project">{demoSnapshot.project.name}</span>
+            <span className="topbar__project">{snapshot.project.name}</span>
             <span className="topbar__separator" aria-hidden="true">
               /
             </span>
             <span className="topbar__baseline">
-              Baseline {demoSnapshot.project.baselineVersion}
+              Baseline {snapshot.project.baselineVersion}
             </span>
           </div>
           <div className="topbar__status">
@@ -114,9 +116,34 @@ export function AppShell() {
                 {deliveryProgress.evidencedPlanHours} / {deliveryProgress.totalPlannedHours} weighted hours
               </small>
             </div>
-            <div className="data-quality" aria-label="Data quality: three warnings, zero blocking errors">
+            <div
+              className={
+                "data-quality " +
+                (error
+                  ? "data-quality--error"
+                  : hasActiveImport
+                    ? "data-quality--active"
+                    : "data-quality--fallback")
+              }
+              aria-label={
+                error
+                  ? `Data source error: ${error}`
+                  : status === "loading"
+                    ? "Loading the active local dataset"
+                    : hasActiveImport
+                      ? `Active validated import ${snapshot.importId}`
+                      : "No active import; using the synthetic demonstration snapshot"
+              }
+              title={error ?? snapshot.importId}
+            >
               <span className="data-quality__dot" aria-hidden="true" />
-              3 warnings
+              {status === "loading"
+                ? "Loading data"
+                : error
+                  ? "Read error"
+                  : hasActiveImport
+                    ? "Active import"
+                    : "Demo fallback"}
             </div>
           </div>
         </div>

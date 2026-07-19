@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { ModulePage } from "../features/modules/ModulePage";
+import { ActiveDatasetProvider } from "./ActiveDatasetContext";
 
 const OverviewPage = lazy(() =>
   import("../features/overview/OverviewPage").then((module) => ({
@@ -28,54 +29,28 @@ const ChangesPage = lazy(() =>
     default: module.ChangesPage,
   })),
 );
+const ScheduleCostPage = lazy(() =>
+  import("../features/scheduleCost/ScheduleCostPage").then((module) => ({
+    default: module.ScheduleCostPage,
+  })),
+);
 
 export function App() {
   return (
-    <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="route-loading" role="status">
-            Loading project controls view…
-          </div>
-        }
-      >
-        <Routes>
-          <Route element={<AppShell />}>
+    <ActiveDatasetProvider>
+      <BrowserRouter>
+        <Suspense
+          fallback={
+            <div className="route-loading" role="status">
+              Loading project controls view…
+            </div>
+          }
+        >
+          <Routes>
+            <Route element={<AppShell />}>
             <Route index element={<OverviewPage />} />
             <Route path="import" element={<ImportPage />} />
-            <Route
-              path="schedule-cost"
-              element={
-                <ModulePage
-                  eyebrow="M2-M3 performance"
-                  title="Schedule and cost"
-                  description="Trace project and work-package performance from headline variance to source records."
-                  items={[
-                    "Periodic and cumulative PV, EV and AC",
-                    "EAC sensitivity and TCPI",
-                    "Structured variance analysis",
-                    "Activity and reporting-period trace",
-                  ]}
-                  guide={{
-                    purpose: "Use this planned view to move from project-level variance to the work package and source record that needs action.",
-                    steps: [
-                      {
-                        title: "Set the scope",
-                        detail: "Choose the reporting date and work package you want to investigate.",
-                      },
-                      {
-                        title: "Compare performance",
-                        detail: "Read PV, EV and AC together; SPI or CPI below 1.00 is adverse.",
-                      },
-                      {
-                        title: "Trace the cause",
-                        detail: "Open the affected period and activity, then assign a corrective action and owner.",
-                      },
-                    ],
-                  }}
-                />
-              }
-            />
+            <Route path="schedule-cost" element={<ScheduleCostPage />} />
             <Route path="milestones" element={<MilestonesPage />} />
             <Route path="risks" element={<RisksPage />} />
             <Route path="changes" element={<ChangesPage />} />
@@ -145,9 +120,10 @@ export function App() {
                 />
               }
             />
-          </Route>
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            </Route>
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ActiveDatasetProvider>
   );
 }

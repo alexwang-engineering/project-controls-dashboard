@@ -1,7 +1,8 @@
-import { AlertTriangle, ArrowRight, CalendarDays } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarDays, Database } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { useProjectStore } from "../../app/store";
+import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
@@ -20,42 +21,43 @@ import {
 } from "../../utils/format";
 import { PerformanceChart } from "./PerformanceChart";
 
-const getCurrentPoint = () => {
-  const point = demoSnapshot.trend.find(
-    (candidate) => candidate.period === demoSnapshot.project.reportingDate,
-  );
-
-  if (!point) {
-    throw new Error("The reporting-date trend point is missing from the demo data.");
-  }
-
-  return point;
-};
-
-const currentPoint = getCurrentPoint();
-
-const projectMetrics = calculateEarnedValue({
-  bac: demoSnapshot.project.originalBac,
-  pv: currentPoint.pv,
-  ev: currentPoint.ev,
-  ac: currentPoint.ac,
-});
-
-const finishVarianceDays = differenceInCalendarDays(
-  parseISO(demoSnapshot.project.forecastFinish),
-  parseISO(demoSnapshot.project.baselineFinish),
-);
-
 const criticalRiskCount = demoSnapshot.risks.filter(
   (risk) => risk.rating === "critical",
 ).length;
 
 export function OverviewPage() {
-  const { selectedWorkPackage, reportingDate, setSelectedWorkPackage } =
-    useProjectStore();
-  const selectedPackage = demoSnapshot.workPackages.find(
-    (workPackage) => workPackage.id === selectedWorkPackage,
+  const { selectedWorkPackage, setSelectedWorkPackage } = useProjectStore();
+  const { snapshot, status, error } = useProjectPerformance();
+  const currentPoint =
+    [...snapshot.trend]
+      .reverse()
+      .find((candidate) => candidate.period <= snapshot.project.reportingDate) ??
+    snapshot.trend.at(-1);
+  if (currentPoint === undefined) {
+    throw new Error("The selected dataset has no performance periods.");
+  }
+  const projectMetrics = calculateEarnedValue({
+    bac: snapshot.project.originalBac,
+    pv: currentPoint.pv,
+    ev: currentPoint.ev,
+    ac: currentPoint.ac,
+  });
+  const finishVarianceDays = differenceInCalendarDays(
+    parseISO(snapshot.project.forecastFinish),
+    parseISO(snapshot.project.baselineFinish),
   );
+  const effectiveWorkPackage = snapshot.workPackages.some(
+    (workPackage) => workPackage.id === selectedWorkPackage,
+  )
+    ? selectedWorkPackage
+    : "all";
+  const selectedPackage = snapshot.workPackages.find(
+    (workPackage) => workPackage.id === effectiveWorkPackage,
+  );
+  const sourceDescription =
+    snapshot.source === "active-import"
+      ? `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`
+      : "No validated generation is active in this browser, so the labelled synthetic demonstration snapshot is shown.";
 
   return (
     <div className="page-stack">
@@ -68,11 +70,33 @@ export function OverviewPage() {
             <CalendarDays size={17} aria-hidden="true" />
             <span>
               <small>Data date</small>
-              {formatDate(reportingDate)}
+              {formatDate(snapshot.project.reportingDate)}
             </span>
           </div>
         }
       />
+
+      <section
+        className={
+          "source-banner " +
+          (snapshot.source === "active-import"
+            ? "source-banner--active"
+            : "source-banner--fallback")
+        }
+        aria-label="Dashboard data source"
+      >
+        <Database size={19} aria-hidden="true" />
+        <div>
+          <strong>
+            {status === "loading"
+              ? "Checking local data…"
+              : snapshot.source === "active-import"
+                ? "Validated active generation"
+                : "Synthetic fallback in use"}
+          </strong>
+          <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
+        </div>
+      </section>
 
       <PageGuide
         pageName="Project overview"
@@ -97,11 +121,11 @@ export function OverviewPage() {
         <label htmlFor="work-package-filter">Work package</label>
         <select
           id="work-package-filter"
-          value={selectedWorkPackage}
+          value={effectiveWorkPackage}
           onChange={(event) => setSelectedWorkPackage(event.target.value)}
         >
           <option value="all">All work packages</option>
-          {demoSnapshot.workPackages.map((workPackage) => (
+          {snapshot.workPackages.map((workPackage) => (
             <option key={workPackage.id} value={workPackage.id}>
               {workPackage.id} — {workPackage.name}
             </option>
@@ -121,17 +145,16 @@ export function OverviewPage() {
         <div>
           <p className="eyebrow">Management attention</p>
           <h2 id="decision-title">
-            Recovery action is needed to protect energisation and handover.
+            Recovery action is needed to protect the current forecast.
           </h2>
           <p>
             The project is {formatPercent(projectMetrics.earnedCompletion)} earned
             complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
-            Mechanical completion is seven days late and the panel FAT risk trigger is
-            breached.
+            The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. Trace the adverse variance to its work package and activity before agreeing recovery action.
           </p>
         </div>
-        <Link className="button button--light" to="/risks">
-          Review exposure <ArrowRight size={17} aria-hidden="true" />
+        <Link className="button button--light" to="/schedule-cost">
+          Trace variance <ArrowRight size={17} aria-hidden="true" />
         </Link>
       </section>
 
@@ -139,16 +162,20 @@ export function OverviewPage() {
         <MetricCard
           label="Earned completion"
           value={formatPercent(projectMetrics.earnedCompletion)}
-          status="adverse"
-          statusLabel="Behind plan"
-          delta="−6.3 pp"
+          status={efficiencyStatus(projectMetrics.spi)}
+          statusLabel={projectMetrics.spi !== null && projectMetrics.spi >= 0.98 ? "On plan" : "Behind plan"}
+          delta={formatPercent(
+            projectMetrics.earnedCompletion === null || projectMetrics.plannedCompletion === null
+              ? null
+              : projectMetrics.earnedCompletion - projectMetrics.plannedCompletion,
+          )}
           detail={formatPercent(projectMetrics.plannedCompletion) + " planned"}
         />
         <MetricCard
           label="Schedule performance index"
           value={formatIndex(projectMetrics.spi)}
           status={efficiencyStatus(projectMetrics.spi)}
-          statusLabel="Adverse"
+          statusLabel={projectMetrics.spi !== null && projectMetrics.spi >= 0.98 ? "Controlled" : "Adverse"}
           delta={formatCompactCurrency(projectMetrics.sv)}
           detail="Earned value for each £1.00 planned"
         />
@@ -156,17 +183,17 @@ export function OverviewPage() {
           label="Cost performance index"
           value={formatIndex(projectMetrics.cpi)}
           status={efficiencyStatus(projectMetrics.cpi)}
-          statusLabel="Adverse"
+          statusLabel={projectMetrics.cpi !== null && projectMetrics.cpi >= 0.98 ? "Controlled" : "Adverse"}
           delta={formatCompactCurrency(projectMetrics.cv)}
           detail="Earned value for each £1.00 spent"
         />
         <MetricCard
           label="Forecast finish"
-          value={formatDate(demoSnapshot.project.forecastFinish)}
-          status="adverse"
-          statusLabel="Late"
-          delta={"+" + String(finishVarianceDays) + " days"}
-          detail={"Baseline " + formatDate(demoSnapshot.project.baselineFinish)}
+          value={formatDate(snapshot.project.forecastFinish)}
+          status={finishVarianceDays > 0 ? "adverse" : "positive"}
+          statusLabel={finishVarianceDays > 0 ? "Late" : "On baseline"}
+          delta={(finishVarianceDays > 0 ? "+" : "") + String(finishVarianceDays) + " days"}
+          detail={"Baseline " + formatDate(snapshot.project.baselineFinish)}
         />
         <MetricCard
           label="Estimate at completion"
@@ -186,9 +213,9 @@ export function OverviewPage() {
       </section>
 
       <PerformanceChart
-        trend={demoSnapshot.trend}
+        trend={[...snapshot.trend]}
         reportingPeriod={currentPoint.label}
-        reportingDate={demoSnapshot.project.reportingDate}
+        reportingDate={snapshot.project.reportingDate}
       />
 
       <section className="panel" aria-labelledby="work-package-title">
@@ -219,13 +246,13 @@ export function OverviewPage() {
               </tr>
             </thead>
             <tbody>
-              {demoSnapshot.workPackages.map((workPackage) => {
+              {snapshot.workPackages.map((workPackage) => {
                 const metrics = calculateEarnedValue(workPackage);
                 const combinedStatus =
                   metrics.spi !== null && metrics.cpi !== null
                     ? efficiencyStatus(Math.min(metrics.spi, metrics.cpi))
                     : "neutral";
-                const isSelected = selectedWorkPackage === workPackage.id;
+                const isSelected = effectiveWorkPackage === workPackage.id;
 
                 return (
                   <tr
@@ -272,6 +299,11 @@ export function OverviewPage() {
             </tfoot>
           </table>
         </div>
+      </section>
+
+      <section className="register-source-note" aria-label="Supporting register data source">
+        <strong>Supporting registers remain synthetic.</strong>
+        <span>Milestone, risk and change editing will be connected to controlled local stores in later increments.</span>
       </section>
 
       <section className="exception-grid" aria-label="Management exceptions">

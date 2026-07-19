@@ -70,7 +70,7 @@ export function PerformanceChart({
           <p className="eyebrow">Cumulative performance</p>
           <h2 id="performance-title">Planned, earned and actual</h2>
           <p className="panel__description">
-            Project-level curve across all 16 synthetic reporting periods.
+            Project-level curve across {trend.length} validated reporting {trend.length === 1 ? "period" : "periods"}.
           </p>
         </div>
         <span className="reporting-period">Status point: {reportingPeriod}</span>

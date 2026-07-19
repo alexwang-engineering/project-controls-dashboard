@@ -4,9 +4,9 @@ A local-first project-controls portfolio application for turning synthetic
 engineering schedule, cost, milestone, risk, and change data into a concise
 management position.
 
-The current implementation is the first tested vertical slice. It is based on
-the Version 1.1 master plan and uses only the synthetic **Aster Depot Automation
-Upgrade** dataset.
+The current implementation is a tested local-first slice based on the Version
+1.1 master plan. It accepts only controlled synthetic data for the portfolio
+release.
 
 ## What is working now
 
@@ -25,10 +25,16 @@ Upgrade** dataset.
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
+- Guided schedule/performance CSV import with field-level validation, checksum
+  control, explicit registry confirmation, and pointer-last atomic persistence.
+- A shared active-generation boundary that supplies project metadata and
+  reconciled performance to the shell, Overview, and Schedule & Cost pages.
+- Period/work-package filtering plus cumulative EVM and activity-level source
+  trace on Schedule & Cost.
+- An explicit synthetic-fallback label whenever no validated import is active.
 
-Import, browser persistence, full schedule/cost trace, editable registers, and
-weekly report generation are clearly marked as planned modules and remain to be
-implemented.
+Backup/restore, the worker boundary, structured variance ownership, editable
+registers, and weekly report generation remain to be implemented.
 
 ## Fixed Week 10 control fixture
 
@@ -76,8 +82,9 @@ src/
 ├── app/             routing and shared UI state
 ├── components/      reusable semantic interface components
 ├── data/            synthetic Aster demonstration snapshot
-├── domain/          framework-independent types and calculations
-├── features/        overview, milestones, risks, changes, planned modules
+├── domain/          records, validation, graph rules, calculations and view models
+├── features/        import, overview, schedule/cost and management registers
+├── repositories/    atomic local generations and active-dataset reads
 ├── styles/          design tokens and responsive/accessibility rules
 └── test/            shared test environment
 ```

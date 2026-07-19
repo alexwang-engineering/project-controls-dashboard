@@ -50,6 +50,12 @@ if [[ -e "$output_path" ]]; then
   mv "$output_path" "$review_build_dir/previous-review.app"
 fi
 ditto --noextattr --noqtn "$staged_app" "$output_path"
+# iCloud-backed Desktop folders can add Finder/file-provider metadata during
+# the copy. Remove only those two bundle-root attributes, then seal the final
+# path so the package is independently verifiable where the reviewer opens it.
+xattr -d com.apple.FinderInfo "$output_path" 2>/dev/null || true
+xattr -d 'com.apple.fileprovider.fpfs#P' "$output_path" 2>/dev/null || true
+codesign --force --deep --sign - "$output_path"
 codesign --verify --deep --strict "$output_path"
 
 print "Created $output_path"

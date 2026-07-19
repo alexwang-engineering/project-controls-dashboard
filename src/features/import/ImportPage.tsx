@@ -10,6 +10,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useState } from "react";
+import { useActiveDataset } from "../../app/ActiveDatasetContext";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { getBrowserRepositories } from "../../repositories/browserRepositories";
@@ -130,6 +131,7 @@ export function ImportPage({
 }: {
   dependencies?: ImportPageDependencies;
 }) {
+  const { refresh } = useActiveDataset();
   const [scheduleFile, setScheduleFile] = useState<File>();
   const [performanceFile, setPerformanceFile] = useState<File>();
   const [review, setReview] = useState<ImportReview>();
@@ -196,12 +198,12 @@ export function ImportPage({
     setIsCommitting(true);
     setErrorMessage("");
     try {
-      setCommitted(
-        await dependencies.commitReview(review, {
-          configurationConfirmed,
-          duplicateChecksumConfirmed: duplicateConfirmed,
-        }),
-      );
+      const manifest = await dependencies.commitReview(review, {
+        configurationConfirmed,
+        duplicateChecksumConfirmed: duplicateConfirmed,
+      });
+      setCommitted(manifest);
+      await refresh();
     } catch (error) {
       setErrorMessage(
         error instanceof Error

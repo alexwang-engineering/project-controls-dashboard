@@ -25,15 +25,15 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M2",
     title: "Overview and performance views",
     plannedHours: 12,
-    completionPercent: 60,
-    evidence: "The overview, KPI cards, trend, filters and accessible tables work; full drill-down and user research remain.",
+    completionPercent: 80,
+    evidence: "The overview and schedule/cost drill-down now read the active generation with reconciled project, period, work-package and activity traces; user research remains.",
   },
   {
     id: "M3",
     title: "Calculation engine",
     plannedHours: 10,
-    completionPercent: 45,
-    evidence: "Core EVM calculations and boundary tests work; traces, variance workflow and complete aggregation remain.",
+    completionPercent: 60,
+    evidence: "Core EVM calculations, imported-data aggregation and source-period traces work; structured variance ownership and sensitivity controls remain.",
   },
   {
     id: "M4",
@@ -89,5 +89,5 @@ export const deliveryProgress = {
   totalPlannedHours,
   evidencedPlanHours,
   completionPercent: Math.round(weightedHourPercent / totalPlannedHours),
-  assessedOn: "2026-07-18",
+  assessedOn: "2026-07-19",
 } as const;

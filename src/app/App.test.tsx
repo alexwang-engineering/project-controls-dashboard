@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getBrowserRepositories } from "../repositories/browserRepositories";
 import { useProjectStore } from "./store";
 import { App } from "./App";
 
@@ -11,6 +12,10 @@ describe("project controls application", () => {
   });
 
   afterEach(() => cleanup());
+
+  afterAll(async () => {
+    await getBrowserRepositories().db.delete();
+  });
 
   it("presents the reconciled Week 10 management position", async () => {
     render(<App />);
@@ -30,8 +35,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "47");
-    expect(screen.getByText("43.8 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "51");
+    expect(screen.getByText("47.7 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -107,5 +112,62 @@ describe("project controls application", () => {
     expect(
       screen.getByLabelText(/Probability 4, impact 4: 1 risks/),
     ).toHaveTextContent("R-001");
+  });
+
+  it("refreshes Overview and Schedule & Cost from the generation committed in the same session", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, "", "/import");
+    render(<App />);
+
+    await screen.findByRole("heading", {
+      name: "Import and data quality",
+      level: 1,
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Load synthetic example" }),
+    );
+    await screen.findByRole("heading", {
+      name: "The data pair is technically valid.",
+    });
+    await user.click(
+      await screen.findByRole("checkbox", {
+        name: "I confirm this proposed synthetic project registry.",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Commit validated import" }),
+    );
+    await screen.findByRole("heading", {
+      name: "The validated generation is now active.",
+    });
+
+    const navigation = screen.getByRole("navigation", {
+      name: "Primary navigation",
+    });
+    await user.click(
+      within(navigation).getByRole("link", { name: "Overview" }),
+    );
+    expect(
+      await screen.findByRole("region", { name: "Dashboard data source" }),
+    ).toHaveTextContent("Validated active generation");
+    expect(screen.getByText("Active import")).toBeInTheDocument();
+
+    await user.click(
+      within(navigation).getByRole("link", { name: "Schedule & cost" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Schedule and cost", level: 1 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Performance data source" }),
+    ).toHaveTextContent("Calculated from the active import");
+    expect(
+      screen.getByRole("table", {
+        name: "Activity-level schedule and cost evidence",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /A-003/ })).toHaveTextContent(
+      "-£70,000",
+    );
   });
 });
