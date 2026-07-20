@@ -4,8 +4,8 @@
 
 **Artifact:** `/Users/wjl/Desktop/Project Controls Dashboard.app`
 
-**Decision:** Native route and keyboard smoke check passed; assistive-technology
-and native input/print approval remain open
+**Decision:** Native route, keyboard and file-validation recovery checks passed;
+assistive-technology, register-editing and native print approval remain open
 
 ## Outcome
 
@@ -17,8 +17,9 @@ setup/input state and authored controls in the accessibility tree.
 
 The clean native origin remained input-first: it showed no active project, no
 demonstration KPI region and no substituted schedule/cost performance. The
-visible delivery position reconciles to **91% — 85.1 of 94 evidence-weighted
-hours** after this inspection was recorded and the bundle was rebuilt.
+visible delivery position now reconciles to **92% — 86.4 of 94 evidence-
+weighted hours** after the native input recovery was completed and the bundle
+was rebuilt.
 
 This is useful native evidence, but it is not described as a VoiceOver test or
 a WCAG-conformance result.
@@ -91,21 +92,55 @@ VoiceOver running.
 - Destructive reset remained disabled until its explicit acknowledgement
   checkbox is selected.
 
+## Native CSV selection and recovery
+
+The initial inspection exposed a genuine native-host defect: the Swift host
+declared `WKUIDelegate` but did not implement WebKit's open-panel callback.
+Activating **Choose File** focused the control but could not open an `NSOpenPanel`.
+
+The host now implements `runOpenPanelWith`, maps WebKit's multiple-selection and
+directory parameters, resolves aliases, constrains selectable content to
+`UTType.commaSeparatedText`, and always completes with chosen URLs or `nil` on
+cancel. A dedicated `macos-latest` CI job now type-checks this AppKit/WebKit
+source with warnings as errors and validates the app metadata; its first remote
+result remains pending until GitHub runs the workflow. The rebuilt bundle
+passed strict signature verification before the
+following task was run in the actual AppKit/WKWebView window:
+
+1. Opened Import & Quality and activated the Schedule CSV control.
+2. Confirmed a real macOS **Open** sheet appeared with CSV documents selectable.
+3. Selected the checksum-pinned `schedule-unclosed-quote.csv` and the valid
+   `controlled-performance.csv`.
+4. Validated through the isolated module worker in 73 ms. The result displayed
+   **Blocking issues must be corrected**, 0 accepted rows, 5 blocking issues,
+   `csv_missingquotes`, **Quoted field unterminated**, and corrective guidance.
+   It also stated **No data has been written** and kept Commit disabled.
+5. Reopened the same native picker, replaced the malformed schedule with
+   `controlled-schedule.csv`, and validated again.
+6. Recovery completed through the isolated module worker in 55 ms with 2 source
+   rows, 2 accepted rows, 0 blocking issues, 0 warnings and reporting date
+   12 April 2026. The first-project registry remained unconfirmed, so no rows
+   were committed.
+7. Reloaded the route. Both file inputs returned to **no file selected**, the
+   native origin still had no active project, and the app was left ready for
+   the user's own input.
+
+This closes the native file-selection and malformed-file recovery item without
+altering the input-first product boundary.
+
 ## Actions deliberately not performed
 
-- No synthetic fixture was imported into the clean review origin; the artifact
-  remains ready for the user's own input.
+- No fixture was committed into the clean review origin; the validated recovery
+  candidate was deliberately left unconfirmed and the route was reloaded.
 - Reset was not enabled or activated.
 - Persistence permission was not requested.
-- No backup was downloaded and no file-picker choice was made.
+- No backup was downloaded.
 - Print was not invoked from the empty input-first report state.
 
 ## Remaining native release gate
 
 - Run VoiceOver through launch, page landmarks, form names/help, validation
   errors, live import status, milestone recovery and report-publication state.
-- Use the native file picker to exercise valid input plus at least one malformed
-  CSV correction journey, preserving the clean review artifact afterward.
 - Confirm keyboard-only register editing and error recovery with the user's
   actual macOS keyboard-navigation settings documented.
 - Inspect a selected immutable full-ASTER publication through the native print
@@ -113,13 +148,19 @@ VoiceOver running.
 - Repeat at enlarged macOS display/text settings and with system contrast
   options where practicable.
 
-Until those tasks pass, this document supports only a **native route, semantic
-and keyboard smoke check**.
+Until those tasks pass, this document supports a **native route, semantic,
+keyboard and file-validation recovery check**, not complete native approval.
 
 ## Post-inspection release gate
 
-After recording the 70% M8 position, `pnpm check:release` passed the dependency
+After recording the earlier 70% M8 position, `pnpm check:release` passed the dependency
 audit, lint, strict type checking, 305/305 Vitest tests, production build, 4/4
 native-server tests and 25/25 Playwright runs. The final browser matrix for this
 increment completed in 47.9 seconds with the runtime/external-network diagnostic
 enabled.
+
+After the file-panel correction and 75% M8 update, the native host passed local
+Swift type-checking with warnings as errors, app metadata validation and a full
+signed package build. The final `pnpm check:release` passed the dependency audit,
+lint, strict type checking, 305/305 Vitest tests, production build, 4/4 native-
+server tests and **26/26 Playwright runs in 31.9 seconds**.

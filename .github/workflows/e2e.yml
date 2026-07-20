@@ -6,6 +6,21 @@ on:
     branches: [main]
 
 jobs:
+  native-host:
+    name: Compile native host
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Type-check AppKit and WebKit host
+        run: >-
+          swiftc -typecheck -warnings-as-errors
+          -target "$(uname -m)-apple-macos13.0"
+          -framework AppKit -framework WebKit
+          packaging/macos-review/native_host.swift
+      - name: Validate app metadata
+        run: plutil -lint packaging/macos-review/Info.plist
+
   playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 20

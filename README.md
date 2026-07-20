@@ -139,7 +139,8 @@ The local security/privacy threat model, controls, negative findings and
 explicit limitations are recorded in
 [`M8_SECURITY_PRIVACY_EVIDENCE.md`](docs/M8_SECURITY_PRIVACY_EVIDENCE.md).
 The signed app's route-by-route WKWebView semantic tree, macOS keyboard path,
-bundle/header proof and remaining manual boundary are recorded in
+real CSV picker, malformed-file recovery, bundle/header proof and remaining
+manual boundary are recorded in
 [`M8_NATIVE_RELEASE_INSPECTION.md`](docs/M8_NATIVE_RELEASE_INSPECTION.md).
 
 ## Fixed Week 10 control fixture
