@@ -70,7 +70,9 @@ A clean browser origin was exercised through the real interface:
 5. Entered a named report author, saved the source-bound draft, confirmed it,
    and published immutable revision 1.
 6. Reloaded the page and confirmed the publication history and enabled
-   snapshot-only print action persisted.
+   snapshot-only print action persisted. A later regression test also confirms
+   that the disabled author and management-summary fields show the selected
+   immutable revision's stored narrative, never an empty/generated live draft.
 7. Checked the default desktop layout and a 390 × 844 viewport; neither had
    horizontal page overflow.
 

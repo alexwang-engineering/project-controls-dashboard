@@ -10,6 +10,9 @@ main-frame bridge for the in-page print button. Both fail closed unless the
 current report DOM identifies a selected immutable publication. The print view
 is explicitly sized to the active paper before WebKit pagination so current
 macOS versions do not emit blank sheets from an uninitialised printing frame.
+At launch, the host probes the private loopback server until it returns a
+successful response (or a bounded failure is shown) before loading the web
+interface; it does not rely on a fixed startup delay.
 
 The packaged app serves the production `dist/` directory only on
 `127.0.0.1:43127`, applies an SPA fallback for application routes, emits the

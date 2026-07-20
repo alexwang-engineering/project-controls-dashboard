@@ -6,6 +6,8 @@ import WebKit
 private let applicationName = "Project Controls Dashboard"
 private let localPort = 43_127
 private let nativePrintHandlerName = "projectControlsPrint"
+private let serverLaunchRetryInterval: TimeInterval = 0.2
+private let serverLaunchMaximumAttempts = 25
 
 final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     private var window: NSWindow?
@@ -155,16 +157,52 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self, weak process] in
-            guard let self else { return }
-            guard process?.isRunning == true else {
-                self.showLaunchFailure(
-                    "The private local server stopped during launch. Close any older copy of the app and reopen it."
-                )
-                return
-            }
-            self.loadApplicationRoute("/")
+        waitForLocalServer(process: process, attempt: 0)
+    }
+
+    private func waitForLocalServer(process: Process, attempt: Int) {
+        guard process.isRunning else {
+            showLaunchFailure(
+                "The private local server stopped during launch. Close any older copy of the app and reopen it."
+            )
+            return
         }
+        guard let url = URL(string: "http://127.0.0.1:\(localPort)/") else {
+            showLaunchFailure("The private local server address is invalid.")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 0.5
+        URLSession.shared.dataTask(with: request) { [weak self, weak process] _, response, _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard process?.isRunning == true else {
+                    self.showLaunchFailure(
+                        "The private local server stopped during launch. Close any older copy of the app and reopen it."
+                    )
+                    return
+                }
+                if let httpResponse = response as? HTTPURLResponse,
+                   httpResponse.statusCode == 200 {
+                    self.loadApplicationRoute("/")
+                    return
+                }
+                guard attempt + 1 < serverLaunchMaximumAttempts else {
+                    self.showLaunchFailure(
+                        "The application interface could not connect to its private local server. Reopen the app and try again."
+                    )
+                    return
+                }
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + serverLaunchRetryInterval
+                ) { [weak self, weak process] in
+                    guard let self, let process else { return }
+                    self.waitForLocalServer(process: process, attempt: attempt + 1)
+                }
+            }
+        }.resume()
     }
 
     private func stopLocalServer() {

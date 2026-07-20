@@ -186,6 +186,23 @@ bridge, the menu shortcut and populated WebKit print preview. It does not yet
 replace the four-page full-ASTER Chromium PDF evidence or claim that a physical
 printer was used.
 
+## Cold-launch readiness correction
+
+A post-package smoke check caught a blank WKWebView that recovered only after
+**View → Reload**. The production assets and loopback server were healthy; the
+host still relied on a fixed 450 ms delay before its first navigation. That
+timing assumption was removed. The host now probes the exact loopback root and
+loads the interface only after an HTTP 200 response, retrying at 200 ms
+intervals for a bounded five-second window and showing an explicit launch
+failure if the process exits or never becomes ready.
+
+The signed app was then quit completely, its host and Python server exits were
+confirmed, it was rebuilt, and it cold-launched directly to the clean input-
+first Overview without a reload. The accessible tree exposed the eight routes,
+**No project loaded**, **Setup required**, the three-step page guide and **93%
+— 87.2 / 94 weighted hours**. A screenshot was visually checked against that
+tree.
+
 ## Remaining native release gate
 
 - Run VoiceOver through launch, page landmarks, form names/help, validation
@@ -223,3 +240,10 @@ produced 87.2. After correcting that bookkeeping value, `pnpm check:release`
 passed the dependency audit, lint, strict type checking, **305/305 Vitest
 tests**, production build, **4/4 native-server tests** and **26/26 Playwright
 runs in 33.7 seconds**.
+
+After the immutable-narrative display and cold-launch readiness corrections,
+`pnpm check:release` again passed the dependency audit, lint, strict type
+checking, **305/305 Vitest tests**, production build, **4/4 native-server
+tests** and **26/26 Playwright runs in 40.2 seconds**. The Swift host separately
+passed warnings-as-errors type checking before the final signed cold-launch
+inspection.

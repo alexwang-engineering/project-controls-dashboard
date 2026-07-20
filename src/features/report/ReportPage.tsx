@@ -304,6 +304,10 @@ function ReportWorkspace({
 
   const report = selectedPublication?.report ?? liveReport;
   const narrativeErrors = validateReportNarrativeForPublication(narrative);
+  const displayedNarrative = selectedPublication?.narrative ?? narrative;
+  const displayedNarrativeErrors = validateReportNarrativeForPublication(
+    displayedNarrative,
+  );
   const publicationInput =
     liveReport === undefined || sourceEvidence === undefined
       ? undefined
@@ -477,23 +481,23 @@ function ReportWorkspace({
             <legend className="sr-only">Management narrative fields</legend>
             <label>
               Report author
-              <input aria-label="Report author" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined ? "report-author-error" : undefined} value={narrative.author} maxLength={80} onChange={(event) => updateNarrative("author", event.target.value)} />
-              {narrativeErrors.success ? null : <small id="report-author-error">{narrativeErrors.fieldErrors.author}</small>}
+              <input aria-label="Report author" aria-invalid={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.author !== undefined} aria-describedby={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.author !== undefined ? "report-author-error" : undefined} value={displayedNarrative.author} maxLength={80} onChange={(event) => updateNarrative("author", event.target.value)} />
+              {displayedNarrativeErrors.success ? null : <small id="report-author-error">{displayedNarrativeErrors.fieldErrors.author}</small>}
             </label>
             <label className="report-publication__wide">
               Management summary
-              <textarea aria-label="Management summary" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.managementSummary !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.managementSummary !== undefined ? "report-summary-error" : undefined} value={narrative.managementSummary} maxLength={2_000} rows={4} onChange={(event) => updateNarrative("managementSummary", event.target.value)} />
-              {narrativeErrors.success ? null : <small id="report-summary-error">{narrativeErrors.fieldErrors.managementSummary}</small>}
+              <textarea aria-label="Management summary" aria-invalid={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.managementSummary !== undefined} aria-describedby={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.managementSummary !== undefined ? "report-summary-error" : undefined} value={displayedNarrative.managementSummary} maxLength={2_000} rows={4} onChange={(event) => updateNarrative("managementSummary", event.target.value)} />
+              {displayedNarrativeErrors.success ? null : <small id="report-summary-error">{displayedNarrativeErrors.fieldErrors.managementSummary}</small>}
             </label>
             <label>
               Decisions required
-              <textarea aria-label="Decisions required" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.decisionsRequired !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.decisionsRequired !== undefined ? "report-decisions-error" : undefined} value={narrative.decisionsRequired} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("decisionsRequired", event.target.value)} />
-              {narrativeErrors.success ? null : <small id="report-decisions-error">{narrativeErrors.fieldErrors.decisionsRequired}</small>}
+              <textarea aria-label="Decisions required" aria-invalid={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.decisionsRequired !== undefined} aria-describedby={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.decisionsRequired !== undefined ? "report-decisions-error" : undefined} value={displayedNarrative.decisionsRequired} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("decisionsRequired", event.target.value)} />
+              {displayedNarrativeErrors.success ? null : <small id="report-decisions-error">{displayedNarrativeErrors.fieldErrors.decisionsRequired}</small>}
             </label>
             <label>
               Next-period focus
-              <textarea aria-label="Next-period focus" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined ? "report-focus-error" : undefined} value={narrative.nextPeriodFocus} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("nextPeriodFocus", event.target.value)} />
-              {narrativeErrors.success ? null : <small id="report-focus-error">{narrativeErrors.fieldErrors.nextPeriodFocus}</small>}
+              <textarea aria-label="Next-period focus" aria-invalid={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.nextPeriodFocus !== undefined} aria-describedby={!displayedNarrativeErrors.success && displayedNarrativeErrors.fieldErrors.nextPeriodFocus !== undefined ? "report-focus-error" : undefined} value={displayedNarrative.nextPeriodFocus} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("nextPeriodFocus", event.target.value)} />
+              {displayedNarrativeErrors.success ? null : <small id="report-focus-error">{displayedNarrativeErrors.fieldErrors.nextPeriodFocus}</small>}
             </label>
           </fieldset>
           <div className="report-publication__actions">

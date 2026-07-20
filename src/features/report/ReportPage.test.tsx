@@ -173,7 +173,13 @@ describe("weekly management report page", () => {
     expect(
       await screen.findByRole("region", { name: "Published revision" }),
     ).toHaveTextContent("Published revision 1");
-    expect(screen.getByText(/Management approved this frozen position/)).toBeInTheDocument();
+    const reportDocument = document.querySelector(".report-document");
+    expect(reportDocument).not.toBeNull();
+    expect(
+      within(reportDocument as HTMLElement).getByText(
+        /Management approved this frozen position/,
+      ),
+    ).toBeInTheDocument();
     expect(document.querySelector(".report-page")).toHaveAttribute(
       "data-print-state",
       "published",
@@ -186,6 +192,15 @@ describe("weekly management report page", () => {
       screen.getByText(/Viewing immutable revision 1/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Report author" })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Report author" })).toHaveValue(
+      "Project Controls Manager",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Management summary" }),
+    ).toHaveValue(
+      "Management approved this frozen position for the weekly review.",
+    );
+    expect(screen.queryByText("Author is required.")).not.toBeInTheDocument();
     const printButton = screen.getByRole("button", {
       name: "Print selected publication",
     });
@@ -249,7 +264,12 @@ describe("weekly management report page", () => {
       />,
     );
 
-    expect(await screen.findByText(hostileSummary)).toHaveTextContent(hostileSummary);
+    await screen.findByRole("region", { name: "Published revision" });
+    const hostileReportDocument = document.querySelector(".report-document");
+    expect(hostileReportDocument).not.toBeNull();
+    expect(
+      within(hostileReportDocument as HTMLElement).getByText(hostileSummary),
+    ).toHaveTextContent(hostileSummary);
     expect(document.querySelector("script")).toBeNull();
     expect(document.querySelector("img")).toBeNull();
     expect(document.querySelector("svg[onload]")).toBeNull();
