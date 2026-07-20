@@ -45,7 +45,7 @@ describe("project controls application", () => {
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
     ).toHaveAttribute("value", "91");
-    expect(screen.getByText("85.1 / 94 weighted hours")).toBeInTheDocument();
+    expect(screen.getByText("85.7 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([

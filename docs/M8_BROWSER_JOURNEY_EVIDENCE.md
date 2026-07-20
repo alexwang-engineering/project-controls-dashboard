@@ -2,7 +2,7 @@
 
 **Evidence date:** 20 July 2026  
 **Milestone:** M8 — Quality and portfolio release  
-**Scope:** Input-first, import, calculated overview, milestone control and 390 px layout  
+**Scope:** Input-first, import, calculated overview, milestone control, full-ASTER publication and 390 px layout
 **Decision:** Working M8 increment; not the final release gate
 
 ## Outcome
@@ -12,6 +12,12 @@ important user journey. Fourteen runs pass: four journeys in each of Chromium,
 Firefox and WebKit, plus two dedicated Chromium journeys at 390 × 844.
 The adjacent Vitest gate contains 305 passing unit and integration tests; its
 configuration explicitly excludes `e2e/**` so each runner owns one test layer.
+
+Subsequent accessibility, security and publication increments expand the same
+isolated suite to **26 runs**: 10 Chromium, 7 Firefox, 7 WebKit and 2 dedicated
+390 × 844 Chromium runs. The additional Chromium journey completes the entire
+60-activity/960-period import, five-scope variance sign-off, immutable report
+publication and A4 PDF boundary.
 
 This increment raises M8 from 25% to 40% and the evidence-weighted overall
 position from 83% (78.4/94 hours) to 86% (80.6/94 hours). It does not claim that
@@ -36,10 +42,10 @@ moderated user research.
   the real CSV parser, validation worker or deterministic fallback, inferred
   first-project registry, atomic Dexie commit and active-data refresh.
 - The compact pair deliberately contains one late source milestone and one
-  performance period. The separate 60-activity/960-performance ASTER pack
-  remains the deeper import/performance fixture in the Vitest gate; duplicating
-  that load in every browser journey would add runtime without a distinct
-  acceptance claim.
+  performance period and runs in every desktop engine. One separate Chromium-
+  only release journey uses the 60-activity/960-performance ASTER pack because
+  it adds the distinct immutable-publication and inspected-PDF acceptance claim
+  without repeating the heavier authoring workflow in every engine.
 
 ## Journey matrix
 
@@ -49,6 +55,7 @@ moderated user research.
 | All eight primary pages expose exactly three usage steps | Pass | Pass | Pass | — |
 | CSV pair validates, registry is confirmed, generation commits and SPI/CPI reconcile | Pass | Pass | Pass | — |
 | Imported milestone becomes a source-linked late exception with five missing controls, publication block and honest no-CPM dependency evidence | Pass | Pass | Pass | — |
+| Full ASTER import, five-scope sign-off, immutable revision and four-page A4 PDF | Pass | — | — | — |
 | All eight routes remain inside the 390 px viewport | — | — | — | Pass |
 | Milestone editor and management-decision field remain reachable | — | — | — | Pass |
 
@@ -83,7 +90,8 @@ pnpm check:release
   screen-reader evidence.
 - Manual release inspection in the packaged macOS WKWebView app; Playwright
   WebKit is useful engine coverage but is not the native host.
-- Full-ASTER PDF evidence in Firefox and the native host.
+- Practical selected-publication print evidence in Firefox and the native host;
+  Chromium full-ASTER PDF evidence is complete.
 - Moderated import → review → report task research with recorded success and
   comprehension outcomes.
 - Portfolio screenshots, architecture explanation, walkthrough and release

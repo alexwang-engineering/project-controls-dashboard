@@ -58,13 +58,57 @@ instructions. Automated text extraction asserted that it contained neither
 `Project QA` nor `Publication controls passed`. The rendered page was visually
 inspected and contained no management-report content.
 
+## Full-ASTER publication journey
+
+The Chromium release journey now exercises the complete evidence path rather
+than mounting a prebuilt report:
+
+1. creates the fixed synthetic ASTER schedule and performance files;
+2. uploads both through the visible Import & Quality controls;
+3. validates through the real isolated module worker;
+4. confirms the inferred registry and atomically commits 60 schedule activities
+   plus 960 performance rows;
+5. supplies the fixed 8-milestone and 12-risk management-register fixture in
+   the isolated test origin only;
+6. completes and signs immutable variance-analysis revision 1 for the project
+   and four breached work-package scopes;
+7. saves and publishes weekly-report revision 1 through the visible controls;
+   and
+8. prints the selected persisted publication with Chromium's A4 PDF boundary.
+
+This test-only setup does not change the production launch: a clean app remains
+empty and ready for the user's own inputs.
+
+| Check | Result |
+|---|---|
+| Imported records | 1,020 (60 schedule, 960 performance) |
+| Reporting date | 14 June 2026 |
+| Cumulative reconciliation | PV £1,500,000; EV £1,350,000; AC £1,440,000; SPI 0.900; CPI 0.938 |
+| Signed variance coverage | Project, WP200, WP300, WP400 and WP500 |
+| Management exceptions | 5 variance, 3 milestone and 5 owned actions |
+| Publication state | Persisted immutable revision 1 selected before print |
+| Page size and count | A4, 594.96 × 841.92 points; 4 pages |
+| PDF structure | Tagged; no JavaScript; not encrypted |
+| Text extraction | 8,693 characters; identity, author, source, control result and every report section present |
+| Visual inspection | All four pages rendered at 144 DPI and inspected; no overlap, clipping, orphan heading, broken ID or blank trailing page |
+| Application chrome | Sticky scope boundary excluded from print |
+| SHA-256 | `ce16dc7995981f3fb538663817ea4940c9f64a6409093fa7751d3b2526f70d0e` |
+
+Final local artifact:
+
+`output/pdf/Project_Controls_Weekly_Report_Full_ASTER_Revision_1.pdf`
+
+The print rules keep the detailed report inside the accepted 2–4-page target by
+using print-only 9-point body type, 8-point tables, three forecast columns and a
+four-column baseline reconciliation. No source or management evidence is
+removed to reach the page limit.
+
 ## Remaining release evidence
 
-- Repeat the 2–4-page check with the fixed full-ASTER project and its populated
-  exception/action evidence.
 - Complete practical Firefox and native AppKit/WKWebView print-preview checks.
 - Run the planned moderated report task and confirm users can reach the selected
   publication and print it in fewer than five actions.
 
 These remaining items prevent a claim of complete M7 release closure; they do
-not weaken the implemented live-versus-published provenance boundary.
+not weaken the implemented live-versus-published provenance boundary or the
+completed full-ASTER Chromium evidence.

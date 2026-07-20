@@ -82,13 +82,18 @@ A clean browser origin was exercised through the real interface:
 - A selected persisted Project QA revision produced a tagged three-page A4 PDF.
 - All three 150-DPI page renders were inspected with no clipping, overlap, split
   heading or blank trailing page.
+- The complete ASTER journey now imports 1,020 records, signs five breached
+  scopes, publishes immutable revision 1 and produces a tagged four-page A4 PDF.
+- All four full-ASTER pages were rendered at 144 DPI and inspected with no
+  clipping, overlap, broken work-package ID, leaked application chrome or blank
+  trailing page.
 - Exact page and provenance evidence is recorded in
   [`M7_PRINT_EVIDENCE.md`](M7_PRINT_EVIDENCE.md).
 
 ## Deliberate limits
 
-- The fixed full-ASTER PDF, practical Firefox and native WKWebView print checks,
-  and the fewer-than-five-actions moderated usability check remain open.
+- Practical Firefox and native WKWebView print checks, and the
+  fewer-than-five-actions moderated usability check remain open.
 - Version-1 JSON backup remains active-generation-only and does not include
   management registers, variance records, report drafts or publications.
 - Strict cross-tab atomicity for management-register edits awaits moving those

@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Native WKWebView route and keyboard inspection
+**Current increment:** Full-ASTER immutable publication and PDF evidence
 
-**Evidence-weighted MVP progress:** 91% (85.1 of 94 planned hours)
+**Evidence-weighted MVP progress:** 91% (85.7 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -23,7 +23,7 @@
 | Responsive layout | Automated all-route 320 px reflow with WCAG text spacing, 390 × 844 overflow/24 px target checks and a reachable mobile milestone editor | Verified |
 | Security and privacy | Restrictive CSP without unsafe-eval, CSP-safe schema runtime, loopback response headers, path/listing controls, native regression tests, no-external-request browser diagnostics, dependency audit, Dependabot and CodeQL configuration | Tested local baseline |
 | Native release inspection | Signed/exact bundle, live headers, all eight input-first routes exposed through WKWebView accessibility, macOS link-focus skip path and keyboard activation into Import & Quality | Partial manual evidence |
-| Quality gate | Lint, strict application/E2E type check, 305 Vitest tests, 4 native-server tests, 25 Playwright browser journeys, dependency audit and production build | Passing |
+| Quality gate | Lint, strict application/E2E type check, 305 Vitest tests, 4 native-server tests, 26 Playwright browser journeys, dependency audit and production build | Passing |
 | Cross-browser journeys | Fresh-context input-first launch, eight page guides, CSV review/registry/atomic commit, calculated KPI evidence, imported-milestone recovery controls, 48 axe-scanned states and an automatic external-network guard in Chromium, Firefox and WebKit | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
@@ -42,7 +42,7 @@
 | Active-data integration | One shared dataset boundary refreshes after commit and supplies the shell, Overview and Schedule & Cost | Working |
 | EAC sensitivity | Budget-rate, CPI-continuation and CPI × SPI scenarios expose formulas, assumptions, VAC and TCPI consequences | Tested working slice |
 | Variance analysis | Generation-aware draft, structured impacts/actions, ownership, sign-off validation and immutable revisions | Tested working slice |
-| Weekly management report | Deterministic reconciliation, editable narrative, exact source fingerprint, source-bound draft, append-only revisions, rollback/race evidence, OS-print provenance guard and inspected three-page A4 publication PDF | Working slice |
+| Weekly management report | Deterministic reconciliation, editable narrative, exact source fingerprint, source-bound draft, append-only revisions, rollback/race evidence, OS-print provenance guard and inspected four-page A4 full-ASTER publication PDF | Working slice |
 | Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
 | Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
 | Desktop review build | Signed native AppKit/WebKit macOS window, app-owned private server, SPA route fallback and repeatable packaging command | Verified |
@@ -58,15 +58,15 @@
 | M4 — Milestones | 20 Aug | All MIL-001–009 controls: schedule mapping/refresh, six derived statuses, variance/movement, exception/next-30 filters, predecessor evidence/warnings, structured recovery and report gates | Technical exit criteria complete; evidence retained for release review |
 | M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
-| M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected three-page A4 real-data publication | Fixed full-ASTER PDF, practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
-| M8 — Release gate | 25 Sep | Repeatable native build plus 25 isolated browser runs, 48 axe-scanned states, accessibility/responsive preferences, CSP/external-network checks, native-server tests and an eight-route WKWebView semantic/keyboard smoke inspection | VoiceOver plus native file-error/print tasks, moderated research and portfolio assets |
+| M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected four-page A4 publication from the complete 1,020-row ASTER journey | Practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
+| M8 — Release gate | 25 Sep | Repeatable native build plus 26 isolated browser runs, 48 axe-scanned states, accessibility/responsive preferences, CSP/external-network checks, native-server tests and an eight-route WKWebView semantic/keyboard smoke inspection | VoiceOver plus native file-error/print tasks, moderated research and portfolio assets |
 
 ## Next implementation slice
 
 1. Complete VoiceOver plus native file-selection/error-recovery and print
    tasks, recording exact announcements and outcomes.
 2. Run the M2 moderated comprehension study and record the findings.
-3. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
+3. Complete practical Firefox and native WKWebView print-preview checks against the approved full-ASTER publication.
 4. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
 5. Move management registers into revisioned backup-aware persistence.
@@ -86,8 +86,8 @@
   time.
 - Weekly reporting now persists editable source-bound drafts and append-only
   publications; both the UI and OS print path limit report output to a selected
-  stored revision. A three-page real-data Chromium PDF is approved, while the
-  fixed full-ASTER and Firefox/WKWebView checks remain. Report records, variance
+  stored revision. A four-page full-ASTER Chromium PDF is approved, while the
+  Firefox/WKWebView checks remain. Report records, variance
   analysis and management registers remain outside active-generation JSON
   backups and variance sign-off is not yet linked to approved baseline revisions.
 - Automated browser QA covers the input-first, controlled-import and imported-

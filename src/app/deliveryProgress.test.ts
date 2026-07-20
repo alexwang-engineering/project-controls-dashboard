@@ -5,7 +5,7 @@ describe("delivery progress", () => {
   it("reconciles the evidence-weighted assessment to the 94-hour plan", () => {
     expect(deliveryMilestones).toHaveLength(9);
     expect(deliveryProgress.totalPlannedHours).toBe(94);
-    expect(deliveryProgress.evidencedPlanHours).toBe(85.1);
+    expect(deliveryProgress.evidencedPlanHours).toBe(85.7);
     expect(deliveryProgress.completionPercent).toBe(91);
     expect(deliveryMilestones.find(({ id }) => id === "M4")).toMatchObject({
       completionPercent: 100,
@@ -38,7 +38,7 @@ describe("delivery progress", () => {
 
   it("records the evidenced M7 publication and print boundary", () => {
     expect(deliveryMilestones.find(({ id }) => id === "M7")).toMatchObject({
-      completionPercent: 90,
+      completionPercent: 95,
     });
   });
 

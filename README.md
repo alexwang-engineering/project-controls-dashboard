@@ -47,7 +47,7 @@ presented as project data.
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
-- Twenty-five browser journeys across Chromium, Firefox, WebKit and a dedicated
+- Twenty-six browser journeys across Chromium, Firefox, WebKit and a dedicated
   390 × 844 Chromium project. They prove the empty input-first launch, all page
   guides, real CSV validation and atomic commit, imported calculations,
   milestone recovery controls, 48 WCAG A/AA axe-scanned states, keyboard/skip/
@@ -120,8 +120,9 @@ ratification and process-flag resolution are recorded in
 [`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Controlled register
 workflow history and persisted report publication are now implemented. A
 selected real-data publication has passed the three-page A4 Chromium layout
-check and the live-preview rejection path has been rendered and inspected.
-Full-ASTER plus Firefox and native WKWebView print approval remain.
+check, the live-preview rejection path has been rendered and inspected, and the
+complete 1,020-row ASTER journey has produced an inspected four-page immutable
+publication. Firefox and native WKWebView print approval remain.
 The M2 global-scope increment is recorded in
 [`M2_GLOBAL_SCOPE_EVIDENCE.md`](docs/M2_GLOBAL_SCOPE_EVIDENCE.md). The M5
 risk-control increment and its remaining limitations are recorded in
