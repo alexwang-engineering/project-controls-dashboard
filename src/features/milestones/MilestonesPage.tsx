@@ -31,15 +31,25 @@ const signedDays = (days: number) => {
 };
 
 export function MilestonesPage() {
-  const { milestones, upsertMilestone, removeMilestone } = useProjectStore();
+  const {
+    milestones,
+    selectedWorkPackage,
+    upsertMilestone,
+    removeMilestone,
+  } = useProjectStore();
   const [editing, setEditing] = useState<Milestone>();
   const [isAdding, setIsAdding] = useState(false);
   const [formError, setFormError] = useState("");
-  const completed = milestones.filter((item) => item.actualDate).length;
-  const late = milestones.filter(
+  const scopedMilestones = milestones.filter(
+    (milestone) =>
+      selectedWorkPackage === "all" ||
+      milestone.wbsId === selectedWorkPackage,
+  );
+  const completed = scopedMilestones.filter((item) => item.actualDate).length;
+  const late = scopedMilestones.filter(
     (item) => item.status === "forecast-late" || item.status === "overdue",
   ).length;
-  const nextCommitment = [...milestones]
+  const nextCommitment = [...scopedMilestones]
     .filter(({ actualDate }) => actualDate === undefined)
     .sort((left, right) => left.forecastDate.localeCompare(right.forecastDate))[0];
   const editorOpen = isAdding || editing !== undefined;
@@ -88,9 +98,9 @@ export function MilestonesPage() {
 
       <PageGuide
         pageName="Milestone control"
-        purpose="Add each contractual or management commitment, then keep its current forecast, outcome and recovery explanation up to date."
+        purpose="Use the global work-package scope to focus accountability, then keep each commitment's forecast, outcome and recovery explanation up to date."
         steps={[
-          { title: "Add the commitment", detail: "Enter its ID, work package, owner and approved baseline date." },
+          { title: "Set scope and add", detail: "Choose a work package in the global bar, then enter the commitment ID, owner and approved baseline date." },
           { title: "Maintain the forecast", detail: "Record previous and current forecast dates, actual date and status." },
           { title: "Explain movement", detail: "For every adverse item, record a specific control action in the commentary." },
         ]}
@@ -107,7 +117,7 @@ export function MilestonesPage() {
         >
           <label>Milestone ID<input name="id" required defaultValue={editing?.id ?? ""} placeholder="M-001" /></label>
           <label>Milestone name<input name="name" required defaultValue={editing?.name ?? ""} /></label>
-          <label>Work package ID<input name="wbsId" required defaultValue={editing?.wbsId ?? ""} placeholder="WP100" /></label>
+          <label>Work package ID<input name="wbsId" required defaultValue={editing?.wbsId ?? (selectedWorkPackage === "all" ? "" : selectedWorkPackage)} placeholder="WP100" /></label>
           <label>Owner<input name="owner" required defaultValue={editing?.owner ?? ""} /></label>
           <label>Baseline date<input name="baselineDate" type="date" required defaultValue={editing?.baselineDate ?? ""} /></label>
           <label>Previous forecast date<input name="previousForecastDate" type="date" required defaultValue={editing?.previousForecastDate ?? ""} /></label>
@@ -119,7 +129,7 @@ export function MilestonesPage() {
       ) : null}
 
       <section className="summary-strip" aria-label="Milestone summary">
-        <div><span>Total milestones</span><strong>{milestones.length}</strong></div>
+        <div><span>Milestones in scope</span><strong>{scopedMilestones.length}</strong></div>
         <div><span>Completed</span><strong>{completed}</strong></div>
         <div><span>Forecast late</span><strong>{late}</strong></div>
         <div><span>Next commitment</span><strong>{nextCommitment ? formatDate(nextCommitment.forecastDate) : "Not entered"}</strong></div>
@@ -129,9 +139,11 @@ export function MilestonesPage() {
         <div className="panel__header"><div><p className="eyebrow">Controlled register</p><h2 id="milestone-register-title">Milestone position</h2><p className="panel__description">Every row below comes from local user input.</p></div></div>
         {milestones.length === 0 ? (
           <div className="register-empty"><strong>No milestones have been entered.</strong><span>Use Add milestone to create the first controlled commitment.</span></div>
+        ) : scopedMilestones.length === 0 ? (
+          <div className="register-empty"><strong>No milestones match the global scope.</strong><span>Clear the work-package scope or add a commitment for {selectedWorkPackage}.</span></div>
         ) : (
-          <div className="table-scroll"><table><caption className="sr-only">Project milestone register</caption><thead><tr><th scope="col">Milestone</th><th scope="col">Owner</th><th scope="col">Baseline</th><th scope="col">Forecast / actual</th><th scope="col">Variance</th><th scope="col">Status</th><th scope="col">Control commentary</th><th scope="col">Actions</th></tr></thead><tbody>
-            {milestones.map((milestone) => {
+          <div className="table-scroll"><table><caption className="sr-only">Scoped project milestone register</caption><thead><tr><th scope="col">Milestone</th><th scope="col">Owner</th><th scope="col">Baseline</th><th scope="col">Forecast / actual</th><th scope="col">Variance</th><th scope="col">Status</th><th scope="col">Control commentary</th><th scope="col">Actions</th></tr></thead><tbody>
+            {scopedMilestones.map((milestone) => {
               const presentation = statusPresentation[milestone.status];
               const outcomeDate = milestone.actualDate ?? milestone.forecastDate;
               const variance = differenceInCalendarDays(parseISO(outcomeDate), parseISO(milestone.baselineDate));

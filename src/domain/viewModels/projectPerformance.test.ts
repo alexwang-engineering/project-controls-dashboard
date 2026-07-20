@@ -7,6 +7,7 @@ import { ImportRepository } from "../../repositories/importRepository";
 import { ProjectConfigurationRepository } from "../../repositories/projectConfigurationRepository";
 import {
   buildImportedPerformanceSnapshot,
+  cumulativePerformanceForScope,
   periodicPerformanceForScope,
 } from "./projectPerformance";
 
@@ -96,6 +97,16 @@ describe("imported performance view model", () => {
     );
     expect(wp300Periods.reduce((total, period) => total + period.ac, 0)).toBe(
       355_000,
+    );
+    expect(cumulativePerformanceForScope(snapshot, "WP300").at(-1)).toEqual({
+      period: "2026-06-14",
+      label: "P16",
+      pv: 400_000,
+      ev: 330_000,
+      ac: 355_000,
+    });
+    expect(cumulativePerformanceForScope(snapshot, "not-a-package")).toEqual(
+      snapshot.trend,
     );
     await db.delete();
   });

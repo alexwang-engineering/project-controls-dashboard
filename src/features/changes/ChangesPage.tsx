@@ -52,15 +52,21 @@ const decisionStatuses: readonly ChangeStatus[] = [
 ];
 
 export function ChangesPage() {
-  const { changes, upsertChange, removeChange } = useProjectStore();
+  const { changes, selectedWorkPackage, upsertChange, removeChange } =
+    useProjectStore();
   const { snapshot: performance } = useProjectPerformance();
   const [editing, setEditing] = useState<ChangeRequest>();
   const [isAdding, setIsAdding] = useState(false);
   const [formStatus, setFormStatus] = useState<ChangeStatus>("draft");
   const [formError, setFormError] = useState("");
 
-  const pending = changes.filter(({ status }) => status === "submitted");
-  const approvedNotIncorporated = changes.filter(
+  const scopedChanges = changes.filter(
+    (change) =>
+      selectedWorkPackage === "all" ||
+      change.wbsId === selectedWorkPackage,
+  );
+  const pending = scopedChanges.filter(({ status }) => status === "submitted");
+  const approvedNotIncorporated = scopedChanges.filter(
     ({ status, incorporatedBaselineVersion }) =>
       status === "approved" && !incorporatedBaselineVersion,
   );
@@ -172,9 +178,9 @@ export function ChangesPage() {
 
       <PageGuide
         pageName="Change control"
-        purpose="Build the complete impact case in draft, submit it to a named authority, then retain every decision and baseline action."
+        purpose="Use the global work-package scope for register decisions, build the complete impact case in draft, then retain every decision and full-project baseline action."
         steps={[
-          { title: "Build the case", detail: "Record reason, scope, impacts, assumptions, alternatives and a recommendation." },
+          { title: "Scope and build the case", detail: "Choose the work package, then record reason, impacts, assumptions, alternatives and a recommendation." },
           { title: "Control the decision", detail: "Use only the allowed next status and retain authority, actor, date, rationale and evidence." },
           { title: "Protect the baseline", detail: "Implement only after approval, with an effective date and explicit rebaseline evidence." },
         ]}
@@ -213,7 +219,7 @@ export function ChangesPage() {
               </label>
               <label>
                 Work package ID
-                <input name="wbsId" required readOnly={requestLocked} defaultValue={editing?.wbsId ?? ""} placeholder="WP100" />
+                <input name="wbsId" required readOnly={requestLocked} defaultValue={editing?.wbsId ?? (selectedWorkPackage === "all" ? "" : selectedWorkPackage)} placeholder="WP100" />
               </label>
               <label className="register-form-field--wide">
                 Reason for change
@@ -355,7 +361,7 @@ export function ChangesPage() {
       ) : null}
 
       <section className="summary-strip" aria-label="Change summary">
-        <div><span>Total requests</span><strong>{changes.length}</strong></div>
+        <div><span>Requests in scope</span><strong>{scopedChanges.length}</strong></div>
         <div><span>Pending decisions</span><strong>{pending.length}</strong></div>
         <div><span>Pending cost</span><strong>{formatCompactCurrency(proposedCost)}</strong></div>
         <div><span>Approved, not baselined</span><strong>{formatCompactCurrency(approvedCost)}</strong></div>
@@ -378,6 +384,10 @@ export function ChangesPage() {
             <p className="panel__description">
               Original BAC and historical performance remain fixed; only implemented,
               version-linked changes may explain the active baseline.
+            </p>
+            <p className="panel__description">
+              Baseline reconciliation remains full project and is never narrowed by
+              the global work-package scope.
             </p>
           </div>
           <FileCheck2 size={22} aria-hidden="true" />
@@ -488,10 +498,15 @@ export function ChangesPage() {
             <strong>No change requests have been entered.</strong>
             <span>Use Add change request to record the first controlled proposal.</span>
           </div>
+        ) : scopedChanges.length === 0 ? (
+          <div className="register-empty">
+            <strong>No change requests match the global scope.</strong>
+            <span>Clear the work-package scope or add a request for {selectedWorkPackage}.</span>
+          </div>
         ) : (
           <div className="table-scroll">
             <table>
-              <caption className="sr-only">Project change-request register</caption>
+              <caption className="sr-only">Scoped project change-request register</caption>
               <thead>
                 <tr>
                   <th scope="col">Change</th>
@@ -505,7 +520,7 @@ export function ChangesPage() {
                 </tr>
               </thead>
               <tbody>
-                {changes.map((change) => (
+                {scopedChanges.map((change) => (
                   <tr key={change.id}>
                     <th scope="row">
                       <span className="table-primary">{change.title}</span>

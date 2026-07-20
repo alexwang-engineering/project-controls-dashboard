@@ -25,8 +25,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M2",
     title: "Overview and performance views",
     plannedHours: 12,
-    completionPercent: 80,
-    evidence: "The overview and schedule/cost drill-down now read the active generation with reconciled project, period, work-package and activity traces; user research remains.",
+    completionPercent: 90,
+    evidence: "One global work-package scope now drives Overview calculations and charting, Schedule & Cost analysis, and matching milestone, risk and change records while publications and baseline reconciliation stay explicitly full-project; user research remains.",
   },
   {
     id: "M3",

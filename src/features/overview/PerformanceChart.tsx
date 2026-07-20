@@ -15,6 +15,7 @@ interface PerformanceChartProps {
   trend: TrendPoint[];
   reportingPeriod: string;
   reportingDate: string;
+  scopeLabel: string;
 }
 
 interface TooltipPayloadItem {
@@ -56,6 +57,7 @@ export function PerformanceChart({
   trend,
   reportingPeriod,
   reportingDate,
+  scopeLabel,
 }: PerformanceChartProps) {
   const chartData = trend.map((point) => ({
     ...point,
@@ -70,7 +72,7 @@ export function PerformanceChart({
           <p className="eyebrow">Cumulative performance</p>
           <h2 id="performance-title">Planned, earned and actual</h2>
           <p className="panel__description">
-            Project-level curve across {trend.length} validated reporting {trend.length === 1 ? "period" : "periods"}.
+            {scopeLabel} curve across {trend.length} validated reporting {trend.length === 1 ? "period" : "periods"}.
           </p>
         </div>
         <span className="reporting-period">Status point: {reportingPeriod}</span>

@@ -14,6 +14,7 @@ interface ProjectState extends RegisterState {
   reportingDate: string;
   announcement: string;
   setSelectedWorkPackage: (workPackageId: string) => void;
+  repairSelectedWorkPackage: () => void;
   setReportingDate: (reportingDate: string) => void;
   resetView: () => void;
   upsertMilestone: (milestone: Milestone) => void;
@@ -48,8 +49,14 @@ export const useProjectStore = create<ProjectState>()(
           selectedWorkPackage,
           announcement:
             selectedWorkPackage === "all"
-              ? "Showing the full project."
-              : "Work-package filter applied.",
+              ? "Global scope reset to the full project."
+              : `Global scope changed to ${selectedWorkPackage}.`,
+        }),
+      repairSelectedWorkPackage: () =>
+        set({
+          selectedWorkPackage: "all",
+          announcement:
+            "Global scope reset because the selected work package is not in the active project.",
         }),
       setReportingDate: (reportingDate) =>
         set({ reportingDate, announcement: "Reporting date updated." }),

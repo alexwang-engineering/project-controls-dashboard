@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { demoSnapshot } from "../data/demo";
@@ -44,8 +44,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "80");
-    expect(screen.getByText("75.4 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "81");
+    expect(screen.getByText("76.6 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -77,25 +77,99 @@ describe("project controls application", () => {
     expect(within(guide).getAllByRole("listitem")).toHaveLength(3);
   });
 
-  it("applies a work-package highlight with an accessible announcement", async () => {
+  it("carries one global work-package scope through performance and registers", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await screen.findByRole("heading", { name: "Project overview", level: 1 });
 
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Work package" }),
+      screen.getByRole("combobox", { name: "Global work package scope" }),
       "WP300",
     );
 
-    expect(
-      screen.getByText("Highlighting WP300 in the work-package table."),
-    ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Work-package filter applied.",
+      "Global scope changed to WP300.",
     );
-    expect(screen.getByRole("row", { name: /WP300/ })).toHaveClass(
-      "table-row--selected",
+    const overviewIndicators = screen.getByRole("region", {
+      name: "Headline performance indicators",
+    });
+    expect(within(overviewIndicators).getByText("0.825")).toBeInTheDocument();
+    expect(within(overviewIndicators).getByText("0.930")).toBeInTheDocument();
+    const overviewTable = screen.getByRole("table", {
+      name: "Work-package budget and earned-value performance",
+    });
+    expect(within(overviewTable).getByRole("row", { name: /WP300/ })).toBeInTheDocument();
+    expect(within(overviewTable).queryByRole("row", { name: /WP200/ })).not.toBeInTheDocument();
+
+    const navigation = screen.getByRole("navigation", {
+      name: "Primary navigation",
+    });
+    await user.click(within(navigation).getByRole("link", { name: "Schedule & cost" }));
+    await screen.findByRole("heading", { name: "Schedule and cost", level: 1 });
+    expect(
+      screen.getByRole("combobox", { name: "Global work package scope" }),
+    ).toHaveValue("WP300");
+    const scheduleIndicators = screen.getByRole("region", {
+      name: "Selected scope performance indicators",
+    });
+    expect(within(scheduleIndicators).getByText("0.825")).toBeInTheDocument();
+
+    await user.click(within(navigation).getByRole("link", { name: "Milestones" }));
+    await screen.findByRole("heading", { name: "Milestone control", level: 1 });
+    const milestones = screen.getByRole("table", {
+      name: "Scoped project milestone register",
+    });
+    expect(within(milestones).getByRole("row", { name: /Mechanical completion/ })).toBeInTheDocument();
+    expect(within(milestones).queryByRole("row", { name: /Electrical energisation/ })).not.toBeInTheDocument();
+
+    await user.click(within(navigation).getByRole("link", { name: "Risks" }));
+    await screen.findByRole("heading", { name: "Risk exposure", level: 1 });
+    const risks = screen.getByRole("table", {
+      name: "Filtered project risk register",
+    });
+    expect(within(risks).getByRole("row", { name: /Mechanical alignment exceeds tolerance/ })).toBeInTheDocument();
+    expect(within(risks).queryByRole("row", { name: /Panel FAT defects/ })).not.toBeInTheDocument();
+
+    await user.click(within(navigation).getByRole("link", { name: "Changes" }));
+    await screen.findByRole("heading", { name: "Change control", level: 1 });
+    const changes = screen.getByRole("table", {
+      name: "Scoped project change-request register",
+    });
+    expect(within(changes).getByRole("row", { name: /Revise guarding support detail/ })).toBeInTheDocument();
+    expect(within(changes).queryByRole("row", { name: /panel ventilation/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Baseline reconciliation remains full project/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(navigation).getByRole("link", { name: "Weekly report" }));
+    await screen.findByRole("heading", {
+      name: "Weekly management report",
+      level: 1,
+    });
+    const reportBoundary = screen.getByRole("region", {
+      name: "Publication scope boundary",
+    });
+    expect(reportBoundary).toHaveTextContent("Full project");
+    expect(reportBoundary).toHaveTextContent("WP300 is paused");
+    expect(
+      screen.queryByRole("combobox", { name: "Global work package scope" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("repairs a stale work-package scope and announces the reset", async () => {
+    useProjectStore.setState({ selectedWorkPackage: "WP999" });
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Project overview", level: 1 });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("combobox", { name: "Global work package scope" }),
+      ).toHaveValue("all"),
+    );
+    expect(useProjectStore.getState().selectedWorkPackage).toBe("all");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Global scope reset because the selected work package is not in the active project.",
     );
   });
 

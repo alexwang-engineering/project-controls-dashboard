@@ -14,6 +14,10 @@ import {
 } from "../../domain/calculations/earnedValue";
 import { riskExposure } from "../../domain/risks";
 import {
+  cumulativePerformanceForScope,
+  resolveWorkPackageScope,
+} from "../../domain/viewModels/projectPerformance";
+import {
   formatCompactCurrency,
   formatCurrency,
   formatDate,
@@ -25,7 +29,6 @@ import { PerformanceChart } from "./PerformanceChart";
 export function OverviewPage() {
   const {
     selectedWorkPackage,
-    setSelectedWorkPackage,
     milestones,
     risks,
     changes,
@@ -65,41 +68,74 @@ export function OverviewPage() {
     );
   }
 
-  const activeRisks = risks.filter((risk) => risk.status !== "closed");
+  const effectiveWorkPackage = resolveWorkPackageScope(
+    snapshot,
+    selectedWorkPackage,
+  );
+  const selectedPackage = snapshot.workPackages.find(
+    (workPackage) => workPackage.id === effectiveWorkPackage,
+  );
+  const scopeLabel = selectedPackage
+    ? `${selectedPackage.id} — ${selectedPackage.name}`
+    : "Full project";
+  const scopeTrend = cumulativePerformanceForScope(
+    snapshot,
+    effectiveWorkPackage,
+  );
+  const scopedWorkPackages = selectedPackage
+    ? [selectedPackage]
+    : [...snapshot.workPackages];
+  const scopedMilestones = milestones.filter(
+    (milestone) =>
+      effectiveWorkPackage === "all" ||
+      milestone.wbsId === effectiveWorkPackage,
+  );
+  const scopedRisks = risks.filter(
+    (risk) =>
+      effectiveWorkPackage === "all" || risk.wbsId === effectiveWorkPackage,
+  );
+  const scopedChanges = changes.filter(
+    (change) =>
+      effectiveWorkPackage === "all" || change.wbsId === effectiveWorkPackage,
+  );
+  const activeRisks = scopedRisks.filter((risk) => risk.status !== "closed");
   const criticalRiskCount = activeRisks.filter(
     (risk) => riskExposure(risk, "residual").rating === "critical",
   ).length;
-  const lateMilestones = milestones.filter(
+  const lateMilestones = scopedMilestones.filter(
     (milestone) => milestone.status === "forecast-late",
   );
-  const pendingChanges = changes.filter(
+  const pendingChanges = scopedChanges.filter(
     (change) => change.status === "submitted",
   );
   const currentPoint =
-    [...snapshot.trend]
+    [...scopeTrend]
       .reverse()
       .find((candidate) => candidate.period <= snapshot.project.reportingDate) ??
-    snapshot.trend.at(-1);
+    scopeTrend.at(-1);
   if (currentPoint === undefined) {
     throw new Error("The selected dataset has no performance periods.");
   }
   const projectMetrics = calculateEarnedValue({
-    bac: snapshot.project.originalBac,
+    bac: selectedPackage?.bac ?? snapshot.project.originalBac,
     pv: currentPoint.pv,
     ev: currentPoint.ev,
     ac: currentPoint.ac,
   });
+  const selectedActivities = selectedPackage
+    ? snapshot.activities.filter(
+        (activity) => activity.wbsId === selectedPackage.id,
+      )
+    : [...snapshot.activities];
+  const baselineFinish =
+    [...selectedActivities]
+      .sort((left, right) => right.baselineFinish.localeCompare(left.baselineFinish))
+      .at(0)?.baselineFinish ?? snapshot.project.baselineFinish;
+  const forecastFinish =
+    selectedPackage?.forecastFinish ?? snapshot.project.forecastFinish;
   const finishVarianceDays = differenceInCalendarDays(
-    parseISO(snapshot.project.forecastFinish),
-    parseISO(snapshot.project.baselineFinish),
-  );
-  const effectiveWorkPackage = snapshot.workPackages.some(
-    (workPackage) => workPackage.id === selectedWorkPackage,
-  )
-    ? selectedWorkPackage
-    : "all";
-  const selectedPackage = snapshot.workPackages.find(
-    (workPackage) => workPackage.id === effectiveWorkPackage,
+    parseISO(forecastFinish),
+    parseISO(baselineFinish),
   );
   const sourceDescription = `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`;
   const recoveryNeeded =
@@ -139,11 +175,11 @@ export function OverviewPage() {
 
       <PageGuide
         pageName="Project overview"
-        purpose="Start here each week: narrow the scope, read the exceptions first, then trace the numbers that need action."
+        purpose="Start here each week: use the global scope, read the exceptions first, then trace the numbers that need action."
         steps={[
           {
             title: "Set the scope",
-            detail: "Choose all work packages for the project position, or one package to highlight its result.",
+            detail: "Use the global bar above to choose the full project or one work package; the same scope follows you through each management view.",
           },
           {
             title: "Read the position",
@@ -156,27 +192,6 @@ export function OverviewPage() {
         ]}
       />
 
-      <section className="filter-bar" aria-label="Dashboard filters">
-        <label htmlFor="work-package-filter">Work package</label>
-        <select
-          id="work-package-filter"
-          value={effectiveWorkPackage}
-          onChange={(event) => setSelectedWorkPackage(event.target.value)}
-        >
-          <option value="all">All work packages</option>
-          {snapshot.workPackages.map((workPackage) => (
-            <option key={workPackage.id} value={workPackage.id}>
-              {workPackage.id} — {workPackage.name}
-            </option>
-          ))}
-        </select>
-        <p>
-          {selectedPackage
-            ? "Highlighting " + selectedPackage.id + " in the work-package table."
-            : "Showing the full-project performance position."}
-        </p>
-      </section>
-
       <section className="decision-banner" aria-labelledby="decision-title">
         <div className="decision-banner__icon" aria-hidden="true">
           <AlertTriangle size={22} />
@@ -186,10 +201,10 @@ export function OverviewPage() {
           <h2 id="decision-title">
             {recoveryNeeded
               ? "Recovery action is needed to protect the current forecast."
-              : "The current project position is within the control thresholds."}
+              : `The current ${selectedPackage ? "work-package" : "project"} position is within the control thresholds.`}
           </h2>
           <p>
-            The project is {formatPercent(projectMetrics.earnedCompletion)} earned
+            {scopeLabel} is {formatPercent(projectMetrics.earnedCompletion)} earned
             complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
             The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. Trace the adverse variance to its work package and activity before agreeing recovery action.
           </p>
@@ -230,11 +245,11 @@ export function OverviewPage() {
         />
         <MetricCard
           label="Forecast finish"
-          value={formatDate(snapshot.project.forecastFinish)}
+          value={formatDate(forecastFinish)}
           status={finishVarianceDays > 0 ? "adverse" : "positive"}
           statusLabel={finishVarianceDays > 0 ? "Late" : "On baseline"}
           delta={(finishVarianceDays > 0 ? "+" : "") + String(finishVarianceDays) + " days"}
-          detail={"Baseline " + formatDate(snapshot.project.baselineFinish)}
+          detail={"Baseline " + formatDate(baselineFinish)}
         />
         <MetricCard
           label="Estimate at completion"
@@ -254,9 +269,10 @@ export function OverviewPage() {
       </section>
 
       <PerformanceChart
-        trend={[...snapshot.trend]}
+        trend={scopeTrend}
         reportingPeriod={currentPoint.label}
         reportingDate={snapshot.project.reportingDate}
+        scopeLabel={scopeLabel}
       />
 
       <section className="panel" aria-labelledby="work-package-title">
@@ -265,7 +281,7 @@ export function OverviewPage() {
             <p className="eyebrow">Variance ownership</p>
             <h2 id="work-package-title">Work-package performance</h2>
             <p className="panel__description">
-              Current snapshot reconciles to the project BAC, PV, EV and AC totals.
+              Current snapshot reconciles to the selected scope BAC, PV, EV and AC totals.
             </p>
           </div>
         </div>
@@ -287,18 +303,16 @@ export function OverviewPage() {
               </tr>
             </thead>
             <tbody>
-              {snapshot.workPackages.map((workPackage) => {
+              {scopedWorkPackages.map((workPackage) => {
                 const metrics = calculateEarnedValue(workPackage);
                 const combinedStatus =
                   metrics.spi !== null && metrics.cpi !== null
                     ? efficiencyStatus(Math.min(metrics.spi, metrics.cpi))
                     : "neutral";
-                const isSelected = effectiveWorkPackage === workPackage.id;
-
                 return (
                   <tr
                     key={workPackage.id}
-                    className={isSelected ? "table-row--selected" : undefined}
+                    className={selectedPackage ? "table-row--selected" : undefined}
                   >
                     <th scope="row">
                       <span className="table-primary">{workPackage.id}</span>
@@ -329,7 +343,7 @@ export function OverviewPage() {
             </tbody>
             <tfoot>
               <tr>
-                <th scope="row" colSpan={2}>Project total</th>
+                <th scope="row" colSpan={2}>{selectedPackage ? "Selected scope" : "Project total"}</th>
                 <td>{formatCurrency(projectMetrics.bac)}</td>
                 <td className="number--adverse">{formatCurrency(projectMetrics.sv)}</td>
                 <td className="number--adverse">{formatCurrency(projectMetrics.cv)}</td>
@@ -343,8 +357,8 @@ export function OverviewPage() {
       </section>
 
       <section className="register-source-note" aria-label="Supporting register data source">
-        <strong>Supporting registers use your local entries.</strong>
-        <span>Add or edit milestones, risks and changes on their register pages; updates appear here immediately.</span>
+        <strong>Supporting registers follow the global work-package scope.</strong>
+        <span>Add or edit milestones, risks and changes on their register pages; matching entries appear here immediately.</span>
       </section>
 
       <section className="exception-grid" aria-label="Management exceptions">

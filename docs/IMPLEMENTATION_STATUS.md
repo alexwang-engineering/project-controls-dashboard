@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Risk-control workflow and exception management
+**Current increment:** Global work-package scope and management-view consistency
 
-**Evidence-weighted MVP progress:** 80% (75.4 of 94 planned hours)
+**Evidence-weighted MVP progress:** 81% (76.6 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -14,14 +14,14 @@
 | Application foundation | React 19, TypeScript 7, Vite 8, router, responsive shell | Working |
 | Test fixture dataset | 5 WPs, 60 activities, 16 periods, 8 milestones, 12 risks, 6 changes; never shown on a clean production launch | Tested |
 | Calculation engine | Fixed Week 10 EVM fixture plus missing/zero/boundary behaviour | Tested |
-| Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and exceptions | Working |
-| Schedule and cost | Period/scope filters, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
-| Milestones | Validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
-| Risks | Cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
+| Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and globally scoped exceptions | Working |
+| Schedule and cost | Global WP scope, period filter, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
+| Milestones | Global WP scope, validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
+| Risks | Global WP scope, cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 276 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 279 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -50,7 +50,7 @@
 |---|---:|---|---|
 | M0 — Specification and architecture | 22 Jul | Master plan, two ADRs, data dictionary, stack, fixed fixture, independent M1 review | Record remaining governance registers and formal gate decision |
 | M1 — Foundation and import | 31 Jul | Worker/fallback validation, complete ASTER pair, controlled registry revisions, atomic generations and recovery | Closed 19 Jul: independent review approved and live module worker confirmed |
-| M2 — Overview | 9 Aug | Active-generation overview, curve, KPIs, WP table, Schedule & Cost drill-down, source trace and explicit setup-required state | True global cross-view filter, error browser QA and research round |
+| M2 — Overview | 9 Aug | Global WP scope across Overview calculations/chart, Schedule & Cost and matching milestone/risk/change records; full-project publication/baseline boundary; active-generation source trace and setup-required state | Error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
 | M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
 | M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
@@ -60,18 +60,14 @@
 
 ## Next implementation slice
 
-1. Make the selected work package a true cross-view scope rather than an
-   Overview row highlight.
-2. Run the M2 moderated comprehension study and record the findings.
-3. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
+1. Run the M2 moderated comprehension study and record the findings.
+2. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
+3. Add milestone predecessor-chain and recovery-action trace.
 4. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
 
 ## Known limitations
 
-- The Overview work-package control highlights and identifies the row; the
-  Schedule & Cost control performs the scoped recalculation. A shared global
-  scope remains to be implemented.
 - Milestone, risk and change inputs persist locally and feed the Overview and
   report, but the active-generation JSON backup does not yet include them or
   the multi-generation baseline evidence ledger.

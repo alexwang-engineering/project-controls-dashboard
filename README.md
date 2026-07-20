@@ -20,7 +20,10 @@ presented as project data.
   WR, three EAC views, ETC, VAC, and TCPI.
 - Cumulative planned, earned, and actual curve. Future EV and AC values are not
   presented beyond the current reporting date.
-- Work-package reconciliation table and interactive highlight control.
+- One global work-package scope across Overview, Schedule & Cost, Milestones,
+  Risks and Changes, with scoped calculations, charts, summaries and records.
+  Weekly publications and baseline reconciliation remain visibly locked to the
+  full project so controlled evidence cannot be accidentally narrowed.
 - Validated add/edit/delete milestone input with baseline/forecast variance.
 - Validated add/edit/delete risk input with cause–event–effect statements,
   inherent/residual scoring, trend, combined filters, a selectable accessible
@@ -97,7 +100,9 @@ workflow history and persisted report publication are now implemented. A
 selected real-data publication has passed the three-page A4 Chromium layout
 check and the live-preview rejection path has been rendered and inspected.
 Full-ASTER plus Firefox and native WKWebView print approval remain.
-The M5 risk-control increment and its remaining limitations are recorded in
+The M2 global-scope increment is recorded in
+[`M2_GLOBAL_SCOPE_EVIDENCE.md`](docs/M2_GLOBAL_SCOPE_EVIDENCE.md). The M5
+risk-control increment and its remaining limitations are recorded in
 [`M5_RISK_CONTROL_EVIDENCE.md`](docs/M5_RISK_CONTROL_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture

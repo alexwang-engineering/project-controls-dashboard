@@ -1,5 +1,5 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useProjectStore } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
@@ -62,8 +62,13 @@ interface RisksPageProps {
 }
 
 export function RisksPage({ reportingDateOverride }: RisksPageProps) {
-  const { risks, reportingDate: storedReportingDate, upsertRisk, removeRisk } =
-    useProjectStore();
+  const {
+    risks,
+    selectedWorkPackage,
+    reportingDate: storedReportingDate,
+    upsertRisk,
+    removeRisk,
+  } = useProjectStore();
   const reportingDate = reportingDateOverride ?? storedReportingDate;
   const [editing, setEditing] = useState<Risk>();
   const [isAdding, setIsAdding] = useState(false);
@@ -75,15 +80,33 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   const [rating, setRating] = useState("all");
   const [selectedCell, setSelectedCell] = useState<RiskHeatmapCell>();
 
+  useEffect(() => {
+    setOwner("all");
+    setCategory("all");
+    setStatus("active");
+    setRating("all");
+    setSelectedCell(undefined);
+  }, [selectedWorkPackage]);
+
+  const scopeRisks = useMemo(
+    () =>
+      risks.filter(
+        (risk) =>
+          selectedWorkPackage === "all" ||
+          risk.wbsId === selectedWorkPackage,
+      ),
+    [risks, selectedWorkPackage],
+  );
+
   const owners = useMemo(
-    () => [...new Set(risks.map((risk) => risk.owner))].sort(),
-    [risks],
+    () => [...new Set(scopeRisks.map((risk) => risk.owner))].sort(),
+    [scopeRisks],
   );
   const categories = useMemo(
-    () => [...new Set(risks.map((risk) => risk.category))].sort(),
-    [risks],
+    () => [...new Set(scopeRisks.map((risk) => risk.category))].sort(),
+    [scopeRisks],
   );
-  const filteredBeforeCell = risks.filter((risk) => {
+  const filteredBeforeCell = scopeRisks.filter((risk) => {
     const exposure = riskExposure(risk, basis);
     return (
       (owner === "all" || risk.owner === owner) &&
@@ -175,11 +198,11 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
       />
       <PageGuide
         pageName="Risk exposure"
-        purpose="Turn uncertain events into owned controls, timed treatments and explicit tolerance decisions."
+        purpose="Use the global work-package scope to focus exposure, then turn uncertain events into owned controls, timed treatments and explicit tolerance decisions."
         steps={[
           {
             title: "Describe cause, event and effect",
-            detail: "Record the condition, possible event, consequence, objective and accountable owner.",
+            detail: "Choose the work-package scope first, then record the condition, possible event, consequence, objective and accountable owner.",
           },
           {
             title: "Compare inherent and residual risk",
@@ -203,7 +226,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
         >
           <label>Risk ID<input name="id" required defaultValue={editing?.id ?? ""} placeholder="R-001" /></label>
           <label>Risk title<input name="title" required defaultValue={editing?.title ?? ""} /></label>
-          <label>Work package ID<input name="wbsId" required defaultValue={editing?.wbsId ?? ""} placeholder="WP100" /></label>
+          <label>Work package ID<input name="wbsId" required defaultValue={editing?.wbsId ?? (selectedWorkPackage === "all" ? "" : selectedWorkPackage)} placeholder="WP100" /></label>
           <label>Owner<input name="owner" required defaultValue={editing?.owner ?? ""} /></label>
           <label>Category<input name="category" required defaultValue={editing?.category ?? ""} /></label>
           <label>Status<select name="status" defaultValue={editing?.status ?? "active"}><option value="active">Active</option><option value="closed">Closed</option></select></label>
@@ -273,7 +296,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
           <label>Status filter<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="active">Active</option><option value="closed">Closed</option><option value="all">All statuses</option></select></label>
           <label>Rating filter<select value={rating} onChange={(event) => setRating(event.target.value)}><option value="all">All ratings</option><option value="critical">Critical</option><option value="high">High</option><option value="moderate">Moderate</option><option value="low">Low</option></select></label>
           <button className="button button--secondary" type="button" onClick={clearFilters}>Clear filters</button>
-          <p aria-live="polite">{filteredRisks.length} of {risks.length} risks shown</p>
+          <p aria-live="polite">{filteredRisks.length} of {scopeRisks.length} risks shown</p>
         </div>
       </section>
 
@@ -324,7 +347,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
         {risks.length === 0 ? (
           <div className="register-empty"><strong>No risks have been entered.</strong><span>Use Add risk to create and control the first uncertainty.</span></div>
         ) : filteredRisks.length === 0 ? (
-          <div className="register-empty"><strong>No risks match the current filters.</strong><span>Clear or change a filter to restore records.</span></div>
+          <div className="register-empty"><strong>No risks match the global scope and current filters.</strong><span>Clear the work-package scope or change a local filter to restore records.</span></div>
         ) : (
           <div className="table-scroll">
             <table>

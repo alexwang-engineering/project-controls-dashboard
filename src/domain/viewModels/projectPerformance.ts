@@ -299,6 +299,40 @@ export function periodicPerformanceForScope(
     }));
 }
 
+export function resolveWorkPackageScope(
+  snapshot: ProjectPerformanceSnapshot,
+  requestedScope: string,
+): string {
+  return requestedScope !== "all" &&
+    snapshot.workPackages.some(({ id }) => id === requestedScope)
+    ? requestedScope
+    : "all";
+}
+
+export function cumulativePerformanceForScope(
+  snapshot: ProjectPerformanceSnapshot,
+  requestedScope: string,
+): TrendPoint[] {
+  const scope = resolveWorkPackageScope(snapshot, requestedScope);
+  if (scope === "all") return [...snapshot.trend];
+
+  let pv = 0;
+  let ev = 0;
+  let ac = 0;
+  return periodicPerformanceForScope(snapshot, scope).map((period) => {
+    pv += period.pv;
+    ev += period.ev;
+    ac += period.ac;
+    return {
+      period: period.period,
+      label: period.label,
+      pv,
+      ev,
+      ac,
+    };
+  });
+}
+
 export const findActivity = (
   dataset: ActiveDataset,
   activityId: string,

@@ -9,11 +9,15 @@ import {
   Settings2,
   ShieldAlert,
   Split,
+  Target,
+  LockKeyhole,
 } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { deliveryProgress } from "../app/deliveryProgress";
 import { useProjectStore } from "../app/store";
 import { useProjectPerformance } from "../app/useProjectPerformance";
+import { resolveWorkPackageScope } from "../domain/viewModels/projectPerformance";
 import { formatDate } from "../utils/format";
 
 const navigation = [
@@ -28,9 +32,45 @@ const navigation = [
 ];
 
 export function AppShell() {
-  const { announcement, resetView } = useProjectStore();
+  const {
+    announcement,
+    selectedWorkPackage,
+    setSelectedWorkPackage,
+    repairSelectedWorkPackage,
+    resetView,
+  } = useProjectStore();
   const { snapshot, status, error } = useProjectPerformance();
+  const { pathname } = useLocation();
   const hasActiveImport = snapshot?.source === "active-import";
+  const effectiveScope = snapshot
+    ? resolveWorkPackageScope(snapshot, selectedWorkPackage)
+    : "all";
+  const selectedPackage = snapshot?.workPackages.find(
+    ({ id }) => id === effectiveScope,
+  );
+  const scopedPage = [
+    "/",
+    "/schedule-cost",
+    "/milestones",
+    "/risks",
+    "/changes",
+  ].includes(pathname);
+  const reportPage = pathname === "/report";
+
+  useEffect(() => {
+    if (
+      snapshot !== undefined &&
+      selectedWorkPackage !== "all" &&
+      effectiveScope === "all"
+    ) {
+      repairSelectedWorkPackage();
+    }
+  }, [
+    effectiveScope,
+    repairSelectedWorkPackage,
+    selectedWorkPackage,
+    snapshot,
+  ]);
 
   return (
     <div className="app-shell">
@@ -145,6 +185,74 @@ export function AppShell() {
             </div>
           </div>
         </div>
+
+        {snapshot !== undefined && scopedPage ? (
+          <section className="global-scope-bar" aria-label="Global scope control">
+            <div className="global-scope-bar__icon" aria-hidden="true">
+              <Target size={18} />
+            </div>
+            <label htmlFor="global-work-package-scope">
+              Global work package scope
+              <select
+                id="global-work-package-scope"
+                value={effectiveScope}
+                onChange={(event) =>
+                  setSelectedWorkPackage(event.target.value)
+                }
+              >
+                <option value="all">All work packages</option>
+                {snapshot.workPackages.map((workPackage) => (
+                  <option key={workPackage.id} value={workPackage.id}>
+                    {workPackage.id} — {workPackage.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="global-scope-bar__context">
+              <strong>
+                {selectedPackage
+                  ? `${selectedPackage.id} — ${selectedPackage.name}`
+                  : "Full project"}
+              </strong>
+              <span>
+                {pathname === "/changes"
+                  ? "Register summaries follow this scope; the baseline control below always uses full-project evidence."
+                  : selectedPackage
+                    ? `${selectedPackage.owner} owns this control account. The scope follows you across management views.`
+                    : "Every accepted work package and matching register record is included."}
+              </span>
+            </div>
+            {effectiveScope !== "all" ? (
+              <button
+                className="button button--secondary global-scope-bar__clear"
+                type="button"
+                onClick={() => setSelectedWorkPackage("all")}
+              >
+                Clear scope
+              </button>
+            ) : null}
+          </section>
+        ) : null}
+
+        {snapshot !== undefined && reportPage ? (
+          <section
+            className="global-scope-bar global-scope-bar--locked"
+            aria-label="Publication scope boundary"
+          >
+            <div className="global-scope-bar__icon" aria-hidden="true">
+              <LockKeyhole size={18} />
+            </div>
+            <div className="global-scope-bar__context">
+              <strong>Full project</strong>
+              <span>
+                Weekly publications always use the complete project evidence.
+                {selectedPackage
+                  ? ` ${selectedPackage.id} is paused here and resumes when you leave reporting.`
+                  : " No work-package view filter is applied."}
+              </span>
+            </div>
+          </section>
+        ) : null}
 
         <main id="main-content" className="main-content" tabIndex={-1}>
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">

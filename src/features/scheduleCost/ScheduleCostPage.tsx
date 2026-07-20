@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, Database, SearchCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
 import { PageGuide } from "../../components/PageGuide";
@@ -18,6 +19,7 @@ import { createVarianceAnalysisContext } from "../../domain/varianceAnalysis";
 import {
   activityPerformanceAtPeriod,
   periodicPerformanceForScope,
+  resolveWorkPackageScope,
   type ProjectPerformanceSnapshot,
 } from "../../domain/viewModels/projectPerformance";
 import {
@@ -67,7 +69,13 @@ function ScheduleCostWorkspace({
 }: {
   snapshot: ProjectPerformanceSnapshot;
 }) {
-  const [workPackageId, setWorkPackageId] = useState("all");
+  const selectedWorkPackage = useProjectStore(
+    (state) => state.selectedWorkPackage,
+  );
+  const workPackageId = resolveWorkPackageScope(
+    snapshot,
+    selectedWorkPackage,
+  );
   const [selectedPeriod, setSelectedPeriod] = useState(
     snapshot.project.reportingDate,
   );
@@ -87,7 +95,7 @@ function ScheduleCostWorkspace({
     }
   }, [scopedPeriods, selectedPeriod, snapshot.project.reportingDate]);
 
-  const selectedWorkPackage = snapshot.workPackages.find(
+  const selectedPackage = snapshot.workPackages.find(
     (workPackage) => workPackage.id === workPackageId,
   );
   const cumulativeRows = scopedPeriods.reduce(
@@ -112,7 +120,7 @@ function ScheduleCostWorkspace({
   const selectedRow =
     cumulativeRows.find((period) => period.period === selectedPeriod) ??
     cumulativeRows.at(-1);
-  const bac = selectedWorkPackage?.bac ?? snapshot.project.originalBac;
+  const bac = selectedPackage?.bac ?? snapshot.project.originalBac;
   const baseMetrics = calculateEarnedValue({
     bac,
     pv: selectedRow?.cumulativePv ?? 0,
@@ -174,11 +182,11 @@ function ScheduleCostWorkspace({
 
       <PageGuide
         pageName="Schedule and cost"
-        purpose="Use this page after spotting an adverse headline: set the scope, compare schedule and cost efficiency, then trace the variance to an activity and owner."
+        purpose="Use this page after spotting an adverse headline: retain the global scope, compare schedule and cost efficiency, then trace the variance to an activity and owner."
         steps={[
           {
             title: "Set scope and period",
-            detail: "Choose the whole project or one work package, then select the control period to investigate.",
+            detail: "Use the global bar above for the whole project or one work package, then select the control period to investigate.",
           },
           {
             title: "Compare the indices",
@@ -206,20 +214,7 @@ function ScheduleCostWorkspace({
         </div>
       </section>
 
-      <section className="filter-bar filter-bar--two" aria-label="Schedule and cost filters">
-        <label htmlFor="performance-work-package">Work package</label>
-        <select
-          id="performance-work-package"
-          value={workPackageId}
-          onChange={(event) => setWorkPackageId(event.target.value)}
-        >
-          <option value="all">All work packages</option>
-          {snapshot.workPackages.map((workPackage) => (
-            <option key={workPackage.id} value={workPackage.id}>
-              {workPackage.id} — {workPackage.name}
-            </option>
-          ))}
-        </select>
+      <section className="filter-bar" aria-label="Schedule and cost filters">
         <label htmlFor="performance-period">Reporting period</label>
         <select
           id="performance-period"
@@ -233,8 +228,8 @@ function ScheduleCostWorkspace({
           ))}
         </select>
         <p>
-          {selectedWorkPackage
-            ? `${selectedWorkPackage.owner} owns this control account.`
+          {selectedPackage
+            ? `${selectedPackage.owner} owns ${selectedPackage.id}; the global scope is retained across management views.`
             : "Project totals include every accepted work package."}
         </p>
       </section>

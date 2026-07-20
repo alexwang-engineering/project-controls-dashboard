@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useProjectStore } from "../../app/store";
@@ -91,7 +91,12 @@ const risks: Risk[] = [
 
 describe("risk-control page", () => {
   beforeEach(() => {
-    useProjectStore.setState({ risks, milestones: [], changes: [] });
+    useProjectStore.setState({
+      risks,
+      milestones: [],
+      changes: [],
+      selectedWorkPackage: "all",
+    });
   });
 
   afterEach(() => cleanup());
@@ -160,5 +165,40 @@ describe("risk-control page", () => {
     expect(item).toHaveTextContent("Review overdue");
     expect(item).toHaveTextContent("Breached trigger");
     expect(item).toHaveTextContent("Ineffective control");
+  });
+
+  it("clears local filters when the global work-package scope changes", async () => {
+    const user = userEvent.setup();
+    const wp300Risk = risk({
+      id: "R-004",
+      title: "Mechanical interface tolerance",
+      wbsId: "WP300",
+      owner: "Carla",
+      category: "Interfaces",
+    });
+    useProjectStore.setState({
+      risks: [...risks, wp300Risk],
+      selectedWorkPackage: "WP200",
+    });
+    render(<RisksPage reportingDateOverride="2026-07-20" />);
+
+    await user.selectOptions(screen.getByLabelText("Owner filter"), "Alice");
+    await user.selectOptions(screen.getByLabelText("Category filter"), "Technical");
+    expect(
+      screen.getByRole("row", { name: /Incomplete test scripts/ }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      useProjectStore.getState().setSelectedWorkPackage("WP300");
+    });
+
+    expect(screen.getByLabelText("Owner filter")).toHaveValue("all");
+    expect(screen.getByLabelText("Category filter")).toHaveValue("all");
+    expect(
+      screen.getByRole("row", { name: /Mechanical interface tolerance/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("row", { name: /Incomplete test scripts/ }),
+    ).not.toBeInTheDocument();
   });
 });
