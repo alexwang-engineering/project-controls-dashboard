@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Global work-package scope and management-view consistency
+**Current increment:** Source-linked milestone dependency and recovery control
 
-**Evidence-weighted MVP progress:** 81% (76.6 of 94 planned hours)
+**Evidence-weighted MVP progress:** 83% (78.4 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -16,12 +16,12 @@
 | Calculation engine | Fixed Week 10 EVM fixture plus missing/zero/boundary behaviour | Tested |
 | Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and globally scoped exceptions | Working |
 | Schedule and cost | Global WP scope, period filter, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
-| Milestones | Global WP scope, validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
+| Milestones | Source-linked import/refresh, reporting-date-derived six-state status, movement filters, iterative predecessor evidence, logic warnings, structured recovery/decision control and publication gates | Complete technical milestone |
 | Risks | Global WP scope, cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 279 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 303 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -52,7 +52,7 @@
 | M1 — Foundation and import | 31 Jul | Worker/fallback validation, complete ASTER pair, controlled registry revisions, atomic generations and recovery | Closed 19 Jul: independent review approved and live module worker confirmed |
 | M2 — Overview | 9 Aug | Global WP scope across Overview calculations/chart, Schedule & Cost and matching milestone/risk/change records; full-project publication/baseline boundary; active-generation source trace and setup-required state | Error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
-| M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
+| M4 — Milestones | 20 Aug | All MIL-001–009 controls: schedule mapping/refresh, six derived statuses, variance/movement, exception/next-30 filters, predecessor evidence/warnings, structured recovery and report gates | Technical exit criteria complete; evidence retained for release review |
 | M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
 | M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected three-page A4 real-data publication | Fixed full-ASTER PDF, practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
@@ -62,9 +62,9 @@
 
 1. Run the M2 moderated comprehension study and record the findings.
 2. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
-3. Add milestone predecessor-chain and recovery-action trace.
-4. Add project-calendar definitions so schedule-change reconciliation can
+3. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
+4. Move management registers into revisioned backup-aware persistence.
 
 ## Known limitations
 
@@ -73,9 +73,10 @@
   the multi-generation baseline evidence ledger.
 - The risk workflow uses documented default objective tolerances; it does not
   yet maintain project-specific appetite revisions or immutable register
-  history. Milestones still lack predecessor-chain credibility and full
-  recovery-action trace. Baseline finish reconciliation
-  currently treats entered schedule-impact days as calendar days because the
+  history. Milestone dependency evidence deliberately does not claim CPM or
+  critical-path status because total float and working-time definitions are not
+  imported. Baseline finish reconciliation currently treats entered
+  schedule-impact days as calendar days because the
   imported calendar registry identifies calendars but does not define working
   time.
 - Weekly reporting now persists editable source-bound drafts and append-only

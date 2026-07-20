@@ -18,6 +18,7 @@ interface ProjectState extends RegisterState {
   setReportingDate: (reportingDate: string) => void;
   resetView: () => void;
   upsertMilestone: (milestone: Milestone) => void;
+  mergeMilestones: (milestones: readonly Milestone[]) => void;
   removeMilestone: (id: string) => void;
   upsertRisk: (risk: Risk) => void;
   removeRisk: (id: string) => void;
@@ -34,6 +35,16 @@ const upsertById = <RecordType extends { id: string }>(
   [...records.filter(({ id }) => id !== record.id), record].sort((left, right) =>
     left.id.localeCompare(right.id),
   );
+
+export const migrateProjectStoreState = (
+  persistedState: unknown,
+  _persistedVersion: number,
+) => {
+  if (persistedState !== null && typeof persistedState === "object") {
+    return persistedState;
+  }
+  return { milestones: [], risks: [], changes: [] };
+};
 
 export const useProjectStore = create<ProjectState>()(
   persist(
@@ -70,6 +81,14 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => ({
           milestones: upsertById(state.milestones, milestone),
           announcement: `Milestone ${milestone.id} saved.`,
+        })),
+      mergeMilestones: (milestones) =>
+        set((state) => ({
+          milestones: milestones.reduce(
+            (records, milestone) => upsertById(records, milestone),
+            state.milestones,
+          ),
+          announcement: `${String(milestones.length)} schedule-linked milestone record${milestones.length === 1 ? "" : "s"} synchronised.`,
         })),
       removeMilestone: (id) =>
         set((state) => ({
@@ -116,6 +135,8 @@ export const useProjectStore = create<ProjectState>()(
     }),
     {
       name: "project-controls-management-registers-v1",
+      version: 2,
+      migrate: migrateProjectStoreState,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         milestones: state.milestones,

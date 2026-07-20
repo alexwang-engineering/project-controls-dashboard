@@ -1,5 +1,76 @@
 import { describe, expect, it } from "vitest";
-import { changeInputSchema, riskInputSchema } from "./registers";
+import {
+  changeInputSchema,
+  createMilestoneInputSchema,
+  riskInputSchema,
+} from "./registers";
+
+const validInput = {
+  id: "MS-001",
+  name: "Mechanical completion",
+  wbsId: "WP300",
+  owner: "Mechanical lead",
+  baselineDate: "2026-06-14",
+  previousForecastDate: "2026-06-16",
+  forecastDate: "2026-06-21",
+  actualDate: "",
+  sourceActivityId: "A-036",
+  cause: "Guarding design release arrived after the planned installation sequence.",
+  recoveryAction: "Add a second installation shift and resequence alignment checks.",
+  actionOwner: "Mechanical lead",
+  actionDueDate: "2026-06-18",
+  decisionRequired: "Approve the temporary second shift through completion.",
+  commentary: "Recovery is measured through the daily completed-guarding count.",
+};
+
+describe("milestone register input", () => {
+  it("derives status from dates rather than accepting a user-selected status", () => {
+    const parsed = createMilestoneInputSchema("2026-06-14").parse(validInput);
+
+    expect(parsed.status).toBe("forecast-late");
+  });
+
+  it("blocks every missing structured recovery field for an adverse milestone", () => {
+    const parsed = createMilestoneInputSchema("2026-06-14").safeParse({
+      ...validInput,
+      cause: "",
+      recoveryAction: "",
+      actionOwner: "",
+      actionDueDate: "",
+      decisionRequired: "",
+    });
+
+    expect(parsed.success).toBe(false);
+    if (parsed.success) return;
+    expect(parsed.error.issues.map(({ path }) => path[0])).toEqual(
+      expect.arrayContaining([
+        "cause",
+        "recoveryAction",
+        "actionOwner",
+        "actionDueDate",
+        "decisionRequired",
+      ]),
+    );
+  });
+
+  it("allows optional recovery fields to remain empty while the milestone is on track", () => {
+    const parsed = createMilestoneInputSchema("2026-06-14").safeParse({
+      ...validInput,
+      baselineDate: "2026-06-21",
+      previousForecastDate: "2026-06-21",
+      forecastDate: "2026-06-21",
+      cause: "",
+      recoveryAction: "",
+      actionOwner: "",
+      actionDueDate: "",
+      decisionRequired: "",
+    });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.status).toBe("on-track");
+  });
+});
 
 const fullSubmission = {
   id: "CR-001",

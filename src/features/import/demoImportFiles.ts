@@ -1,4 +1,4 @@
-import { demoSnapshot } from "../../data/demo";
+import { demoSnapshot, milestoneActivityIds } from "../../data/demo";
 import { encodeCsv } from "../../utils/safeCsvExport";
 
 export interface SyntheticImportFiles {
@@ -40,17 +40,6 @@ const performanceHeaders = [
   "physical_percent_complete",
   "remaining_cost_forecast",
   "progress_commentary",
-] as const;
-
-const milestoneActivityIds = [
-  "A-011",
-  "A-012",
-  "A-024",
-  "A-030",
-  "A-036",
-  "A-048",
-  "A-059",
-  "A-060",
 ] as const;
 
 const milestoneByActivity = new Map<

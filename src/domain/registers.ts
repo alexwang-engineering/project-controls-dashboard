@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { strictIsoDateSchema } from "../schemas/fields";
 import { missingChangeControlFields } from "./changes";
+import {
+  milestoneStatusAt,
+  missingMilestoneRecoveryFields,
+} from "./milestones";
 import { riskRating, riskToleranceForObjective } from "./risks";
 import type { ChangeRequest, Milestone, Risk } from "./types";
 
@@ -30,8 +34,8 @@ const optionalDate = z.preprocess(
   strictIsoDateSchema.optional(),
 );
 
-export const milestoneInputSchema = z
-  .object({
+export const createMilestoneInputSchema = (reportingDate: string) =>
+  z.object({
     id: identifier,
     name: shortText("Milestone name"),
     wbsId: identifier,
@@ -40,14 +44,16 @@ export const milestoneInputSchema = z
     previousForecastDate: strictIsoDateSchema,
     forecastDate: strictIsoDateSchema,
     actualDate: optionalDate,
-    status: z.enum([
-      "complete-on-time",
-      "complete-late",
-      "on-track",
-      "forecast-late",
-      "overdue",
-      "data-issue",
-    ]),
+    sourceActivityId: z.preprocess(
+      (value) =>
+        typeof value === "string" && value.trim() === "" ? undefined : value,
+      identifier.optional(),
+    ),
+    cause: optionalDetailedText,
+    recoveryAction: optionalDetailedText,
+    actionOwner: optionalText,
+    actionDueDate: optionalDate,
+    decisionRequired: optionalDetailedText,
     commentary: z
       .string()
       .trim()
@@ -56,23 +62,23 @@ export const milestoneInputSchema = z
   })
   .strict()
   .superRefine((record, context) => {
-    const isComplete = record.status.startsWith("complete-");
-    if (isComplete && record.actualDate === undefined) {
+    const status = milestoneStatusAt(record, reportingDate);
+    const missing = missingMilestoneRecoveryFields({ ...record, status });
+    for (const field of missing) {
       context.addIssue({
         code: "custom",
-        path: ["actualDate"],
-        message: "A completed milestone requires an actual date.",
-      });
-    }
-    if (!isComplete && record.actualDate !== undefined) {
-      context.addIssue({
-        code: "custom",
-        path: ["actualDate"],
-        message: "Use a completed status when an actual date is supplied.",
+        path: [field],
+        message:
+          "An adverse milestone requires a cause, recovery action, owner, due date and management decision.",
       });
     }
   })
-  .transform((value) => value as Milestone);
+  .transform(
+    (value): Milestone => ({
+      ...value,
+      status: milestoneStatusAt(value, reportingDate),
+    }),
+  );
 
 export { riskRating } from "./risks";
 

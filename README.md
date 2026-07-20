@@ -24,7 +24,11 @@ presented as project data.
   Risks and Changes, with scoped calculations, charts, summaries and records.
   Weekly publications and baseline reconciliation remain visibly locked to the
   full project so controlled evidence cannot be accidentally narrowed.
-- Validated add/edit/delete milestone input with baseline/forecast variance.
+- Source-linked milestone import and refresh with reporting-date-derived status,
+  baseline/previous/current movement, exception/next-30 filters, iterative
+  predecessor evidence and structured cause/recovery/owner/due/decision fields.
+  Adverse records with incomplete recovery or unresolved schedule logic block
+  weekly-report publication; the evidence view never claims to calculate CPM.
 - Validated add/edit/delete risk input with cause–event–effect statements,
   inherent/residual scoring, trend, combined filters, a selectable accessible
   5 × 5 heatmap, objective tolerance, tested controls, overdue review/action
@@ -104,6 +108,9 @@ The M2 global-scope increment is recorded in
 [`M2_GLOBAL_SCOPE_EVIDENCE.md`](docs/M2_GLOBAL_SCOPE_EVIDENCE.md). The M5
 risk-control increment and its remaining limitations are recorded in
 [`M5_RISK_CONTROL_EVIDENCE.md`](docs/M5_RISK_CONTROL_EVIDENCE.md).
+The completed M4 milestone-control contract and its bounded CPM limitation are
+recorded in
+[`M4_MILESTONE_CONTROL_EVIDENCE.md`](docs/M4_MILESTONE_CONTROL_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture
 

@@ -27,7 +27,20 @@ describe("input-first management registers", () => {
     await user.type(screen.getByLabelText("Baseline date"), "2026-08-10");
     await user.type(screen.getByLabelText("Previous forecast date"), "2026-08-10");
     await user.type(screen.getByLabelText("Current forecast date"), "2026-08-12");
-    await user.selectOptions(screen.getByLabelText("Milestone status"), "forecast-late");
+    await user.type(
+      screen.getByLabelText("Cause of movement"),
+      "Approval evidence arrived after the planned review sequence.",
+    );
+    await user.type(
+      screen.getByLabelText("Recovery action"),
+      "Hold an additional review session and close every comment daily.",
+    );
+    await user.type(screen.getByLabelText("Recovery owner"), "Design Manager");
+    await user.type(screen.getByLabelText("Recovery due date"), "2026-08-08");
+    await user.type(
+      screen.getByLabelText("Management decision required"),
+      "Approve the additional design-review session.",
+    );
     await user.type(
       screen.getByLabelText("Control commentary"),
       "Approval meeting booked and action owner confirmed.",
@@ -37,6 +50,77 @@ describe("input-first management registers", () => {
     const row = screen.getByRole("row", { name: /Design approved/ });
     expect(within(row).getByText("M-001 · WP100")).toBeInTheDocument();
     expect(useProjectStore.getState().milestones).toHaveLength(1);
+  });
+
+  it("creates source-linked milestones from the imported schedule", async () => {
+    const user = userEvent.setup();
+    render(<MilestonesPage />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Add 8 imported milestones" }),
+    );
+
+    expect(useProjectStore.getState().milestones).toHaveLength(8);
+    const row = screen.getByRole("row", { name: /Mechanical completion/ });
+    expect(within(row).getByText(/A-036/)).toBeInTheDocument();
+    await user.click(
+      within(row).getByRole("button", {
+        name: "Review dependency and recovery for A-036",
+      }),
+    );
+    expect(
+      screen.getByText(/dependency evidence only, not a calculated critical path/i),
+    ).toBeInTheDocument();
+  });
+
+  it("refreshes linked dates while preserving entered recovery evidence", async () => {
+    const user = userEvent.setup();
+    render(<MilestonesPage />);
+    await user.click(
+      screen.getByRole("button", { name: "Add 8 imported milestones" }),
+    );
+    const current = useProjectStore
+      .getState()
+      .milestones.find(({ id }) => id === "A-036")!;
+    useProjectStore.getState().upsertMilestone({
+      ...current,
+      forecastDate: "2026-06-25",
+      cause: "Late guarding design constrained the planned sequence.",
+      recoveryAction: "Add a second shift and resequence the final checks.",
+      actionOwner: "Mechanical lead",
+      actionDueDate: "2026-06-18",
+      decisionRequired: "Approve the temporary second shift.",
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Refresh 8 linked milestones" }),
+    );
+
+    const refreshed = useProjectStore
+      .getState()
+      .milestones.find(({ id }) => id === "A-036")!;
+    expect(refreshed).toMatchObject({
+      previousForecastDate: "2026-06-25",
+      forecastDate: "2026-06-28",
+      recoveryAction: "Add a second shift and resequence the final checks.",
+    });
+  });
+
+  it("filters derived exceptions and the next 30 days at the active data date", async () => {
+    const user = userEvent.setup();
+    render(<MilestonesPage />);
+    await user.click(
+      screen.getByRole("button", { name: "Add 8 imported milestones" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Exceptions" }));
+    expect(screen.getByRole("row", { name: /Mechanical completion/ })).toBeInTheDocument();
+    expect(screen.queryByRole("row", { name: /Electrical energisation/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next 30 days" }));
+    expect(screen.getByRole("row", { name: /Mechanical completion/ })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Electrical energisation/ })).toBeInTheDocument();
+    expect(screen.queryByRole("row", { name: /Operational handover/ })).not.toBeInTheDocument();
   });
 
   it("derives risk score and rating from user-entered probability and impact", async () => {

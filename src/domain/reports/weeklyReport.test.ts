@@ -12,7 +12,7 @@ import {
 } from "../viewModels/projectPerformance";
 import { buildWeeklyReportSnapshot } from "./weeklyReport";
 import type { BaselineGenerationSnapshot } from "../baselineReconciliation";
-import type { ChangeRequest, Risk } from "../types";
+import type { ChangeRequest, Milestone, Risk } from "../types";
 
 const completeDetails: VarianceAnalysisDetails = {
   rootCause: "Late control-panel release constrained installation.",
@@ -274,6 +274,63 @@ describe("weekly report snapshot", () => {
     expect(report.sourceNotes).toContain(
       "Performance history contains one accepted period; current-period and cumulative columns therefore reconcile to the same values.",
     );
+  });
+
+  it("blocks publication when an adverse milestone lacks structured recovery evidence", () => {
+    const performance = singleScopeFixture();
+    const incompleteMilestone: Milestone = {
+      id: "MS-001",
+      name: "Mechanical completion",
+      wbsId: "WP300",
+      owner: "Mechanical lead",
+      baselineDate: "2026-06-01",
+      previousForecastDate: "2026-06-07",
+      forecastDate: "2026-06-21",
+      status: "on-track",
+      commentary: "The forecast movement requires a structured recovery record.",
+    };
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [incompleteMilestone],
+      risks: [],
+      changes: [],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.milestoneExceptions[0]).toMatchObject({
+      id: "MS-001",
+      status: "forecast-late",
+      baselineDate: "2026-06-01",
+      previousForecastDate: "2026-06-07",
+      forecastDate: "2026-06-21",
+      movementDays: 14,
+      dependencyQuality: "unlinked",
+    });
+    expect(report.controls).toContainEqual(
+      expect.objectContaining({ code: "MILESTONE_RECOVERY_REQUIRED" }),
+    );
+    expect(report.canPublish).toBe(false);
+    expect(report.controls).toContainEqual(
+      expect.objectContaining({ code: "MILESTONE_LOGIC_UNRESOLVED" }),
+    );
+  });
+
+  it("blocks publication when accepted schedule milestones are absent from the register", () => {
+    const performance = activeFixture();
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [],
+      milestones: [],
+      risks: [],
+      changes: [],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.controls).toContainEqual(
+      expect.objectContaining({ code: "MILESTONE_REGISTER_INCOMPLETE" }),
+    );
+    expect(report.canPublish).toBe(false);
   });
 
   it("reports active control exceptions and excludes closed risk exposure", () => {

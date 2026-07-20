@@ -39,8 +39,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M4",
     title: "Milestone control",
     plannedHours: 6,
-    completionPercent: 70,
-    evidence: "Validated add/edit/delete input, local persistence, status/date consistency, variance display and overview/report integration work; filters and predecessor/recovery trace remain.",
+    completionPercent: 100,
+    evidence: "Accepted schedule mapping and refresh, all six reporting-date statuses, variance/movement filters, iterative predecessor evidence with logic warnings, structured recovery/decision control and weekly-report publication gates pass.",
   },
   {
     id: "M5",

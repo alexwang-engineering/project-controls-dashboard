@@ -95,12 +95,45 @@ export const trend: TrendPoint[] = cumulativeTrend.map(
   }),
 );
 
+export const milestoneActivityIds = [
+  "A-011",
+  "A-012",
+  "A-024",
+  "A-030",
+  "A-036",
+  "A-048",
+  "A-059",
+  "A-060",
+] as const;
+
+const milestoneActivityDetails = new Map<
+  string,
+  {
+    name: string;
+    owner: string;
+    baselineDate: string;
+    forecastDate: string;
+    actualDate?: string;
+  }
+>([
+  ["A-011", { name: "Design freeze", owner: "Design lead", baselineDate: "2026-04-19", forecastDate: "2026-04-19", actualDate: "2026-04-18" }],
+  ["A-012", { name: "Site access ready", owner: "Site lead", baselineDate: "2026-04-26", forecastDate: "2026-04-26", actualDate: "2026-04-26" }],
+  ["A-024", { name: "Structural works complete", owner: "Civil lead", baselineDate: "2026-05-24", forecastDate: "2026-05-28", actualDate: "2026-05-28" }],
+  ["A-030", { name: "Mechanical equipment delivered", owner: "Supply lead", baselineDate: "2026-05-31", forecastDate: "2026-05-31", actualDate: "2026-05-30" }],
+  ["A-036", { name: "Mechanical completion", owner: "Mechanical lead", baselineDate: "2026-06-21", forecastDate: "2026-06-28" }],
+  ["A-048", { name: "Electrical energisation", owner: "Controls lead", baselineDate: "2026-06-28", forecastDate: "2026-06-28" }],
+  ["A-059", { name: "Integrated testing complete", owner: "Commissioning lead", baselineDate: "2026-07-19", forecastDate: "2026-07-19" }],
+  ["A-060", { name: "Operational handover", owner: "Project manager", baselineDate: "2026-07-26", forecastDate: "2026-08-03" }],
+]);
+
 function createActivities(): Activity[] {
   return workPackages.flatMap((workPackage, packageIndex) => {
     const standardBudget = Math.floor(workPackage.bac / 12);
 
     return Array.from({ length: 12 }, (_, activityIndex) => {
       const sequence = packageIndex * 12 + activityIndex + 1;
+      const activityId = "A-" + String(sequence).padStart(3, "0");
+      const milestone = milestoneActivityDetails.get(activityId);
       const start = addDays(projectStart, packageIndex * 14 + activityIndex * 4);
       const finish = addDays(start, 3);
       const predecessorId =
@@ -109,19 +142,23 @@ function createActivities(): Activity[] {
           : "A-" + String(sequence - 1).padStart(3, "0");
 
       return {
-        id: "A-" + String(sequence).padStart(3, "0"),
+        id: activityId,
         wbsId: workPackage.id,
-        name: workPackage.name + " activity " + String(activityIndex + 1),
-        owner: workPackage.owner,
+        name: milestone?.name ?? workPackage.name + " activity " + String(activityIndex + 1),
+        owner: milestone?.owner ?? workPackage.owner,
         baselineStart: isoDate(start),
-        baselineFinish: isoDate(finish),
+        baselineFinish: milestone?.baselineDate ?? isoDate(finish),
         forecastStart: isoDate(
           addDays(start, packageIndex >= 2 && activityIndex >= 5 ? 2 : 0),
         ),
-        forecastFinish: isoDate(
-          addDays(finish, packageIndex >= 2 && activityIndex >= 5 ? 4 : 0),
-        ),
+        forecastFinish:
+          milestone?.forecastDate ??
+          isoDate(addDays(finish, packageIndex >= 2 && activityIndex >= 5 ? 4 : 0)),
+        actualFinish: milestone?.actualDate,
         predecessorIds: predecessorId ? [predecessorId] : [],
+        isMilestone: milestone !== undefined,
+        calendarId: "CAL-5D",
+        constraintType: "none" as const,
         baselineBudget:
           activityIndex === 11
             ? workPackage.bac - standardBudget * 11
@@ -135,6 +172,7 @@ function createActivities(): Activity[] {
 export const milestones: Milestone[] = [
   {
     id: "MS-001",
+    sourceActivityId: "A-011",
     name: "Design freeze",
     wbsId: "WP100",
     owner: "Design lead",
@@ -147,6 +185,7 @@ export const milestones: Milestone[] = [
   },
   {
     id: "MS-002",
+    sourceActivityId: "A-012",
     name: "Site access ready",
     wbsId: "WP100",
     owner: "Site lead",
@@ -159,6 +198,7 @@ export const milestones: Milestone[] = [
   },
   {
     id: "MS-003",
+    sourceActivityId: "A-024",
     name: "Structural works complete",
     wbsId: "WP200",
     owner: "Civil lead",
@@ -167,10 +207,17 @@ export const milestones: Milestone[] = [
     forecastDate: "2026-05-28",
     actualDate: "2026-05-28",
     status: "complete-late",
+    cause: "Restricted access and survey rework delayed structural completion.",
+    recoveryAction: "Close the residual survey actions and protect the released mechanical interfaces.",
+    actionOwner: "Civil lead",
+    actionDueDate: "2026-06-14",
+    decisionRequired: "Accept the four-day outcome and retain the interface protection plan.",
+    updatedAt: "2026-06-14T17:10:00Z",
     commentary: "Access and survey rework moved completion by four days.",
   },
   {
     id: "MS-004",
+    sourceActivityId: "A-030",
     name: "Mechanical equipment delivered",
     wbsId: "WP300",
     owner: "Supply lead",
@@ -183,6 +230,7 @@ export const milestones: Milestone[] = [
   },
   {
     id: "MS-005",
+    sourceActivityId: "A-036",
     name: "Mechanical completion",
     wbsId: "WP300",
     owner: "Mechanical lead",
@@ -190,10 +238,17 @@ export const milestones: Milestone[] = [
     previousForecastDate: "2026-06-25",
     forecastDate: "2026-06-28",
     status: "forecast-late",
+    cause: "Alignment and guarding installation are progressing below the approved sequence.",
+    recoveryAction: "Add a recovery shift and resequence guarding completion behind aligned equipment.",
+    actionOwner: "Mechanical lead",
+    actionDueDate: "2026-06-18",
+    decisionRequired: "Approve the temporary second shift through mechanical completion.",
+    updatedAt: "2026-06-14T17:10:00Z",
     commentary: "Recovery shift proposed for alignment and guarding work.",
   },
   {
     id: "MS-006",
+    sourceActivityId: "A-048",
     name: "Electrical energisation",
     wbsId: "WP400",
     owner: "Controls lead",
@@ -205,6 +260,7 @@ export const milestones: Milestone[] = [
   },
   {
     id: "MS-007",
+    sourceActivityId: "A-059",
     name: "Integrated testing complete",
     wbsId: "WP500",
     owner: "Commissioning lead",
@@ -216,6 +272,7 @@ export const milestones: Milestone[] = [
   },
   {
     id: "MS-008",
+    sourceActivityId: "A-060",
     name: "Operational handover",
     wbsId: "WP500",
     owner: "Project manager",
@@ -223,6 +280,12 @@ export const milestones: Milestone[] = [
     previousForecastDate: "2026-07-30",
     forecastDate: "2026-08-03",
     status: "forecast-late",
+    cause: "Mechanical recovery and the dependent retest sequence have moved handover.",
+    recoveryAction: "Protect the integrated-test window and run handover evidence reviews in parallel.",
+    actionOwner: "Project manager",
+    actionDueDate: "2026-06-21",
+    decisionRequired: "Confirm priority access to the test area for the protected recovery window.",
+    updatedAt: "2026-06-14T17:10:00Z",
     commentary: "Current forecast reflects mechanical recovery and retest.",
   },
 ];

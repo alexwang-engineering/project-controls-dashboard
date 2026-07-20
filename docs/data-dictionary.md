@@ -4,7 +4,7 @@
 
 **Local database schema:** Version 2 (adds revisioned project-configuration history)
 
-**Status date:** 18 July 2026
+**Status date:** 20 July 2026
 
 **Authority:** Master Plan Version 1.1 and ADR-0002
 
@@ -101,6 +101,37 @@ activity cannot exceed that activity's baseline budget. The sorted set of
 distinct project periods defines the reporting calendar; a gap other than seven
 calendar days is a warning. Its latest date is the deterministic import data
 date used to validate actual dates.
+
+## Milestone control record
+
+Milestone records are locally entered or explicitly created from accepted
+schedule rows where `is_milestone=true`. A source-linked refresh takes current
+dates and logic from the active generation while preserving the human-entered
+recovery evidence.
+
+| Field | Required | Rule |
+|---|---:|---|
+| `id` | Yes | Unique register identifier |
+| `sourceActivityId` | No | Exact accepted schedule activity; required for credible dependency evidence |
+| `name`, `wbsId`, `owner` | Yes | Named commitment, scope and accountable owner |
+| `baselineDate` | Yes | Approved comparison date |
+| `previousForecastDate` | Yes | Prior accepted current forecast; advanced automatically on linked refresh |
+| `forecastDate` | Yes | Current accepted forecast |
+| `actualDate` | No | A future actual relative to the reporting date is a data issue |
+| `status` | Derived | Complete on time, complete late, on track, forecast late, overdue or data issue |
+| `cause` | Adverse | Specific cause of movement/outcome |
+| `recoveryAction` | Adverse | Action capable of changing or controlling the outcome |
+| `actionOwner` | Adverse | Named accountable recovery owner |
+| `actionDueDate` | Adverse | ISO date for the recovery action |
+| `decisionRequired` | Adverse | Management decision or explicit confirmation required |
+| `commentary` | Yes | Control context, 10–500 characters |
+| `updatedAt` | New records | ISO timestamp; missing legacy values remain labelled as legacy |
+
+Adverse means complete late, forecast late, overdue or data issue. All five
+structured recovery fields are required together. Missing fields and unresolved
+or unlinked predecessor evidence block report publication. The dependency trace
+enumerates accepted links and quality issues only; it is not a computed critical
+path or total-float result.
 
 ## Project configuration input
 

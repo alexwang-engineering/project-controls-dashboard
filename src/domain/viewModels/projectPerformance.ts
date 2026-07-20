@@ -1,4 +1,9 @@
-import type { NormalisedActivity, PerformanceRecord } from "../records";
+import type {
+  ConstraintType,
+  LinkType,
+  NormalisedActivity,
+  PerformanceRecord,
+} from "../records";
 import type { TrendPoint, WorkPackageSnapshot } from "../types";
 import type { ActiveDataset } from "../../repositories/datasetRepository";
 import { demoSnapshot } from "../../data/demo";
@@ -15,6 +20,15 @@ export interface PerformanceActivity {
   baselineFinish: string;
   forecastFinish: string;
   actualFinish?: string;
+  predecessorLinks: readonly {
+    activityId: string;
+    type: LinkType;
+    lagDays: number;
+  }[];
+  calendarId: string;
+  constraintType: ConstraintType;
+  constraintDate?: string;
+  isMilestone: boolean;
   commentary: string;
 }
 
@@ -154,6 +168,15 @@ export function buildImportedPerformanceSnapshot(
         baselineFinish: activity.baselineFinish,
         forecastFinish: activity.forecastFinish,
         actualFinish: activity.actualFinish,
+        predecessorLinks: activity.predecessorLinks.map((link) => ({
+          activityId: link.activityId,
+          type: link.type,
+          lagDays: link.lagDays,
+        })),
+        calendarId: activity.calendarId,
+        constraintType: activity.constraintType,
+        constraintDate: activity.constraintDate,
+        isMilestone: activity.isMilestone,
         commentary: activity.commentary,
       }),
     )
@@ -223,6 +246,16 @@ export function buildSyntheticPerformanceSnapshot(): ProjectPerformanceSnapshot 
       bac: activity.baselineBudget,
       baselineFinish: activity.baselineFinish,
       forecastFinish: activity.forecastFinish,
+      actualFinish: activity.actualFinish,
+      predecessorLinks: activity.predecessorIds.map((activityId) => ({
+        activityId,
+        type: "FS",
+        lagDays: 0,
+      })),
+      calendarId: activity.calendarId ?? "CAL-5D",
+      constraintType: activity.constraintType ?? "none",
+      constraintDate: activity.constraintDate,
+      isMilestone: activity.isMilestone ?? false,
       commentary: "Synthetic planning activity; import a performance pair for source-period trace.",
     })),
     performance: [],

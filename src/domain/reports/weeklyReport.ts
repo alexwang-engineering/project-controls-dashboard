@@ -18,6 +18,12 @@ import {
   type VarianceMetric,
 } from "../varianceAnalysis";
 import { missingChangeControlFields } from "../changes";
+import {
+  buildMilestoneDependencyTrace,
+  isAdverseMilestoneStatus,
+  milestoneStatusAt,
+  missingMilestoneRecoveryFields,
+} from "../milestones";
 import { riskExceptionFlags, riskExposure } from "../risks";
 import {
   buildBaselineReconciliation,
@@ -38,6 +44,9 @@ export type ReportControlCode =
   | "BASELINE_VERSION_MISMATCH"
   | "DECISION_AUTHORITY_REQUIRED"
   | "CHANGE_RECORD_INCOMPLETE"
+  | "MILESTONE_RECOVERY_REQUIRED"
+  | "MILESTONE_LOGIC_UNRESOLVED"
+  | "MILESTONE_REGISTER_INCOMPLETE"
   | BaselineControlCode;
 
 export interface ReportControl {
@@ -99,9 +108,21 @@ export interface WeeklyReportSnapshot {
     id: string;
     name: string;
     owner: string;
+    baselineDate: string;
+    previousForecastDate: string;
+    forecastDate: string;
+    actualDate?: string;
     outcomeDate: string;
     varianceDays: number;
+    movementDays: number;
     status: Milestone["status"];
+    dependencyQuality: "credible" | "warning" | "unresolved" | "unlinked";
+    dependencyIssues: readonly string[];
+    cause?: string;
+    recoveryAction?: string;
+    actionOwner?: string;
+    actionDueDate?: string;
+    decisionRequired?: string;
     commentary: string;
   }>;
   topRisks: readonly Risk[];
@@ -512,25 +533,93 @@ export function buildWeeklyReportSnapshot(
     });
   }
 
-  const milestoneExceptions = input.milestones
-    .filter(({ status }) =>
-      ["complete-late", "forecast-late", "overdue"].includes(status),
-    )
+  const registeredSourceActivityIds = new Set(
+    input.milestones.flatMap((milestone) => [
+      milestone.id,
+      ...(milestone.sourceActivityId ? [milestone.sourceActivityId] : []),
+    ]),
+  );
+  const missingScheduleMilestones = input.performance.activities.filter(
+    (activity) =>
+      activity.isMilestone && !registeredSourceActivityIds.has(activity.id),
+  );
+  if (missingScheduleMilestones.length > 0) {
+    controls.push({
+      code: "MILESTONE_REGISTER_INCOMPLETE",
+      severity: "blocking",
+      message: `${String(missingScheduleMilestones.length)} accepted schedule milestone${missingScheduleMilestones.length === 1 ? " is" : "s are"} missing from the controlled milestone register: ${missingScheduleMilestones.map(({ id }) => id).join(", ")}.`,
+    });
+  }
+
+  const milestonesAtReportingDate = input.milestones.map((milestone) => ({
+    ...milestone,
+    status: milestoneStatusAt(
+      milestone,
+      input.performance.project.reportingDate,
+    ),
+  }));
+  const incompleteMilestoneRecovery = milestonesAtReportingDate.filter(
+    (milestone) => missingMilestoneRecoveryFields(milestone).length > 0,
+  );
+  if (incompleteMilestoneRecovery.length > 0) {
+    controls.push({
+      code: "MILESTONE_RECOVERY_REQUIRED",
+      severity: "blocking",
+      message: `${incompleteMilestoneRecovery.map(({ id }) => id).join(", ")} ${incompleteMilestoneRecovery.length === 1 ? "requires" : "require"} complete cause, recovery action, owner, due date and management-decision evidence.`,
+    });
+  }
+  const milestoneExceptions = milestonesAtReportingDate
+    .filter(({ status }) => isAdverseMilestoneStatus(status))
     .map((milestone) => {
       const outcomeDate = milestone.actualDate ?? milestone.forecastDate;
+      const dependency = milestone.sourceActivityId
+        ? buildMilestoneDependencyTrace(
+            input.performance.activities,
+            milestone.sourceActivityId,
+          )
+        : {
+            quality: "unlinked" as const,
+            issues: [],
+          };
       return {
         id: milestone.id,
         name: milestone.name,
         owner: milestone.owner,
+        baselineDate: milestone.baselineDate,
+        previousForecastDate: milestone.previousForecastDate,
+        forecastDate: milestone.forecastDate,
+        actualDate: milestone.actualDate,
         outcomeDate,
         varianceDays: differenceInCalendarDays(
           parseISO(outcomeDate),
           parseISO(milestone.baselineDate),
         ),
+        movementDays: differenceInCalendarDays(
+          parseISO(milestone.forecastDate),
+          parseISO(milestone.previousForecastDate),
+        ),
         status: milestone.status,
+        dependencyQuality: dependency.quality,
+        dependencyIssues: dependency.issues.map(({ code }) => code),
+        cause: milestone.cause,
+        recoveryAction: milestone.recoveryAction,
+        actionOwner: milestone.actionOwner,
+        actionDueDate: milestone.actionDueDate,
+        decisionRequired: milestone.decisionRequired,
         commentary: milestone.commentary,
       };
     });
+  const milestonesWithoutCredibleLogic = milestoneExceptions.filter(
+    ({ dependencyQuality }) =>
+      dependencyQuality === "unresolved" || dependencyQuality === "unlinked",
+  );
+  if (milestonesWithoutCredibleLogic.length > 0) {
+    controls.push({
+      code: "MILESTONE_LOGIC_UNRESOLVED",
+      severity: "blocking",
+      message: `${milestonesWithoutCredibleLogic.map(({ id }) => id).join(", ")} ${milestonesWithoutCredibleLogic.length === 1 ? "does" : "do"} not have a credible accepted predecessor trace. Link the milestone to its active schedule activity and resolve missing or circular logic.`,
+    });
+  }
   const topRisks = [...input.risks]
     .filter((risk) => {
       if (risk.status === "closed") return false;

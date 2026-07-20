@@ -14,6 +14,10 @@ import {
 } from "../../domain/calculations/earnedValue";
 import { riskExposure } from "../../domain/risks";
 import {
+  isAdverseMilestoneStatus,
+  milestoneStatusAt,
+} from "../../domain/milestones";
+import {
   cumulativePerformanceForScope,
   resolveWorkPackageScope,
 } from "../../domain/viewModels/projectPerformance";
@@ -102,9 +106,12 @@ export function OverviewPage() {
   const criticalRiskCount = activeRisks.filter(
     (risk) => riskExposure(risk, "residual").rating === "critical",
   ).length;
-  const lateMilestones = scopedMilestones.filter(
-    (milestone) => milestone.status === "forecast-late",
-  );
+  const lateMilestones = scopedMilestones
+    .map((milestone) => ({
+      ...milestone,
+      status: milestoneStatusAt(milestone, snapshot.project.reportingDate),
+    }))
+    .filter((milestone) => isAdverseMilestoneStatus(milestone.status));
   const pendingChanges = scopedChanges.filter(
     (change) => change.status === "submitted",
   );
@@ -366,7 +373,7 @@ export function OverviewPage() {
           <div className="panel__header">
             <div>
               <p className="eyebrow">Milestone movement</p>
-              <h2>{lateMilestones.length} forecast late</h2>
+              <h2>{lateMilestones.length} require attention</h2>
             </div>
             <Link to="/milestones">View register</Link>
           </div>
@@ -380,7 +387,7 @@ export function OverviewPage() {
                   <span>{formatDate(milestone.forecastDate)}</span>
                 </li>
               ))}
-            {lateMilestones.length === 0 ? <li>No late milestone is entered.</li> : null}
+            {lateMilestones.length === 0 ? <li>No milestone exception is recorded.</li> : null}
           </ul>
         </article>
 

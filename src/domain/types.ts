@@ -42,7 +42,17 @@ export interface Activity {
   baselineFinish: string;
   forecastStart: string;
   forecastFinish: string;
+  actualFinish?: string;
   predecessorIds: string[];
+  isMilestone?: boolean;
+  calendarId?: string;
+  constraintType?:
+    | "none"
+    | "start-no-earlier-than"
+    | "finish-no-later-than"
+    | "must-start-on"
+    | "must-finish-on";
+  constraintDate?: string;
   baselineBudget: number;
   progressMethod: "percent_complete";
 }
@@ -65,6 +75,13 @@ export interface Milestone {
   forecastDate: string;
   actualDate?: string;
   status: MilestoneStatus;
+  sourceActivityId?: string;
+  cause?: string;
+  recoveryAction?: string;
+  actionOwner?: string;
+  actionDueDate?: string;
+  decisionRequired?: string;
+  updatedAt?: string;
   commentary: string;
 }
 

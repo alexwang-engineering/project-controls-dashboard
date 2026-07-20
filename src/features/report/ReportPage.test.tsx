@@ -306,6 +306,11 @@ describe("weekly management report page", () => {
       <ReportPage
         dependencies={workflowDependencies}
         performanceOverride={controlledPerformance}
+        registerOverride={{
+          milestones: demoSnapshot.milestones,
+          risks: [],
+          changes: [],
+        }}
       />,
     );
 
