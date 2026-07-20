@@ -96,21 +96,25 @@ export function EacScenarioPanel({
           </div>
           <div>
             <dt>TCPI to BAC</dt>
-            <dd>{formatIndex(metrics.tcpiBac)}</dd>
-            <small>
-              {metrics.tcpiBac === null
-                ? "Unavailable: BAC is not above actual cost."
-                : "Efficiency required to recover the approved BAC."}
-            </small>
+            <dd>
+              {formatIndex(metrics.tcpiBac)}
+              <small>
+                {metrics.tcpiBac === null
+                  ? "Unavailable: BAC is not above actual cost."
+                  : "Efficiency required to recover the approved BAC."}
+              </small>
+            </dd>
           </div>
           <div>
             <dt>TCPI to selected EAC</dt>
-            <dd>{formatIndex(metrics.tcpiEac)}</dd>
-            <small>
-              {metrics.tcpiEac === null
-                ? "Unavailable: selected EAC is not above actual cost."
-                : "Efficiency required over the remaining forecast."}
-            </small>
+            <dd>
+              {formatIndex(metrics.tcpiEac)}
+              <small>
+                {metrics.tcpiEac === null
+                  ? "Unavailable: selected EAC is not above actual cost."
+                  : "Efficiency required over the remaining forecast."}
+              </small>
+            </dd>
           </div>
         </dl>
       </div>

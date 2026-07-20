@@ -84,7 +84,11 @@ export function PerformanceChart({
           height="100%"
           initialDimension={{ width: 800, height: 340 }}
         >
-          <LineChart data={chartData} margin={{ top: 10, right: 18, left: 4, bottom: 0 }}>
+          <LineChart
+            accessibilityLayer={false}
+            data={chartData}
+            margin={{ top: 10, right: 18, left: 4, bottom: 0 }}
+          >
             <CartesianGrid strokeDasharray="3 5" vertical={false} stroke="#d8e3e8" />
             <XAxis dataKey="label" tickLine={false} axisLine={false} />
             <YAxis

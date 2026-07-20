@@ -1,11 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const desktopProjects = [
-  ["chromium", devices["Desktop Chrome"]],
-  ["firefox", devices["Desktop Firefox"]],
-  ["webkit", devices["Desktop Safari"]],
-] as const;
-
 export default defineConfig({
   testDir: "./e2e",
   timeout: 45_000,
@@ -24,11 +18,21 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [
-    ...desktopProjects.map(([name, use]) => ({
-      name,
+    {
+      name: "chromium",
       testIgnore: /responsive\.spec\.ts/,
-      use,
-    })),
+      use: devices["Desktop Chrome"],
+    },
+    {
+      name: "firefox",
+      testIgnore: [/responsive\.spec\.ts/, /chromium-only\.spec\.ts/],
+      use: devices["Desktop Firefox"],
+    },
+    {
+      name: "webkit",
+      testIgnore: [/responsive\.spec\.ts/, /chromium-only\.spec\.ts/],
+      use: devices["Desktop Safari"],
+    },
     {
       name: "mobile-390",
       testMatch: /responsive\.spec\.ts/,

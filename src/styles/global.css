@@ -5,7 +5,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --ink: #142b3a;
-  --muted: #5e7280;
+  --muted: #526977;
   --navy-950: #092334;
   --navy-900: #102f43;
   --navy-800: #173f56;
@@ -349,7 +349,7 @@ h2 {
 }
 
 .build-progress small {
-  color: #6f818b;
+  color: var(--muted);
   font-size: 0.57rem;
   line-height: 1.2;
   text-align: right;
@@ -2017,7 +2017,7 @@ tfoot td {
   gap: 0.55rem;
   padding: 0.6rem 0.85rem;
   border-right: 1px solid var(--border);
-  color: #748690;
+  color: var(--muted);
 }
 
 .import-step:last-child {

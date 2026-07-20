@@ -28,6 +28,37 @@ test("keeps every input-first route within a 390 pixel viewport", async ({
     expect(widths.document, `${route} document width`).toBeLessThanOrEqual(
       widths.viewport,
     );
+
+    const undersizedTargets = await page
+      .locator(
+        ".button, button:not([disabled]), select, textarea, summary, input:not([type='checkbox']):not([type='radio']):not([type='hidden'])",
+      )
+      .evaluateAll((elements) =>
+        elements
+          .filter((element) => {
+            const style = getComputedStyle(element);
+            const bounds = element.getBoundingClientRect();
+            return (
+              style.visibility !== "hidden" &&
+              style.display !== "none" &&
+              bounds.width > 0 &&
+              bounds.height > 0 &&
+              (bounds.width < 24 || bounds.height < 24)
+            );
+          })
+          .map((element) => {
+            const bounds = element.getBoundingClientRect();
+            return {
+              name:
+                element.getAttribute("aria-label") ??
+                element.textContent?.trim().slice(0, 80) ??
+                element.tagName,
+              width: Math.round(bounds.width),
+              height: Math.round(bounds.height),
+            };
+          }),
+      );
+    expect(undersizedTargets, `${route} target size`).toEqual([]);
   }
 });
 

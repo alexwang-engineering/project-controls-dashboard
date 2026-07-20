@@ -292,7 +292,12 @@ export function OverviewPage() {
             </p>
           </div>
         </div>
-        <div className="table-scroll">
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Work-package performance table; scroll horizontally to see every measure"
+          tabIndex={0}
+        >
           <table className="performance-table">
             <caption className="sr-only">
               Work-package budget and earned-value performance

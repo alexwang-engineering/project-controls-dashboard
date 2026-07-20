@@ -47,10 +47,12 @@ presented as project data.
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
-- Fourteen browser journeys across Chromium, Firefox, WebKit and a dedicated
+- Twenty-four browser journeys across Chromium, Firefox, WebKit and a dedicated
   390 × 844 Chromium project. They prove the empty input-first launch, all page
-  guides, real CSV validation and atomic commit, imported calculations, and
-  milestone recovery controls in fresh isolated browser contexts.
+  guides, real CSV validation and atomic commit, imported calculations,
+  milestone recovery controls, 48 WCAG A/AA axe-scanned states, keyboard/skip/
+  focus behaviour, 320 px reflow with WCAG text spacing, 24 px target sizing,
+  reduced motion and forced colours in fresh isolated browser contexts.
 - Guided schedule/performance CSV import with downloadable blank templates,
   field-level validation, checksum control, explicit registry confirmation, and
   pointer-last atomic persistence.
@@ -117,6 +119,9 @@ recorded in
 [`M4_MILESTONE_CONTROL_EVIDENCE.md`](docs/M4_MILESTONE_CONTROL_EVIDENCE.md).
 The repeatable cross-browser critical-flow gate is recorded in
 [`M8_BROWSER_JOURNEY_EVIDENCE.md`](docs/M8_BROWSER_JOURNEY_EVIDENCE.md).
+The automated accessibility findings, fixes and explicit manual-testing
+boundary are recorded in
+[`M8_ACCESSIBILITY_EVIDENCE.md`](docs/M8_ACCESSIBILITY_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture
 

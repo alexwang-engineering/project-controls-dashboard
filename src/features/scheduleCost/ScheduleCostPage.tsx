@@ -298,7 +298,12 @@ function ScheduleCostWorkspace({
           </div>
           <span className="reporting-period">{scopedPeriods.length} period{scopedPeriods.length === 1 ? "" : "s"}</span>
         </div>
-        <div className="table-scroll">
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Periodic and cumulative performance table; scroll horizontally to see every measure"
+          tabIndex={0}
+        >
           <table>
             <caption className="sr-only">Periodic and cumulative earned-value performance</caption>
             <thead>
@@ -332,7 +337,12 @@ function ScheduleCostWorkspace({
             <div><strong>No activity-period records are active.</strong><span>Import a performance file containing accepted activity-period records to enable the source trace.</span></div>
           </div>
         ) : (
-          <div className="table-scroll">
+          <div
+            className="table-scroll"
+            role="region"
+            aria-label="Activity performance evidence table; scroll horizontally to see every measure"
+            tabIndex={0}
+          >
             <table className="activity-trace-table">
               <caption className="sr-only">Activity-level schedule and cost evidence</caption>
               <thead><tr><th scope="col">Activity</th><th scope="col">Owner</th><th scope="col">BAC</th><th scope="col">PV</th><th scope="col">EV</th><th scope="col">AC</th><th scope="col">SV</th><th scope="col">CV</th><th scope="col">Physical complete</th><th scope="col">Evidence</th></tr></thead>

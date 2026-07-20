@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 40,
-    evidence: "Fourteen isolated Playwright journeys now pass across Chromium, Firefox, WebKit and a dedicated 390 px project, covering input-first launch, every page guide, real CSV validation/commit, calculated KPIs and imported-milestone controls. The signed native AppKit/WebKit app remains the review package; full accessibility, moderated research and portfolio evidence remain.",
+    completionPercent: 55,
+    evidence: "The isolated Playwright gate now includes WCAG A/AA axe scans over input-first and active-data states in Chromium, Firefox and WebKit, keyboard/skip/focus checks, 320 px reflow with WCAG text spacing, 390 px target sizing, reduced-motion and forced-colour evidence. It also retains the real CSV and milestone journeys. Manual assistive-technology testing, moderated research and portfolio evidence remain.",
   },
 ];
 
