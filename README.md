@@ -47,6 +47,10 @@ presented as project data.
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
+- Fourteen browser journeys across Chromium, Firefox, WebKit and a dedicated
+  390 × 844 Chromium project. They prove the empty input-first launch, all page
+  guides, real CSV validation and atomic commit, imported calculations, and
+  milestone recovery controls in fresh isolated browser contexts.
 - Guided schedule/performance CSV import with downloadable blank templates,
   field-level validation, checksum control, explicit registry confirmation, and
   pointer-last atomic persistence.
@@ -111,6 +115,8 @@ risk-control increment and its remaining limitations are recorded in
 The completed M4 milestone-control contract and its bounded CPM limitation are
 recorded in
 [`M4_MILESTONE_CONTROL_EVIDENCE.md`](docs/M4_MILESTONE_CONTROL_EVIDENCE.md).
+The repeatable cross-browser critical-flow gate is recorded in
+[`M8_BROWSER_JOURNEY_EVIDENCE.md`](docs/M8_BROWSER_JOURNEY_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture
 
@@ -150,6 +156,18 @@ pnpm check
 
 This runs linting, strict TypeScript checks, all Vitest tests, and the production
 build.
+
+Install the pinned Playwright browser engines once, then run the release gate:
+
+```bash
+pnpm exec playwright install chromium firefox webkit
+pnpm check:release
+```
+
+Playwright starts its own production preview server. Each test receives a new
+browser context, so IndexedDB and local storage cannot leak between journeys.
+Failure screenshots, video and first-retry traces are written only to ignored
+test-artifact directories.
 
 ## Architecture
 

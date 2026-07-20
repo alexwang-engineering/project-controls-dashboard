@@ -263,7 +263,8 @@ The critical path is M0 → M1 → M2 → M3 → M7 → M8. Milestones M4–M6 c
 - Accessibility and responsive-layout review.
 - Security/privacy check confirming that imported data stays local in the MVP.
 - README with screenshots, architecture diagram, calculation definitions, setup steps, limitations, and roadmap.
-- Seeded one-click demonstration mode.
+- Checksum-pinned synthetic journey fixtures that never appear as project data
+  on a clean production launch.
 - Deployed demo or packaged release.
 - Three-minute walkthrough video.
 - Short project retrospective covering scope decisions, risks, trade-offs, results, and next steps.
@@ -274,6 +275,8 @@ The critical path is M0 → M1 → M2 → M3 → M7 → M8. Milestones M4–M6 c
 - Zero unresolved release-blocking defects.
 - All calculation and import-validation tests pass.
 - Core flows work at desktop and 390-pixel mobile widths.
+- Critical input, import, calculation and milestone-control journeys pass in
+  Chromium, Firefox and WebKit with isolated local storage.
 - Five testers can complete import → review → report without assistance; at least four succeed on their first attempt.
 - README allows a new user to run the project without private instructions.
 - The project can be explained in a graduate interview using a clear problem/action/result narrative.
@@ -301,4 +304,7 @@ At the end of each milestone, record:
 
 ## Immediate next action
 
-Complete M0 by creating the product charter, data dictionary, calculation specification, technical architecture, and low-fidelity page layouts. Do not start dashboard implementation until those shared contracts are stable.
+Continue M8 with automated accessibility evidence, manual assistive-technology
+checks, moderated task research and the portfolio-release package. Preserve the
+input-first production boundary: synthetic data belongs in tests and explicit
+fixtures, never in a clean user's project view.

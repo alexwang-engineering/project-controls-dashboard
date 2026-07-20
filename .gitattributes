@@ -2,3 +2,5 @@
 # control characters, binary impostors, and missing final record endings exactly.
 src/test/fixtures/csv/** -text -diff
 src/test/fixtures/csv/SHA256SUMS text diff
+e2e/fixtures/** -text -diff
+e2e/fixtures/SHA256SUMS text diff

@@ -11,12 +11,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "lint": "oxlint src --deny-warnings",
+    "lint": "oxlint src e2e playwright.config.ts --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium",
     "coverage": "vitest run --coverage",
     "fixtures:generate": "node scripts/generate-csv-fixtures.mjs",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "check:release": "pnpm check && pnpm test:e2e"
   },
   "dependencies": {
     "date-fns": "4.4.0",
@@ -32,9 +35,11 @@
     "zustand": "5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
+    "@types/node": "^22.20.1",
     "@types/papaparse": "5.5.2",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",

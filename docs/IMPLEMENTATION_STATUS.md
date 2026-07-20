@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Source-linked milestone dependency and recovery control
+**Current increment:** Cross-browser critical-flow automation
 
-**Evidence-weighted MVP progress:** 83% (78.4 of 94 planned hours)
+**Evidence-weighted MVP progress:** 86% (80.6 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -20,8 +20,9 @@
 | Risks | Global WP scope, cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
-| Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 303 tests, production build | Passing |
+| Responsive layout | Automated all-route 390 × 844 overflow checks plus a reachable mobile milestone editor | Verified |
+| Quality gate | Lint, strict type check, 305 Vitest tests, 14 Playwright browser journeys and production build | Passing |
+| Cross-browser journeys | Fresh-context input-first launch, eight page guides, CSV review/registry/atomic commit, calculated KPI evidence and imported-milestone recovery controls in Chromium, Firefox and WebKit | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -56,15 +57,17 @@
 | M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
 | M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected three-page A4 real-data publication | Fixed full-ASTER PDF, practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
-| M8 — Release gate | 25 Sep | Build pipeline and initial browser QA | Full browser/a11y/security/performance evidence and portfolio assets |
+| M8 — Release gate | 25 Sep | Repeatable native build plus 14 isolated critical-flow runs across Chromium, Firefox, WebKit and 390 px Chromium, with CI configuration and failure artifacts | Full accessibility/security evidence, moderated research and portfolio assets |
 
 ## Next implementation slice
 
-1. Run the M2 moderated comprehension study and record the findings.
-2. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
-3. Add project-calendar definitions so schedule-change reconciliation can
+1. Complete the automated WCAG 2.2 accessibility audit and manual keyboard/
+   screen-reader evidence.
+2. Run the M2 moderated comprehension study and record the findings.
+3. Repeat the approved A4 print/PDF path with full ASTER and complete Firefox/WKWebView checks.
+4. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
-4. Move management registers into revisioned backup-aware persistence.
+5. Move management registers into revisioned backup-aware persistence.
 
 ## Known limitations
 
@@ -85,12 +88,19 @@
   fixed full-ASTER and Firefox/WKWebView checks remain. Report records, variance
   analysis and management registers remain outside active-generation JSON
   backups and variance sign-off is not yet linked to approved baseline revisions.
-- Browser QA covers the in-app Chromium surface at desktop and 390 px, and the
-  native macOS WKWebView host has a verified desktop window and server lifecycle;
-  the full Chromium/Firefox/WebKit matrix belongs to M8.
+- Automated browser QA covers the input-first, controlled-import and imported-
+  milestone journeys in Chromium, Firefox and WebKit plus every route at 390 px.
+  Native WKWebView still requires manual release inspection because Playwright's
+  WebKit engine is not the packaged macOS host.
 
 ## Verification command
 
 ```bash
 pnpm check
+```
+
+The release gate adds the four-project browser matrix:
+
+```bash
+pnpm check:release
 ```

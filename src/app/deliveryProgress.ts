@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 25,
-    evidence: "Automated input journeys and a signed native AppKit/WebKit review app with verified child-server lifecycle and a clean input-first launch exist; full accessibility, browser matrix and release evidence remain.",
+    completionPercent: 40,
+    evidence: "Fourteen isolated Playwright journeys now pass across Chromium, Firefox, WebKit and a dedicated 390 px project, covering input-first launch, every page guide, real CSV validation/commit, calculated KPIs and imported-milestone controls. The signed native AppKit/WebKit app remains the review package; full accessibility, moderated research and portfolio evidence remain.",
   },
 ];
 

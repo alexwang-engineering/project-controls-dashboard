@@ -5,10 +5,16 @@ describe("delivery progress", () => {
   it("reconciles the evidence-weighted assessment to the 94-hour plan", () => {
     expect(deliveryMilestones).toHaveLength(9);
     expect(deliveryProgress.totalPlannedHours).toBe(94);
-    expect(deliveryProgress.evidencedPlanHours).toBe(78.4);
-    expect(deliveryProgress.completionPercent).toBe(83);
+    expect(deliveryProgress.evidencedPlanHours).toBe(80.6);
+    expect(deliveryProgress.completionPercent).toBe(86);
     expect(deliveryMilestones.find(({ id }) => id === "M4")).toMatchObject({
       completionPercent: 100,
+    });
+  });
+
+  it("records the evidenced cross-browser M8 journeys", () => {
+    expect(deliveryMilestones.find(({ id }) => id === "M8")).toMatchObject({
+      completionPercent: 40,
     });
   });
 
