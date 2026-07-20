@@ -69,6 +69,20 @@ export interface Milestone {
 }
 
 export type RiskRating = "low" | "moderate" | "high" | "critical";
+export type RiskObjective =
+  | "safety-quality"
+  | "schedule"
+  | "cost"
+  | "operational-readiness";
+export type RiskStatus = "active" | "closed";
+export type RiskExposureBasis = "inherent" | "residual";
+export type RiskControlEffectiveness =
+  | "effective"
+  | "partly-effective"
+  | "ineffective"
+  | "not-tested";
+export type RiskDisposition = "within-tolerance" | "escalated" | "accepted";
+export type RiskTrend = "improving" | "stable" | "worsening" | "not-recorded";
 
 export interface Risk {
   id: string;
@@ -76,14 +90,37 @@ export interface Risk {
   owner: string;
   wbsId: string;
   category: string;
+  status?: RiskStatus;
+  objective?: RiskObjective;
+  condition?: string;
+  event?: string;
+  consequence?: string;
+  inherentProbability?: number;
+  inherentImpact?: number;
+  inherentScore?: number;
+  inherentRating?: RiskRating;
+  previousResidualProbability?: number;
+  previousResidualImpact?: number;
   residualProbability: number;
   residualImpact: number;
   residualScore: number;
   rating: RiskRating;
   treatment: string;
   treatmentDue: string;
+  reviewDate?: string;
+  triggerDescription?: string;
   triggerStatus: "clear" | "watch" | "breached";
-  controlEffectiveness: "effective" | "partly-effective" | "ineffective";
+  controlDescription?: string;
+  controlOwner?: string;
+  controlEvidence?: string;
+  controlTestDate?: string;
+  controlEffectiveness: RiskControlEffectiveness;
+  disposition?: RiskDisposition;
+  escalationOwner?: string;
+  escalationDate?: string;
+  acceptanceAuthority?: string;
+  acceptanceRationale?: string;
+  acceptanceReviewDate?: string;
 }
 
 export type ChangeStatus =

@@ -5,10 +5,10 @@ import type {
   DemoSnapshot,
   Milestone,
   Risk,
-  RiskRating,
   TrendPoint,
   WorkPackageSnapshot,
 } from "../domain/types";
+import { riskRating, riskToleranceForObjective } from "../domain/risks";
 
 const isoDate = (date: Date) => formatISO(date, { representation: "date" });
 const projectStart = new Date("2026-04-06T12:00:00Z");
@@ -227,13 +227,6 @@ export const milestones: Milestone[] = [
   },
 ];
 
-const riskRating = (score: number): RiskRating => {
-  if (score >= 15) return "critical";
-  if (score >= 10) return "high";
-  if (score >= 5) return "moderate";
-  return "low";
-};
-
 const riskSeeds = [
   ["Panel FAT defects delay energisation", "WP400", 4, 4, "breached"],
   ["Mechanical alignment exceeds tolerance", "WP300", 3, 5, "watch"],
@@ -253,6 +246,23 @@ export const risks: Risk[] = riskSeeds.map(
   ([title, wbsId, probability, impact, triggerStatus], index) => {
     const score = probability * impact;
     const workPackage = workPackages.find((item) => item.id === wbsId);
+    const objective = [
+      "schedule",
+      "safety-quality",
+      "cost",
+      "operational-readiness",
+    ][index % 4] as NonNullable<Risk["objective"]>;
+    const inherentProbability = Math.min(5, probability + 1);
+    const inherentImpact = Math.min(5, impact + (index % 2));
+    const inherentScore = inherentProbability * inherentImpact;
+    const previousResidualProbability =
+      index % 3 === 0
+        ? Math.max(1, probability - 1)
+        : index % 3 === 2
+          ? Math.min(5, probability + 1)
+          : probability;
+    const aboveTolerance = score > riskToleranceForObjective(objective);
+    const accepted = aboveTolerance && index % 2 === 1;
 
     return {
       id: "R-" + String(index + 1).padStart(3, "0"),
@@ -260,6 +270,17 @@ export const risks: Risk[] = riskSeeds.map(
       owner: workPackage?.owner ?? "Project manager",
       wbsId,
       category: index % 2 === 0 ? "Delivery" : "Technical",
+      status: index === riskSeeds.length - 1 ? "closed" : "active",
+      objective,
+      condition: "Current delivery evidence shows uncertainty against the approved control plan.",
+      event: `${title} may occur before the next reporting review.`,
+      consequence: "The affected work package could miss its authorised cost, schedule or readiness objective.",
+      inherentProbability,
+      inherentImpact,
+      inherentScore,
+      inherentRating: riskRating(inherentScore),
+      previousResidualProbability,
+      previousResidualImpact: impact,
       residualProbability: probability,
       residualImpact: impact,
       residualScore: score,
@@ -269,13 +290,38 @@ export const risks: Risk[] = riskSeeds.map(
           ? "Complete targeted review and track evidence at the daily coordination meeting."
           : "Monitor trigger and complete the assigned preventive action.",
       treatmentDue: isoDate(addDays(new Date("2026-06-14T12:00:00Z"), index - 2)),
+      reviewDate: isoDate(addDays(new Date("2026-06-14T12:00:00Z"), index - 1)),
+      triggerDescription: "The named evidence is not available by the weekly control cut-off.",
       triggerStatus,
+      controlDescription: "The accountable owner reviews dated evidence at the weekly controls meeting.",
+      controlOwner: workPackage?.owner ?? "Project manager",
+      controlEvidence: `RISK-CONTROL-${String(index + 1).padStart(3, "0")}`,
+      controlTestDate: "2026-06-13",
       controlEffectiveness:
         index === 0
           ? "ineffective"
           : index < 4
             ? "partly-effective"
             : "effective",
+      disposition: aboveTolerance
+        ? accepted
+          ? "accepted"
+          : "escalated"
+        : "within-tolerance",
+      ...(aboveTolerance && !accepted
+        ? {
+            escalationOwner: "Project director",
+            escalationDate: "2026-06-14",
+          }
+        : {}),
+      ...(accepted
+        ? {
+            acceptanceAuthority: "Project director",
+            acceptanceRationale:
+              "Exposure is time-bounded and the treatment is funded and monitored weekly.",
+            acceptanceReviewDate: "2026-06-21",
+          }
+        : {}),
     };
   },
 );

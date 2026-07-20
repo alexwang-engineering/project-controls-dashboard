@@ -51,6 +51,27 @@ describe("input-first management registers", () => {
     await user.type(screen.getByLabelText("Work package ID"), "WP200");
     await user.type(screen.getByLabelText("Owner"), "Supply Chain Manager");
     await user.type(screen.getByLabelText("Category"), "Delivery");
+    await user.selectOptions(screen.getByLabelText("Objective threatened"), "schedule");
+    await user.type(
+      screen.getByLabelText("Condition"),
+      "The supplier has not secured the planned dispatch slot.",
+    );
+    await user.type(
+      screen.getByLabelText("Possible event"),
+      "The control panel may arrive after the installation window.",
+    );
+    await user.type(
+      screen.getByLabelText("Consequence"),
+      "Energisation and integrated testing could be delayed.",
+    );
+    await user.clear(screen.getByLabelText("Inherent probability"));
+    await user.type(screen.getByLabelText("Inherent probability"), "5");
+    await user.clear(screen.getByLabelText("Inherent impact"));
+    await user.type(screen.getByLabelText("Inherent impact"), "4");
+    await user.clear(screen.getByLabelText("Previous residual probability"));
+    await user.type(screen.getByLabelText("Previous residual probability"), "3");
+    await user.clear(screen.getByLabelText("Previous residual impact"));
+    await user.type(screen.getByLabelText("Previous residual impact"), "3");
     await user.clear(screen.getByLabelText("Residual probability"));
     await user.type(screen.getByLabelText("Residual probability"), "4");
     await user.clear(screen.getByLabelText("Residual impact"));
@@ -60,10 +81,29 @@ describe("input-first management registers", () => {
       "Expedite the purchase order and track dispatch evidence daily.",
     );
     await user.type(screen.getByLabelText("Treatment due"), "2026-08-01");
+    await user.type(screen.getByLabelText("Review date"), "2026-07-25");
+    await user.type(
+      screen.getByLabelText("Early-warning trigger"),
+      "Dispatch evidence is not received by the agreed cut-off.",
+    );
+    await user.type(
+      screen.getByLabelText("Key control"),
+      "Daily supplier progress confirmation and receipt log review.",
+    );
+    await user.type(screen.getByLabelText("Control owner"), "Supply Chain Manager");
+    await user.type(screen.getByLabelText("Control evidence"), "SUPPLIER-LOG-001");
+    await user.type(screen.getByLabelText("Control test date"), "2026-07-18");
+    await user.selectOptions(
+      screen.getByLabelText("Control effectiveness"),
+      "ineffective",
+    );
+    await user.selectOptions(screen.getByLabelText("Tolerance decision"), "escalated");
+    await user.type(screen.getByLabelText("Escalation owner"), "Project Director");
+    await user.type(screen.getByLabelText("Escalation date"), "2026-07-18");
     await user.click(screen.getByRole("button", { name: "Save risk" }));
 
     const row = screen.getByRole("row", { name: /Supplier delivery delay/ });
-    expect(within(row).getByText("4 × 4 = 16")).toBeInTheDocument();
+    expect(within(row).getByText("20 → 16")).toBeInTheDocument();
     expect(within(row).getByText("Critical")).toBeInTheDocument();
   });
 

@@ -12,6 +12,7 @@ import {
   calculateEarnedValue,
   efficiencyStatus,
 } from "../../domain/calculations/earnedValue";
+import { riskExposure } from "../../domain/risks";
 import {
   formatCompactCurrency,
   formatCurrency,
@@ -64,8 +65,9 @@ export function OverviewPage() {
     );
   }
 
-  const criticalRiskCount = risks.filter(
-    (risk) => risk.rating === "critical",
+  const activeRisks = risks.filter((risk) => risk.status !== "closed");
+  const criticalRiskCount = activeRisks.filter(
+    (risk) => riskExposure(risk, "residual").rating === "critical",
   ).length;
   const lateMilestones = milestones.filter(
     (milestone) => milestone.status === "forecast-late",
@@ -380,21 +382,28 @@ export function OverviewPage() {
             <Link to="/risks">Open heatmap</Link>
           </div>
           <ul className="exception-list">
-            {[...risks]
-              .sort((left, right) => right.residualScore - left.residualScore)
+            {[...activeRisks]
+              .sort(
+                (left, right) =>
+                  riskExposure(right, "residual").score -
+                  riskExposure(left, "residual").score,
+              )
               .slice(0, 2)
-              .map((risk) => (
+              .map((risk) => {
+                const exposure = riskExposure(risk, "residual");
+                return (
               <li key={risk.id}>
                 <div>
                   <strong>{risk.title}</strong>
                   <span>{risk.owner}</span>
                 </div>
-                <StatusPill status={risk.rating === "critical" ? "adverse" : "attention"}>
-                  {String(risk.residualScore)} / 25
+                <StatusPill status={exposure.rating === "critical" ? "adverse" : "attention"}>
+                  {String(exposure.score)} / 25
                 </StatusPill>
               </li>
-            ))}
-            {risks.length === 0 ? <li>No risk is entered.</li> : null}
+                );
+              })}
+            {activeRisks.length === 0 ? <li>No active risk is entered.</li> : null}
           </ul>
         </article>
 

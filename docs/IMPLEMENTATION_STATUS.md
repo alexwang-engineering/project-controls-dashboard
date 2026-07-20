@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Weekly-report print/PDF provenance and layout evidence
+**Current increment:** Risk-control workflow and exception management
 
-**Evidence-weighted MVP progress:** 78% (73.1 of 94 planned hours)
+**Evidence-weighted MVP progress:** 80% (75.4 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -17,11 +17,11 @@
 | Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and exceptions | Working |
 | Schedule and cost | Period/scope filters, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
 | Milestones | Validated add/edit/delete input, local persistence, six-state presentation, calendar variance and overview/report integration | Working slice |
-| Risks | Validated add/edit/delete input, derived residual score/rating, local persistence, prioritisation, triggers and 5 × 5 heatmap | Working slice |
+| Risks | Cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | Semantic landmarks/tables, skip link, focus, live region, chart table | Implemented in current slice |
 | Responsive layout | Desktop and 390 px browser inspection with no page-level overflow | Verified |
-| Quality gate | Lint, strict type check, 254 tests, production build | Passing |
+| Quality gate | Lint, strict type check, 276 tests, production build | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
 | M1 row schemas | Branded activities/performance, strict row and cross-field rules, stable machine codes | Tested increment |
@@ -53,7 +53,7 @@
 | M2 — Overview | 9 Aug | Active-generation overview, curve, KPIs, WP table, Schedule & Cost drill-down, source trace and explicit setup-required state | True global cross-view filter, error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
 | M4 — Milestones | 20 Aug | Persistent validated CRUD, status/date guard, variance and overview/report exceptions | Filters, predecessor chain and recovery workflow |
-| M5 — Risks | 28 Aug | Persistent validated CRUD, derived residual score, prioritised register and heatmap | Inherent score, filters, control/escalation workflow and remaining boundary tests |
+| M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
 | M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected three-page A4 real-data publication | Fixed full-ASTER PDF, practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
 | M8 — Release gate | 25 Sep | Build pipeline and initial browser QA | Full browser/a11y/security/performance evidence and portfolio assets |
@@ -75,8 +75,10 @@
 - Milestone, risk and change inputs persist locally and feed the Overview and
   report, but the active-generation JSON backup does not yet include them or
   the multi-generation baseline evidence ledger.
-- Risk and milestone workflows do not yet include escalation, predecessor-chain
-  credibility or full recovery-action trace. Baseline finish reconciliation
+- The risk workflow uses documented default objective tolerances; it does not
+  yet maintain project-specific appetite revisions or immutable register
+  history. Milestones still lack predecessor-chain credibility and full
+  recovery-action trace. Baseline finish reconciliation
   currently treats entered schedule-impact days as calendar days because the
   imported calendar registry identifies calendars but does not define working
   time.

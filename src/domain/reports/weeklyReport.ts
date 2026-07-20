@@ -18,6 +18,7 @@ import {
   type VarianceMetric,
 } from "../varianceAnalysis";
 import { missingChangeControlFields } from "../changes";
+import { riskExceptionFlags, riskExposure } from "../risks";
 import {
   buildBaselineReconciliation,
   type BaselineChangeComparison,
@@ -531,13 +532,23 @@ export function buildWeeklyReportSnapshot(
       };
     });
   const topRisks = [...input.risks]
-    .filter(
-      ({ rating, triggerStatus }) =>
-        rating === "critical" ||
-        rating === "high" ||
-        triggerStatus === "breached",
+    .filter((risk) => {
+      if (risk.status === "closed") return false;
+      const flags = riskExceptionFlags(
+        risk,
+        input.performance.project.reportingDate,
+      );
+      return (
+        riskExposure(risk, "residual").rating === "critical" ||
+        riskExposure(risk, "residual").rating === "high" ||
+        Object.values(flags).some(Boolean)
+      );
+    })
+    .sort(
+      (left, right) =>
+        riskExposure(right, "residual").score -
+        riskExposure(left, "residual").score,
     )
-    .sort((left, right) => right.residualScore - left.residualScore)
     .slice(0, 5);
   const actions = varianceExceptions
     .filter(

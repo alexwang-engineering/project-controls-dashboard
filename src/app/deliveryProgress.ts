@@ -46,8 +46,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M5",
     title: "Risk control",
     plannedHours: 9,
-    completionPercent: 65,
-    evidence: "Validated add/edit/delete input, derived residual scoring, local persistence, prioritised register, heatmap and overview/report integration work; inherent scoring, filters and escalation evidence remain.",
+    completionPercent: 90,
+    evidence: "Validated cause-event-effect input, inherent/residual scoring and trend, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence all work; configurable appetite history and revisioned register storage remain.",
   },
   {
     id: "M6",

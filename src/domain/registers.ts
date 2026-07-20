@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { strictIsoDateSchema } from "../schemas/fields";
 import { missingChangeControlFields } from "./changes";
-import type { ChangeRequest, Milestone, Risk, RiskRating } from "./types";
+import { riskRating, riskToleranceForObjective } from "./risks";
+import type { ChangeRequest, Milestone, Risk } from "./types";
 
 const identifier = z
   .string()
@@ -73,12 +74,7 @@ export const milestoneInputSchema = z
   })
   .transform((value) => value as Milestone);
 
-export const riskRating = (score: number): RiskRating => {
-  if (score >= 15) return "critical";
-  if (score >= 10) return "high";
-  if (score >= 5) return "moderate";
-  return "low";
-};
+export { riskRating } from "./risks";
 
 export const riskInputSchema = z
   .object({
@@ -87,6 +83,20 @@ export const riskInputSchema = z
     owner: shortText("Owner").pipe(z.string().max(80)),
     wbsId: identifier,
     category: shortText("Category").pipe(z.string().max(60)),
+    status: z.enum(["active", "closed"]),
+    objective: z.enum([
+      "safety-quality",
+      "schedule",
+      "cost",
+      "operational-readiness",
+    ]),
+    condition: z.string().trim().min(10).max(500),
+    event: z.string().trim().min(10).max(500),
+    consequence: z.string().trim().min(10).max(500),
+    inherentProbability: z.coerce.number().int().min(1).max(5),
+    inherentImpact: z.coerce.number().int().min(1).max(5),
+    previousResidualProbability: z.coerce.number().int().min(1).max(5),
+    previousResidualImpact: z.coerce.number().int().min(1).max(5),
     residualProbability: z.coerce.number().int().min(1).max(5),
     residualImpact: z.coerce.number().int().min(1).max(5),
     treatment: z
@@ -95,17 +105,77 @@ export const riskInputSchema = z
       .min(10, "Treatment action must contain at least 10 characters.")
       .max(500),
     treatmentDue: strictIsoDateSchema,
+    reviewDate: strictIsoDateSchema,
+    triggerDescription: z.string().trim().min(10).max(500),
     triggerStatus: z.enum(["clear", "watch", "breached"]),
+    controlDescription: z.string().trim().min(10).max(500),
+    controlOwner: shortText("Control owner").pipe(z.string().max(80)),
+    controlEvidence: shortText("Control evidence").pipe(z.string().max(120)),
+    controlTestDate: strictIsoDateSchema,
     controlEffectiveness: z.enum([
       "effective",
       "partly-effective",
       "ineffective",
+      "not-tested",
     ]),
+    disposition: z.enum(["within-tolerance", "escalated", "accepted"]),
+    escalationOwner: optionalText,
+    escalationDate: optionalDate,
+    acceptanceAuthority: optionalText,
+    acceptanceRationale: optionalDetailedText,
+    acceptanceReviewDate: optionalDate,
   })
   .strict()
+  .superRefine((record, context) => {
+    const residualScore = record.residualProbability * record.residualImpact;
+    const aboveTolerance =
+      residualScore > riskToleranceForObjective(record.objective);
+
+    if (aboveTolerance && record.disposition === "within-tolerance") {
+      context.addIssue({
+        code: "custom",
+        path: ["disposition"],
+        message:
+          "A risk above tolerance must be escalated or formally accepted.",
+      });
+    }
+    if (
+      record.disposition === "escalated" &&
+      (!record.escalationOwner || !record.escalationDate)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["escalationOwner"],
+        message: "Escalation requires a named owner and escalation date.",
+      });
+    }
+    if (record.disposition === "accepted") {
+      for (const [field, value] of [
+        ["acceptanceAuthority", record.acceptanceAuthority],
+        ["acceptanceRationale", record.acceptanceRationale],
+        ["acceptanceReviewDate", record.acceptanceReviewDate],
+      ] as const) {
+        if (!value) {
+          context.addIssue({
+            code: "custom",
+            path: [field],
+            message:
+              "Formal acceptance requires authority, rationale and a review date.",
+          });
+        }
+      }
+    }
+  })
   .transform((value): Risk => {
+    const inherentScore = value.inherentProbability * value.inherentImpact;
     const residualScore = value.residualProbability * value.residualImpact;
-    return { ...value, residualScore, rating: riskRating(residualScore) };
+    return {
+      ...value,
+      inherentScore,
+      inherentRating: riskRating(inherentScore),
+      residualScore,
+      rating: riskRating(residualScore),
+    };
   });
 
 export const changeInputSchema = z

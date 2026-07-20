@@ -22,8 +22,10 @@ presented as project data.
   presented beyond the current reporting date.
 - Work-package reconciliation table and interactive highlight control.
 - Validated add/edit/delete milestone input with baseline/forecast variance.
-- Validated add/edit/delete risk input, derived residual score and an accessible
-  5 × 5 heatmap.
+- Validated add/edit/delete risk input with cause–event–effect statements,
+  inherent/residual scoring, trend, combined filters, a selectable accessible
+  5 × 5 heatmap, objective tolerance, tested controls, overdue review/action
+  exceptions, and evidenced escalation or authorised acceptance.
 - Validated add/edit/delete change input with signed impacts and an
   approved-but-not-baselined integrity warning.
 - A controlled change state machine that prevents skipped decisions, locks the
@@ -95,6 +97,8 @@ workflow history and persisted report publication are now implemented. A
 selected real-data publication has passed the three-page A4 Chromium layout
 check and the live-preview rejection path has been rendered and inspected.
 Full-ASTER plus Firefox and native WKWebView print approval remain.
+The M5 risk-control increment and its remaining limitations are recorded in
+[`M5_RISK_CONTROL_EVIDENCE.md`](docs/M5_RISK_CONTROL_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture
 

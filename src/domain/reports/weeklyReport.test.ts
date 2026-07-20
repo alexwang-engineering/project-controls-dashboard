@@ -12,7 +12,7 @@ import {
 } from "../viewModels/projectPerformance";
 import { buildWeeklyReportSnapshot } from "./weeklyReport";
 import type { BaselineGenerationSnapshot } from "../baselineReconciliation";
-import type { ChangeRequest } from "../types";
+import type { ChangeRequest, Risk } from "../types";
 
 const completeDetails: VarianceAnalysisDetails = {
   rootCause: "Late control-panel release constrained installation.",
@@ -274,6 +274,39 @@ describe("weekly report snapshot", () => {
     expect(report.sourceNotes).toContain(
       "Performance history contains one accepted period; current-period and cumulative columns therefore reconcile to the same values.",
     );
+  });
+
+  it("reports active control exceptions and excludes closed risk exposure", () => {
+    const performance = singleScopeFixture();
+    const activeControlException: Risk = {
+      ...demoSnapshot.risks[11]!,
+      id: "R-CONTROL",
+      status: "active",
+      residualProbability: 2,
+      residualImpact: 2,
+      residualScore: 4,
+      rating: "low",
+      treatmentDue: "2026-06-20",
+      reviewDate: "2026-06-20",
+      triggerStatus: "clear",
+      controlEffectiveness: "not-tested",
+      disposition: "within-tolerance",
+    };
+    const closedCritical: Risk = {
+      ...demoSnapshot.risks[0]!,
+      id: "R-CLOSED",
+      status: "closed",
+    };
+    const report = buildWeeklyReportSnapshot({
+      performance,
+      signedAnalyses: [signedProjectAnalysis(performance)],
+      milestones: [],
+      risks: [closedCritical, activeControlException],
+      changes: [],
+      generatedAt: "2026-07-19T18:00:00.000Z",
+    });
+
+    expect(report.topRisks.map(({ id }) => id)).toEqual(["R-CONTROL"]);
   });
 
   it("uses the named authority for a submitted change decision", () => {

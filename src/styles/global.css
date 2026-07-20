@@ -1084,6 +1084,27 @@ h2 {
   font-size: 0.78rem;
 }
 
+.risk-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr)) auto;
+  align-items: end;
+}
+
+.risk-filter-grid label {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.risk-filter-grid select {
+  width: 100%;
+}
+
+.risk-filter-grid p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .filter-bar--two {
   flex-wrap: wrap;
 }
@@ -1540,6 +1561,15 @@ tfoot td {
   padding: 0 0 2rem 2.4rem;
 }
 
+.risk-map-limitation {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid var(--teal-500);
+  background: var(--surface-subtle);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .risk-map {
   table-layout: fixed;
   border-collapse: separate;
@@ -1565,18 +1595,44 @@ tfoot td {
 
 .risk-map td {
   border: 1px solid rgb(20 43 58 / 8%);
+  padding: 0;
 }
 
-.risk-map td strong,
-.risk-map td span {
+.risk-map td button {
+  display: grid;
+  width: 100%;
+  min-width: 44px;
+  height: 100%;
+  min-height: 64px;
+  place-content: center;
+  padding: 0.4rem;
+  border: 2px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.risk-map td button:hover,
+.risk-map td button:focus-visible {
+  border-color: currentColor;
+}
+
+.risk-map td button[aria-pressed="true"] {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 75%);
+}
+
+.risk-map td button strong,
+.risk-map td button span {
   display: block;
 }
 
-.risk-map td strong {
+.risk-map td button strong {
   font-size: 1.1rem;
 }
 
-.risk-map td span {
+.risk-map td button span {
   margin-top: 0.18rem;
   overflow: hidden;
   font-size: 0.55rem;
@@ -1607,6 +1663,35 @@ tfoot td {
 .risk-axis--x {
   right: 43%;
   bottom: 0;
+}
+
+.risk-exception-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risk-exception-list li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #efc5bd;
+  border-left: 4px solid var(--adverse);
+  border-radius: 9px;
+  background: var(--adverse-bg);
+}
+
+.risk-exception-list strong {
+  color: var(--navy-950);
+  font-size: 0.78rem;
+}
+
+.risk-exception-list span {
+  color: var(--adverse);
+  font-size: 0.7rem;
+  font-weight: 750;
 }
 
 .risk-legend {
@@ -3849,6 +3934,14 @@ tfoot td {
     margin: 0;
   }
 
+  .risk-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .risk-filter-grid p {
+    grid-column: 1 / -1;
+  }
+
   .decision-banner {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -3929,7 +4022,12 @@ tfoot td {
     padding: 0.18rem;
   }
 
-  .risk-map td span {
+  .risk-map td button {
+    min-height: 47px;
+    padding: 0.12rem;
+  }
+
+  .risk-map td button span {
     display: none;
   }
 
@@ -3948,6 +4046,14 @@ tfoot td {
 }
 
 @media (max-width: 440px) {
+  .risk-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-filter-grid p {
+    grid-column: 1;
+  }
+
   .summary-strip {
     grid-template-columns: 1fr;
   }
@@ -3985,6 +4091,10 @@ tfoot td {
   .nav-link--active,
   .risk-map td {
     border: 1px solid CanvasText;
+  }
+
+  .risk-map td button[aria-pressed="true"] {
+    outline: 3px solid Highlight;
   }
 
   .status-pill__marker,
