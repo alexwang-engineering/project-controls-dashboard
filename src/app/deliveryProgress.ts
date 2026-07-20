@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 65,
-    evidence: "The isolated Playwright gate includes WCAG A/AA axe scans, keyboard/skip/focus checks, 320 px reflow with text spacing, 390 px target sizing and user-preference evidence. A restrictive CSP, loopback-server response headers, no-external-request browser diagnostics, native-server security tests, dependency audit, Dependabot and CodeQL configuration now form a repeatable security baseline. Manual assistive-technology testing, moderated research and portfolio evidence remain.",
+    completionPercent: 70,
+    evidence: "The isolated browser gate includes WCAG A/AA axe scans, keyboard/skip/focus, reflow, target sizing and user-preference evidence. The security baseline adds CSP, loopback headers/tests, no-external-request diagnostics, audit, Dependabot and CodeQL configuration. The signed native WKWebView bundle now has an eight-route semantic and keyboard smoke inspection. VoiceOver, native file-error/print tasks, moderated research and portfolio evidence remain.",
   },
 ];
 
