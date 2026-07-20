@@ -16,10 +16,12 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=chromium",
+    "test:native": "python3 packaging/macos-review/test_review_server.py",
+    "audit:security": "pnpm audit --audit-level high",
     "coverage": "vitest run --coverage",
     "fixtures:generate": "node scripts/generate-csv-fixtures.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "check:release": "pnpm check && pnpm test:e2e"
+    "check:release": "pnpm audit:security && pnpm check && pnpm test:native && pnpm test:e2e"
   },
   "dependencies": {
     "date-fns": "4.4.0",

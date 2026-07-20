@@ -1,3 +1,4 @@
+import "../../configureCspRuntime";
 import { processImportFiles } from "./importProcessor";
 import {
   IMPORT_WORKER_PROTOCOL_VERSION,

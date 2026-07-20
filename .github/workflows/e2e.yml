@@ -16,7 +16,9 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:security
       - run: pnpm check
+      - run: pnpm test:native
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
       - if: failure()

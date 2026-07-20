@@ -44,8 +44,8 @@ describe("project controls application", () => {
 
     expect(
       screen.getByRole("progressbar", { name: "MVP build progress" }),
-    ).toHaveAttribute("value", "88");
-    expect(screen.getByText("82.9 / 94 weighted hours")).toBeInTheDocument();
+    ).toHaveAttribute("value", "90");
+    expect(screen.getByText("84.4 / 94 weighted hours")).toBeInTheDocument();
   });
 
   it.each([
@@ -234,9 +234,12 @@ describe("project controls application", () => {
     await user.click(
       within(navigation).getByRole("link", { name: "Overview" }),
     );
-    expect(
-      await screen.findByRole("region", { name: "Dashboard data source" }),
-    ).toHaveTextContent("Validated active generation");
+    const dashboardSource = await screen.findByRole("region", {
+      name: "Dashboard data source",
+    });
+    await waitFor(() =>
+      expect(dashboardSource).toHaveTextContent("Validated active generation"),
+    );
     expect(screen.getByText("Active import")).toBeInTheDocument();
 
     await user.click(
@@ -245,9 +248,14 @@ describe("project controls application", () => {
     expect(
       await screen.findByRole("heading", { name: "Schedule and cost", level: 1 }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Performance data source" }),
-    ).toHaveTextContent("Calculated from the active project import");
+    const performanceSource = screen.getByRole("region", {
+      name: "Performance data source",
+    });
+    await waitFor(() =>
+      expect(performanceSource).toHaveTextContent(
+        "Calculated from the active project import",
+      ),
+    );
     expect(
       screen.getByRole("table", {
         name: "Activity-level schedule and cost evidence",

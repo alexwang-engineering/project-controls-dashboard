@@ -30,6 +30,9 @@ export async function importControlledProject(page: Page) {
   await expect(page.getByLabel("Validation summary")).toContainText(
     "2026-04-12",
   );
+  await expect(
+    page.getByText("Validated in the isolated module worker"),
+  ).toBeVisible();
 
   await page
     .getByRole("checkbox", {

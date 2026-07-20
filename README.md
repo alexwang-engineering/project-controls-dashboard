@@ -47,12 +47,24 @@ presented as project data.
   forced-colour support.
 - Automated calculation, fixture, application, navigation, and accessibility-
   oriented component checks.
-- Twenty-four browser journeys across Chromium, Firefox, WebKit and a dedicated
+- Twenty-five browser journeys across Chromium, Firefox, WebKit and a dedicated
   390 × 844 Chromium project. They prove the empty input-first launch, all page
   guides, real CSV validation and atomic commit, imported calculations,
   milestone recovery controls, 48 WCAG A/AA axe-scanned states, keyboard/skip/
   focus behaviour, 320 px reflow with WCAG text spacing, 24 px target sizing,
   reduced motion and forced colours in fresh isolated browser contexts.
+- A restrictive production content-security policy without `unsafe-eval`, with
+  the import worker constrained to same-origin assets and Zod placed in its
+  supported CSP-safe jitless mode before schemas load. Every Playwright journey
+  fails if the app makes an unexpected HTTP(S) request outside its local test
+  origin.
+- The native loopback server adds CSP, frame, MIME, referrer, permissions and
+  cross-origin isolation headers, disables caching and directory listings, and
+  rejects paths that resolve outside the packaged web root. Checked-in native
+  server tests exercise those controls over a real ephemeral HTTP listener.
+- A high-severity dependency audit runs in the release command and CI;
+  Dependabot and CodeQL workflows provide ongoing dependency and static-analysis
+  coverage after they run on GitHub.
 - Guided schedule/performance CSV import with downloadable blank templates,
   field-level validation, checksum control, explicit registry confirmation, and
   pointer-last atomic persistence.
@@ -122,6 +134,9 @@ The repeatable cross-browser critical-flow gate is recorded in
 The automated accessibility findings, fixes and explicit manual-testing
 boundary are recorded in
 [`M8_ACCESSIBILITY_EVIDENCE.md`](docs/M8_ACCESSIBILITY_EVIDENCE.md).
+The local security/privacy threat model, controls, negative findings and
+explicit limitations are recorded in
+[`M8_SECURITY_PRIVACY_EVIDENCE.md`](docs/M8_SECURITY_PRIVACY_EVIDENCE.md).
 
 ## Fixed Week 10 control fixture
 
@@ -172,7 +187,9 @@ pnpm check:release
 Playwright starts its own production preview server. Each test receives a new
 browser context, so IndexedDB and local storage cannot leak between journeys.
 Failure screenshots, video and first-retry traces are written only to ignored
-test-artifact directories.
+test-artifact directories. The release command also audits dependencies at the
+high-severity threshold and starts the real native loopback server for its
+header, SPA fallback, traversal and directory-listing tests.
 
 ## Architecture
 
@@ -201,6 +218,14 @@ The repository fixtures are synthetic. Data you choose in the app is processed
 and retained locally on that device; no CV, university, employer, client, or
 confidential project data is included in the source repository. A cloud backend
 and authentication are outside the portfolio-release scope.
+
+The application has no analytics, telemetry or remote API path. Automated
+browser journeys fail on any unexpected external HTTP(S) request. Imported and
+user-entered data remain in browser/WebKit local storage until the user resets
+it; a downloaded backup leaves that boundary only because the user explicitly
+chooses a destination. This local-first design does not claim application-level
+encryption at rest: device access, macOS account security and backup handling
+remain user responsibilities.
 
 ## Delivery baseline
 

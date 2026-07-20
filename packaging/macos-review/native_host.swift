@@ -186,7 +186,7 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             decisionHandler(.allow)
             return
         }
-        if url.scheme == "about" || url.scheme == "data" {
+        if url.scheme == "about" {
             decisionHandler(.allow)
             return
         }
