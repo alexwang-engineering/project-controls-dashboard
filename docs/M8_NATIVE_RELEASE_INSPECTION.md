@@ -4,8 +4,9 @@
 
 **Artifact:** `/Users/wjl/Desktop/Project Controls Dashboard.app`
 
-**Decision:** Native route, keyboard and file-validation recovery checks passed;
-assistive-technology, register-editing and native print approval remain open
+**Decision:** Native route, keyboard, file-validation recovery and immutable-
+publication print checks passed; assistive-technology, register-editing and the
+full-ASTER native print repetition remain open
 
 ## Outcome
 
@@ -17,9 +18,9 @@ setup/input state and authored controls in the accessibility tree.
 
 The clean native origin remained input-first: it showed no active project, no
 demonstration KPI region and no substituted schedule/cost performance. The
-visible delivery position now reconciles to **92% — 86.4 of 94 evidence-
-weighted hours** after the native input recovery was completed and the bundle
-was rebuilt.
+visible delivery position now reconciles to **93% — 87.2 of 94 evidence-
+weighted hours** after the native input recovery and fail-closed publication
+print bridge were completed and the bundle was rebuilt.
 
 This is useful native evidence, but it is not described as a VoiceOver test or
 a WCAG-conformance result.
@@ -128,14 +129,62 @@ following task was run in the actual AppKit/WKWebView window:
 This closes the native file-selection and malformed-file recovery item without
 altering the input-first product boundary.
 
-## Actions deliberately not performed
+## Actions deliberately not performed during the file-recovery task
 
 - No fixture was committed into the clean review origin; the validated recovery
   candidate was deliberately left unconfirmed and the route was reloaded.
 - Reset was not enabled or activated.
 - Persistence permission was not requested.
 - No backup was downloaded.
-- Print was not invoked from the empty input-first report state.
+- Print was not invoked from the empty input-first report state during that
+  task; the separate controlled print task below later proved both rejection
+  and approved-publication paths.
+
+## Native immutable-publication print boundary
+
+The original AppKit host had no File menu print command, so `Cmd+P` did
+nothing. The host now exposes **File → Print Selected Publication…** and
+injects a main-frame-only bridge for the report page's `window.print()` action.
+Both routes enter one native preflight. The preflight accepts only a DOM with
+`data-print-state="published"`; every live draft, setup screen and unrelated
+page fails closed in an `NSAlert` before an `NSPrintOperation` is created.
+
+The implementation uses WebKit's documented
+[`printOperation(with:)`](https://developer.apple.com/documentation/webkit/wkwebview/printoperation%28with%3A%29)
+API. Practical inspection found that leaving the returned `WKPrintingView`
+frame uninitialised produced three syntactically valid but blank A4 pages on
+the current macOS build. That rejected output was moved to the temporary test
+area and was not treated as evidence. The host now sets the print view to the
+paper size, disables centring, retains automatic vertical/fit horizontal
+pagination and runs the operation modally. This is consistent with the
+zero-frame/blank-output symptoms reported for current WebKit printing in the
+[Apple Developer Forums](https://developer.apple.com/forums/topics/safari-and-web-topic?open-dropdown=true&sortBy=replies&sortOrder=desc).
+
+The corrected, signed application then passed this real UI task:
+
+1. `Cmd+P` on the clean Overview showed **Print blocked** and stated that an
+   immutable published revision must be selected.
+2. Through native CSV panels, the controlled E2E schedule/performance pair was
+   validated in the isolated worker and atomically committed.
+3. Its imported milestone was linked, completed and saved; project and WP100
+   variance-analysis revisions were completed and signed.
+4. Weekly-report revision 1 was saved, confirmed and published through the
+   native UI. The selected record showed **Published revision 1**, author Alex
+   Wang, source import ID, and **Publication controls passed**.
+5. The in-app **Print selected publication** button opened the macOS print
+   dialog through the injected bridge. The preview visibly contained three A4
+   report pages rather than blank sheets.
+6. After cancelling, `Cmd+P` opened the same visible three-page preview through
+   the File-menu path.
+7. The synthetic native test generation, milestone, variance revisions and
+   publication were then removed through the app's acknowledged reset control.
+   The final state reported 0 activities, 0 performance rows and **The app is
+   ready for new input**.
+
+This proves the native fail-closed preflight, the JavaScript-to-native button
+bridge, the menu shortcut and populated WebKit print preview. It does not yet
+replace the four-page full-ASTER Chromium PDF evidence or claim that a physical
+printer was used.
 
 ## Remaining native release gate
 
@@ -143,8 +192,9 @@ altering the input-first product boundary.
   errors, live import status, milestone recovery and report-publication state.
 - Confirm keyboard-only register editing and error recovery with the user's
   actual macOS keyboard-navigation settings documented.
-- Inspect a selected immutable full-ASTER publication through the native print
-  dialog and exported PDF; verify that live-preview printing remains rejected.
+- Repeat the selected-publication native preview with the full ASTER data pack
+  and retain the exported native PDF; live/non-report rejection is already
+  verified.
 - Repeat at enlarged macOS display/text settings and with system contrast
   options where practicable.
 
@@ -164,3 +214,12 @@ Swift type-checking with warnings as errors, app metadata validation and a full
 signed package build. The final `pnpm check:release` passed the dependency audit,
 lint, strict type checking, 305/305 Vitest tests, production build, 4/4 native-
 server tests and **26/26 Playwright runs in 31.9 seconds**.
+
+After the native print correction and 80% M8 update, the Swift host again
+passed type-checking with warnings as errors and the signed bundle was rebuilt
+from the exact production assets. The first release-gate run correctly caught
+one documentation/test expectation rounded to 87.1 hours while the calculation
+produced 87.2. After correcting that bookkeeping value, `pnpm check:release`
+passed the dependency audit, lint, strict type checking, **305/305 Vitest
+tests**, production build, **4/4 native-server tests** and **26/26 Playwright
+runs in 33.7 seconds**.

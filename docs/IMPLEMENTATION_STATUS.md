@@ -3,9 +3,9 @@
 **Status date:** 20 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Native macOS file selection and validation recovery
+**Current increment:** Fail-closed native immutable-publication printing
 
-**Evidence-weighted MVP progress:** 92% (86.4 of 94 planned hours)
+**Evidence-weighted MVP progress:** 93% (87.2 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -22,7 +22,7 @@
 | Accessibility | WCAG A/AA axe scans over input-first and active project states in three engines; skip link, visible keyboard focus, valid semantics, named keyboard-scroll tables, text spacing, reduced motion and forced colours; manual assistive-technology review remains | Automated working evidence |
 | Responsive layout | Automated all-route 320 px reflow with WCAG text spacing, 390 × 844 overflow/24 px target checks and a reachable mobile milestone editor | Verified |
 | Security and privacy | Restrictive CSP without unsafe-eval, CSP-safe schema runtime, loopback response headers, path/listing controls, native regression tests, no-external-request browser diagnostics, dependency audit, Dependabot and CodeQL configuration | Tested local baseline |
-| Native release inspection | Signed/exact bundle, live headers, all eight input-first routes exposed through WKWebView accessibility, macOS link-focus skip path, real CSV open panel, malformed-file rejection and valid-file recovery | Partial manual evidence |
+| Native release inspection | Signed/exact bundle, live headers, all eight input-first routes exposed through WKWebView accessibility, macOS link-focus skip path, real CSV open panel, malformed-file recovery, fail-closed print preflight and visible three-page immutable-publication preview | Partial manual evidence |
 | Quality gate | Lint, strict application/E2E type check, 305 Vitest tests, 4 native-server tests, 26 Playwright browser journeys, dependency audit and production build | Passing |
 | Cross-browser journeys | Fresh-context input-first launch, eight page guides, CSV review/registry/atomic commit, calculated KPI evidence, imported-milestone recovery controls, 48 axe-scanned states and an automatic external-network guard in Chromium, Firefox and WebKit | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
@@ -59,14 +59,15 @@
 | M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
 | M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected four-page A4 publication from the complete 1,020-row ASTER journey | Practical Firefox/WKWebView print checks and fewer-than-five-actions usability evidence |
-| M8 — Release gate | 25 Sep | Repeatable native build plus 26 isolated browser runs, 48 axe-scanned states, accessibility/responsive preferences, CSP/external-network checks, native-server tests, eight-route WKWebView inspection and a native malformed-file/recovery journey | VoiceOver plus native print, keyboard-only register editing, moderated research and portfolio assets |
+| M8 — Release gate | 25 Sep | Repeatable native build plus 26 isolated browser runs, 48 axe-scanned states, accessibility/responsive preferences, CSP/external-network checks, native-server tests, eight-route WKWebView inspection, native malformed-file recovery and gated populated print preview | VoiceOver, keyboard-only register editing, full-ASTER native print repetition, moderated research and portfolio assets |
 
 ## Next implementation slice
 
-1. Complete VoiceOver plus native register-editing and print tasks, recording
-   exact announcements and outcomes.
+1. Complete VoiceOver plus native register-editing tasks, recording exact
+   announcements and outcomes.
 2. Run the M2 moderated comprehension study and record the findings.
-3. Complete practical Firefox and native WKWebView print-preview checks against the approved full-ASTER publication.
+3. Complete practical Firefox and repeat native WKWebView print preview against
+   the approved full-ASTER publication.
 4. Add project-calendar definitions so schedule-change reconciliation can
    move from explicit calendar-day arithmetic to source working days.
 5. Move management registers into revisioned backup-aware persistence.
@@ -94,8 +95,9 @@
   milestone journeys and automatically detectable WCAG A/AA issues in Chromium,
   Firefox and WebKit, plus 320/390 px layout and target checks. Automated scans
   cannot prove WCAG conformance. The signed WKWebView now has a route/semantic/
-  keyboard and file-recovery check, but actual VoiceOver announcements, native
-  register editing and print still require manual release inspection.
+  keyboard, file-recovery and controlled-publication print check, but actual
+  VoiceOver announcements and native register editing still require manual
+  release inspection; the native preview must also be repeated with full ASTER.
 - The web entry point enforces CSP from a meta policy and the packaged native
   server adds header-only controls such as `frame-ancestors`. Runtime chart
   layout still requires CSP `style-src 'unsafe-inline'`; script evaluation is

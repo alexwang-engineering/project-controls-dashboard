@@ -105,7 +105,11 @@ removed to reach the page limit.
 
 ## Remaining release evidence
 
-- Complete practical Firefox and native AppKit/WKWebView print-preview checks.
+- Complete practical Firefox print-preview and repeat the native
+  AppKit/WKWebView preview with the full ASTER publication. A smaller but fully
+  controlled native project has already proved live-content rejection, the
+  report-button bridge, `Cmd+P`, and a visibly populated three-page A4 preview;
+  see `docs/M8_NATIVE_RELEASE_INSPECTION.md`.
 - Run the planned moderated report task and confirm users can reach the selected
   publication and print it in fewer than five actions.
 

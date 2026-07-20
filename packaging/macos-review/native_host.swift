@@ -5,8 +5,9 @@ import WebKit
 
 private let applicationName = "Project Controls Dashboard"
 private let localPort = 43_127
+private let nativePrintHandlerName = "projectControlsPrint"
 
-final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
+final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     private var window: NSWindow?
     private var webView: WKWebView?
     private var serverProcess: Process?
@@ -48,6 +49,18 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         applicationMenuItem.submenu = applicationMenu
         mainMenu.addItem(applicationMenuItem)
 
+        let fileMenuItem = NSMenuItem()
+        let fileMenu = NSMenu(title: "File")
+        let printItem = NSMenuItem(
+            title: "Print Selected Publication…",
+            action: #selector(requestNativePrint(_:)),
+            keyEquivalent: "p"
+        )
+        printItem.target = self
+        fileMenu.addItem(printItem)
+        fileMenuItem.submenu = fileMenu
+        mainMenu.addItem(fileMenuItem)
+
         let editMenuItem = NSMenuItem()
         let editMenu = NSMenu(title: "Edit")
         editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
@@ -79,6 +92,18 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         configuration.preferences.isElementFullscreenEnabled = true
+        configuration.userContentController.add(self, name: nativePrintHandlerName)
+        configuration.userContentController.addUserScript(
+            WKUserScript(
+                source: """
+                window.print = function () {
+                    window.webkit.messageHandlers.\(nativePrintHandlerName).postMessage("print");
+                };
+                """,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            )
+        )
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
@@ -158,6 +183,64 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         webView?.reload()
     }
 
+    @objc private func requestNativePrint(_ sender: Any?) {
+        guard let webView else { return }
+        webView.evaluateJavaScript(
+            """
+            (() => {
+                const page = document.querySelector('.report-page[data-print-state="published"]');
+                const publicationDocument = page?.querySelector('.report-document[data-publication-state="published"]');
+                return window.location.pathname === '/report' && page !== null && publicationDocument !== null;
+            })()
+            """
+        ) { [weak self] result, error in
+            guard let self else { return }
+            guard error == nil, result as? Bool == true else {
+                self.showPrintBlocked()
+                return
+            }
+            self.runPrintOperation(for: webView)
+        }
+    }
+
+    private func showPrintBlocked() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Print blocked"
+        alert.informativeText = "Open Weekly report and select an immutable published revision before printing. Live drafts and other pages are not approved management reports."
+        alert.addButton(withTitle: "OK")
+        if let window {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
+    }
+
+    private func runPrintOperation(for webView: WKWebView) {
+        let printInfo = NSPrintInfo.shared.copy() as? NSPrintInfo ?? NSPrintInfo.shared
+        printInfo.isHorizontallyCentered = false
+        printInfo.isVerticallyCentered = false
+        printInfo.horizontalPagination = .fit
+        printInfo.verticalPagination = .automatic
+        let operation = webView.printOperation(with: printInfo)
+        // WKPrintingView can otherwise reach knowsPageRange with a zero frame
+        // on current macOS releases, producing valid-looking blank pages.
+        operation.view?.frame = NSRect(origin: .zero, size: printInfo.paperSize)
+        operation.canSpawnSeparateThread = true
+        operation.showsPrintPanel = true
+        operation.showsProgressPanel = true
+        if let window {
+            operation.runModal(
+                for: window,
+                delegate: self,
+                didRun: nil,
+                contextInfo: nil
+            )
+        } else {
+            operation.run()
+        }
+    }
+
     private func showLaunchFailure(_ message: String) {
         let escaped = message
             .replacingOccurrences(of: "&", with: "&amp;")
@@ -232,6 +315,18 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         panel.beginSheetModal(for: window) { response in
             completionHandler(response == .OK ? panel.urls : nil)
         }
+    }
+
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceive message: WKScriptMessage
+    ) {
+        guard message.name == nativePrintHandlerName,
+              message.frameInfo.isMainFrame,
+              message.webView === webView else {
+            return
+        }
+        requestNativePrint(nil)
     }
 
     func webView(

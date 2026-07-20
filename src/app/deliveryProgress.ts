@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 75,
-    evidence: "The isolated browser gate includes WCAG A/AA axe scans, keyboard/skip/focus, reflow, target sizing and user-preference evidence. The security baseline adds CSP, loopback headers/tests, no-external-request diagnostics, audit, Dependabot and CodeQL configuration. The signed native WKWebView bundle now has an eight-route semantic/keyboard inspection plus a real macOS CSV-picker malformed-file and recovery journey. VoiceOver, native print, moderated research and portfolio evidence remain.",
+    completionPercent: 80,
+    evidence: "The isolated browser gate includes WCAG A/AA axe scans, keyboard/skip/focus, reflow, target sizing and user-preference evidence. The signed native WKWebView bundle has eight-route semantic/keyboard inspection, real CSV-picker malformed-file recovery, and a fail-closed native print bridge proven against both rejected live content and a visible three-page immutable-publication preview. VoiceOver, keyboard-only register editing, moderated research and portfolio evidence remain.",
   },
 ];
 

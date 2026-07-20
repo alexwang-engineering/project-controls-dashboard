@@ -99,7 +99,8 @@ presented as project data.
   disabled while source, variance, baseline, decision-authority or narrative
   controls are incomplete. Cmd/Ctrl+P follows the same boundary: a live preview
   prints only a rejection notice, while the report document is printable only
-  when an immutable revision is selected.
+  when an immutable revision is selected. The packaged macOS app applies the
+  same check to both its File-menu `Cmd+P` action and the in-page print button.
 - Explicit setup-required screens whenever no validated import is active; the
   Overview, Schedule & Cost and report never substitute demonstration figures.
 - A Settings & Data workflow with browser storage health, persistence requests,
@@ -122,7 +123,9 @@ workflow history and persisted report publication are now implemented. A
 selected real-data publication has passed the three-page A4 Chromium layout
 check, the live-preview rejection path has been rendered and inspected, and the
 complete 1,020-row ASTER journey has produced an inspected four-page immutable
-publication. Firefox and native WKWebView print approval remain.
+publication. A controlled native project has also passed fail-closed rejection
+and a visibly populated three-page WKWebView preview through both the in-page
+button and `Cmd+P`; Firefox and the full-ASTER native repetition remain.
 The M2 global-scope increment is recorded in
 [`M2_GLOBAL_SCOPE_EVIDENCE.md`](docs/M2_GLOBAL_SCOPE_EVIDENCE.md). The M5
 risk-control increment and its remaining limitations are recorded in
@@ -139,7 +142,8 @@ The local security/privacy threat model, controls, negative findings and
 explicit limitations are recorded in
 [`M8_SECURITY_PRIVACY_EVIDENCE.md`](docs/M8_SECURITY_PRIVACY_EVIDENCE.md).
 The signed app's route-by-route WKWebView semantic tree, macOS keyboard path,
-real CSV picker, malformed-file recovery, bundle/header proof and remaining
+real CSV picker, malformed-file recovery, guarded native print bridge,
+populated immutable-publication preview, bundle/header proof and remaining
 manual boundary are recorded in
 [`M8_NATIVE_RELEASE_INSPECTION.md`](docs/M8_NATIVE_RELEASE_INSPECTION.md).
 
