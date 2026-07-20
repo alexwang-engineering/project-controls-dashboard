@@ -131,7 +131,62 @@ describe("report publication repository", () => {
     expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
     expect(results.filter(({ status }) => status === "rejected")).toHaveLength(1);
     const records = await db.reportPublications.toArray();
-    expect(records.filter(({ recordType }) => recordType === "published")).toHaveLength(1);
+    const published = records.filter(({ recordType }) => recordType === "published");
+    expect(published).toHaveLength(1);
+    expect(published.map(({ revision }) => revision)).toEqual([1]);
+    expect(new Set(published.map(({ revision }) => revision)).size).toBe(1);
+    expect(records.filter(({ recordType }) => recordType === "draft")).toHaveLength(0);
+  });
+
+  it("rolls back publication when the immutable record insert fails", async () => {
+    await repository.saveDraft({ ...input(), savedAt: "2026-07-19T18:05:00.000Z" });
+    const injectedFailure = () => {
+      throw new Error("Injected publication add failure");
+    };
+    db.reportPublications.hook("creating", injectedFailure);
+
+    try {
+      await expect(
+        repository.publish({
+          ...input(),
+          publishedAt: "2026-07-19T18:10:00.000Z",
+        }),
+      ).rejects.toThrow("Injected publication add failure");
+    } finally {
+      db.reportPublications.hook.creating.unsubscribe(injectedFailure);
+    }
+
+    const records = await db.reportPublications.toArray();
+    expect(records.filter(({ recordType }) => recordType === "draft")).toHaveLength(1);
+    expect(records.filter(({ recordType }) => recordType === "published")).toHaveLength(0);
+  });
+
+  it("allows only one immutable revision when three publish attempts race", async () => {
+    await repository.saveDraft({ ...input(), savedAt: "2026-07-19T18:05:00.000Z" });
+
+    const results = await Promise.allSettled([
+      repository.publish({
+        ...input(),
+        publishedAt: "2026-07-19T18:10:00.000Z",
+      }),
+      repository.publish({
+        ...input(),
+        publishedAt: "2026-07-19T18:10:01.000Z",
+      }),
+      repository.publish({
+        ...input(),
+        publishedAt: "2026-07-19T18:10:02.000Z",
+      }),
+    ]);
+
+    expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+    expect(results.filter(({ status }) => status === "rejected")).toHaveLength(2);
+    const records = await db.reportPublications.toArray();
+    expect(
+      records
+        .filter(({ recordType }) => recordType === "published")
+        .map(({ revision }) => revision),
+    ).toEqual([1]);
     expect(records.filter(({ recordType }) => recordType === "draft")).toHaveLength(0);
   });
 

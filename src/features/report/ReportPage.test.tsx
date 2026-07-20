@@ -92,6 +92,17 @@ describe("weekly management report page", () => {
     expect(
       screen.getByRole("button", { name: "Print selected publication" }),
     ).toBeDisabled();
+    expect(document.querySelector(".report-page")).toHaveAttribute(
+      "data-print-state",
+      "live",
+    );
+    expect(document.querySelector(".report-document")).toHaveAttribute(
+      "data-publication-state",
+      "live",
+    );
+    expect(document.querySelector(".report-print-blocker")).toHaveTextContent(
+      "No approved revision selected",
+    );
     expect(dependencies.loadSignedAnalyses).toHaveBeenCalledWith({
       projectId: performance.project.id,
       baselineVersion: performance.project.baselineVersion,
@@ -163,12 +174,85 @@ describe("weekly management report page", () => {
       await screen.findByRole("region", { name: "Published revision" }),
     ).toHaveTextContent("Published revision 1");
     expect(screen.getByText(/Management approved this frozen position/)).toBeInTheDocument();
+    expect(document.querySelector(".report-page")).toHaveAttribute(
+      "data-print-state",
+      "published",
+    );
+    expect(document.querySelector(".report-document")).toHaveAttribute(
+      "data-publication-state",
+      "published",
+    );
+    expect(
+      screen.getByText(/Viewing immutable revision 1/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Report author" })).toBeDisabled();
     const printButton = screen.getByRole("button", {
       name: "Print selected publication",
     });
     expect(printButton).toBeEnabled();
     fireEvent.click(printButton);
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders hostile published narrative as literal text without creating executable markup", async () => {
+    const publishedReport = buildWeeklyReportSnapshot({
+      performance: controlledPerformance,
+      signedAnalyses: [],
+      milestones: [],
+      risks: [],
+      changes: [],
+      generatedAt: "2026-07-19T17:30:00.000Z",
+      registerSource: "User-entered local management registers",
+    });
+    const sourceEvidence: WeeklyReportSourceEvidence = {
+      activeImportId: controlledPerformance.importId,
+      signedAnalyses: [],
+      milestones: [],
+      risks: [],
+      changes: [],
+    };
+    const hostileSummary = "<script>globalThis.compromised = true</script> =cmd|'/C calc";
+    const published: WeeklyReportPublicationRecord = {
+      recordId: "REPORT-PUBLISHED::ASTER|B0|2026-06-14::1",
+      recordType: "published",
+      contextKey: "ASTER|B0|2026-06-14",
+      projectId: controlledPerformance.project.id,
+      baselineVersion: controlledPerformance.project.baselineVersion,
+      reportingPeriod: controlledPerformance.project.reportingDate,
+      sourceImportId: controlledPerformance.importId,
+      sourceFingerprint: buildReportSourceFingerprint(publishedReport, sourceEvidence),
+      report: publishedReport,
+      sourceEvidence,
+      narrative: {
+        author: "<img src=x onerror=alert(1)>",
+        managementSummary: hostileSummary,
+        decisionsRequired: "<svg onload=alert(1)>Approve nothing.</svg>",
+        nextPeriodFocus: "Treat every hostile value as literal report text.",
+      },
+      revision: 1,
+      createdAt: "2026-07-19T17:35:00.000Z",
+      updatedAt: "2026-07-19T17:35:00.000Z",
+      publishedAt: "2026-07-19T17:35:00.000Z",
+    };
+    const hostileDependencies: ReportPageDependencies = {
+      ...dependencies,
+      loadPublicationContext: vi.fn().mockResolvedValue({
+        publishedRevisions: [published],
+        retainedDraftCount: 0,
+      }),
+    };
+
+    render(
+      <ReportPage
+        dependencies={hostileDependencies}
+        performanceOverride={controlledPerformance}
+      />,
+    );
+
+    expect(await screen.findByText(hostileSummary)).toHaveTextContent(hostileSummary);
+    expect(document.querySelector("script")).toBeNull();
+    expect(document.querySelector("img")).toBeNull();
+    expect(document.querySelector("svg[onload]")).toBeNull();
   });
 
   it("requires a current saved draft before publishing an immutable revision", async () => {

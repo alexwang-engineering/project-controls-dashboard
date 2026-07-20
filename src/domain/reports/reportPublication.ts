@@ -39,6 +39,20 @@ export const emptyReportNarrative: WeeklyReportNarrative = {
   nextPeriodFocus: "",
 };
 
+const reportNarrativeFields = [
+  "author",
+  "managementSummary",
+  "decisionsRequired",
+  "nextPeriodFocus",
+] as const satisfies readonly (keyof WeeklyReportNarrative)[];
+
+export function sameReportNarrative(
+  left: WeeklyReportNarrative,
+  right: WeeklyReportNarrative,
+) {
+  return reportNarrativeFields.every((field) => left[field] === right[field]);
+}
+
 export interface WeeklyReportSourceEvidence {
   activeImportId: string;
   signedAnalyses: readonly VarianceAnalysisRecord[];

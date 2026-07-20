@@ -35,6 +35,7 @@ import type { VarianceAnalysisRecord } from "../../domain/varianceAnalysis";
 import {
   buildReportSourceFingerprint,
   emptyReportNarrative,
+  sameReportNarrative,
   validateReportNarrativeForPublication,
   type WeeklyReportNarrative,
   type WeeklyReportPublicationRecord,
@@ -313,8 +314,8 @@ function ReportWorkspace({
         };
   const currentDraftMatches =
     publicationState.currentDraft?.sourceFingerprint === sourceFingerprint &&
-    JSON.stringify(publicationState.currentDraft.narrative) ===
-      JSON.stringify(narrative);
+    publicationState.currentDraft !== undefined &&
+    sameReportNarrative(publicationState.currentDraft.narrative, narrative);
 
   const updateNarrative = (field: keyof WeeklyReportNarrative, value: string) => {
     setNarrative((current) => ({ ...current, [field]: value }));
@@ -375,7 +376,10 @@ function ReportWorkspace({
   };
 
   return (
-    <div className="page-stack report-page">
+    <div
+      className={`page-stack report-page${selectedPublication === undefined ? "" : " report-page--published"}`}
+      data-print-state={selectedPublication === undefined ? "live" : "published"}
+    >
       <PageHeader
         eyebrow="M7 reporting"
         title="Weekly management report"
@@ -414,6 +418,16 @@ function ReportWorkspace({
         ]}
       />
 
+      <section className="report-print-blocker" aria-hidden="true">
+        <p className="eyebrow">Print blocked</p>
+        <h1>No approved revision selected</h1>
+        <p>
+          This is a live, recalculated preview and is not an approved management
+          report. Return to the app, select a persisted published revision, then
+          print again.
+        </p>
+      </section>
+
       {error ? (
         <div className="import-error" role="alert">
           <strong>Report snapshot could not be loaded.</strong>
@@ -439,7 +453,27 @@ function ReportWorkspace({
           <p>
             Edit the decision-focused narrative, save it against the current source fingerprint, then publish. Published revisions cannot be overwritten; print uses only the selected stored revision.
           </p>
-          <div className="report-publication__form">
+          {selectedPublication ? (
+            <p
+              className="report-publication__selection-note"
+              id="report-publication-selection-note"
+              role="status"
+            >
+              Viewing immutable revision {String(selectedPublication.revision)}.
+              Its narrative cannot be edited. Choose “View current live draft”
+              to prepare a new revision.
+            </p>
+          ) : null}
+          <fieldset
+            className="report-publication__form"
+            disabled={selectedPublication !== undefined}
+            aria-describedby={
+              selectedPublication === undefined
+                ? undefined
+                : "report-publication-selection-note"
+            }
+          >
+            <legend className="sr-only">Management narrative fields</legend>
             <label>
               Report author
               <input aria-label="Report author" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.author !== undefined ? "report-author-error" : undefined} value={narrative.author} maxLength={80} onChange={(event) => updateNarrative("author", event.target.value)} />
@@ -460,16 +494,16 @@ function ReportWorkspace({
               <textarea aria-label="Next-period focus" aria-invalid={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined} aria-describedby={!narrativeErrors.success && narrativeErrors.fieldErrors.nextPeriodFocus !== undefined ? "report-focus-error" : undefined} value={narrative.nextPeriodFocus} maxLength={1_500} rows={3} onChange={(event) => updateNarrative("nextPeriodFocus", event.target.value)} />
               {narrativeErrors.success ? null : <small id="report-focus-error">{narrativeErrors.fieldErrors.nextPeriodFocus}</small>}
             </label>
-          </div>
+          </fieldset>
           <div className="report-publication__actions">
-            <button className="button button--secondary" type="button" disabled={publicationBusy} onClick={saveDraft}>
+            <button className="button button--secondary" type="button" disabled={publicationBusy || selectedPublication !== undefined} onClick={saveDraft}>
               <Save size={17} aria-hidden="true" /> Save current draft
             </button>
             <label className="checkbox-row">
-              <input type="checkbox" checked={publicationConfirmed} onChange={(event) => setPublicationConfirmed(event.target.checked)} />
+              <input type="checkbox" checked={publicationConfirmed} disabled={selectedPublication !== undefined} onChange={(event) => setPublicationConfirmed(event.target.checked)} />
               I confirm this narrative and the frozen source evidence are ready to publish.
             </label>
-            <button className="button button--primary" type="button" disabled={publicationBusy || !publicationConfirmed || !narrativeErrors.success || !liveReport.canPublish || !currentDraftMatches} onClick={publish}>
+            <button className="button button--primary" type="button" disabled={publicationBusy || selectedPublication !== undefined || !publicationConfirmed || !narrativeErrors.success || !liveReport.canPublish || !currentDraftMatches} onClick={publish}>
               <FilePlus2 size={17} aria-hidden="true" /> Publish immutable revision
             </button>
           </div>
@@ -488,7 +522,11 @@ function ReportWorkspace({
       ) : null}
 
       {report ? (
-        <article className="report-document" aria-labelledby="report-document-title">
+        <article
+          className="report-document"
+          data-publication-state={selectedPublication === undefined ? "live" : "published"}
+          aria-labelledby="report-document-title"
+        >
           {selectedPublication ? (
             <section className="report-publication-banner" aria-label="Published revision">
               <strong>Published revision {String(selectedPublication.revision)}</strong>

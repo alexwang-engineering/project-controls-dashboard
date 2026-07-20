@@ -3,7 +3,9 @@ import type { WeeklyReportSnapshot } from "./weeklyReport";
 import {
   buildReportSourceFingerprint,
   emptyReportNarrative,
+  sameReportNarrative,
   validateReportNarrativeForPublication,
+  type WeeklyReportNarrative,
   type WeeklyReportSourceEvidence,
 } from "./reportPublication";
 
@@ -97,6 +99,29 @@ describe("weekly report publication", () => {
     expect(buildReportSourceFingerprint(report, changed)).not.toBe(
       buildReportSourceFingerprint(report, evidence),
     );
+  });
+
+  it("compares narrative values independently of object insertion order", () => {
+    const first: WeeklyReportNarrative = {
+      author: "Project Controls Manager",
+      managementSummary: "Management approved the reconciled position.",
+      decisionsRequired: "Approve recovery resources.",
+      nextPeriodFocus: "Evidence recovery output.",
+    };
+    const second = Object.fromEntries([
+      ["nextPeriodFocus", first.nextPeriodFocus],
+      ["decisionsRequired", first.decisionsRequired],
+      ["managementSummary", first.managementSummary],
+      ["author", first.author],
+    ]) as WeeklyReportNarrative;
+
+    expect(sameReportNarrative(first, second)).toBe(true);
+    expect(
+      sameReportNarrative(first, {
+        ...second,
+        decisionsRequired: "Reject recovery resources.",
+      }),
+    ).toBe(false);
   });
 
   it("requires a named author and decision-focused narrative before publication", () => {

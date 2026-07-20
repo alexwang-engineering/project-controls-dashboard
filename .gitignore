@@ -5,3 +5,5 @@ coverage/
 *.local
 playwright-report/
 test-results/
+output/
+tmp/

@@ -2855,11 +2855,28 @@ tfoot td {
   line-height: 1.55;
 }
 
+.report-publication__selection-note {
+  margin-top: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #b8d6d8;
+  border-radius: 8px;
+  background: #eef8f7;
+  color: var(--teal-700) !important;
+  font-weight: 750;
+}
+
 .report-publication__form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
   margin-top: 1rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.report-publication__form:disabled {
+  opacity: 0.68;
 }
 
 .report-publication__form label {
@@ -3021,6 +3038,10 @@ tfoot td {
   border-radius: var(--radius);
   background: white;
   box-shadow: var(--shadow);
+}
+
+.report-print-blocker {
+  display: none;
 }
 
 .report-document__header {
@@ -3982,6 +4003,8 @@ tfoot td {
   html,
   body {
     background: white;
+    color: black;
+    font-size: 10pt;
   }
 
   .sidebar,
@@ -4004,9 +4027,28 @@ tfoot td {
 
   .report-document {
     overflow: visible;
+    margin: 0;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .report-page[data-print-state="live"] .report-document {
+    display: none !important;
+  }
+
+  .report-page[data-print-state="live"] .report-print-blocker {
+    display: block !important;
+    max-width: 150mm;
+    margin: 30mm auto 0;
+    padding: 12mm;
+    border: 2px solid black;
+    background: white;
+    color: black;
+  }
+
+  .report-page[data-print-state="published"] .report-print-blocker {
+    display: none !important;
   }
 
   .report-document__header,
@@ -4014,8 +4056,30 @@ tfoot td {
   .report-gate,
   .report-scenario,
   .report-record-list li,
-  .report-baseline-grid {
+  .report-baseline-grid,
+  .report-scenario-grid,
+  .report-two-column > div {
     break-inside: avoid;
+  }
+
+  .report-section:last-child {
+    margin-bottom: 0;
+    break-after: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  p,
+  li,
+  td,
+  th {
+    overflow-wrap: anywhere;
+    orphans: 3;
+    widows: 3;
   }
 
   .table-scroll {
@@ -4028,5 +4092,15 @@ tfoot td {
 
   thead {
     display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  td,
+  th {
+    break-inside: avoid;
   }
 }

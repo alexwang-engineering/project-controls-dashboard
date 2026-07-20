@@ -60,8 +60,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M7",
     title: "Weekly report",
     plannedHours: 11,
-    completionPercent: 75,
-    evidence: "Editable management narrative, exact source fingerprints, one current draft, append-only published revisions, active-generation compare-and-set protection, persisted-history selection and snapshot-only printing now extend the deterministic accessible report; formal print/PDF page approval remains.",
+    completionPercent: 90,
+    evidence: "Immutable revisions now have an explicit live-versus-published print boundary, locked historical narrative, rollback and concurrency regression coverage, plus a visually inspected three-page A4 persisted-publication PDF; full-ASTER and Firefox/WKWebView print evidence plus moderated usability remain.",
   },
   {
     id: "M8",
@@ -89,5 +89,5 @@ export const deliveryProgress = {
   totalPlannedHours,
   evidencedPlanHours,
   completionPercent: Math.round(weightedHourPercent / totalPlannedHours),
-  assessedOn: "2026-07-19",
+  assessedOn: "2026-07-20",
 } as const;

@@ -2,6 +2,7 @@ import {
   buildReportSourceFingerprint,
   reportContextKey,
   reportNarrativeDraftSchema,
+  sameReportNarrative,
   validateReportNarrativeForPublication,
   type WeeklyReportNarrative,
   type WeeklyReportPublicationRecord,
@@ -227,8 +228,7 @@ export class ReportPublicationRepository {
             if (
               draft === undefined ||
               draft.sourceFingerprint !== input.sourceFingerprint ||
-              JSON.stringify(draft.narrative) !==
-                JSON.stringify(completeNarrative.data)
+              !sameReportNarrative(draft.narrative, completeNarrative.data)
             ) {
               throw new ReportDraftNotCurrentError();
             }

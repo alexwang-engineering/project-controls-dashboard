@@ -70,7 +70,9 @@ presented as project data.
   action is enabled only for a selected persisted publication and therefore
   renders the same approved timestamp, facts and narrative. Publication remains
   disabled while source, variance, baseline, decision-authority or narrative
-  controls are incomplete.
+  controls are incomplete. Cmd/Ctrl+P follows the same boundary: a live preview
+  prints only a rejection notice, while the report document is printable only
+  when an immutable revision is selected.
 - Explicit setup-required screens whenever no validated import is active; the
   Overview, Schedule & Cost and report never substitute demonstration figures.
 - A Settings & Data workflow with browser storage health, persistence requests,
@@ -89,8 +91,10 @@ The M1 closure increment was independently reviewed by Hermes and Claude in
 isolated checkouts and approved with no blocking findings; the post-review
 ratification and process-flag resolution are recorded in
 [`M1_CLOSURE_EVIDENCE.md`](docs/M1_CLOSURE_EVIDENCE.md). Controlled register
-workflow history and persisted report publication are now implemented. Formal
-print/PDF page-count and cross-engine visual approval remain to be completed.
+workflow history and persisted report publication are now implemented. A
+selected real-data publication has passed the three-page A4 Chromium layout
+check and the live-preview rejection path has been rendered and inspected.
+Full-ASTER plus Firefox and native WKWebView print approval remain.
 
 ## Fixed Week 10 control fixture
 

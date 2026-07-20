@@ -1,8 +1,8 @@
 # M7 immutable weekly-report publication evidence
 
-**Evidence date:** 19 July 2026  
-**Milestone assessment:** M7 75%  
-**Overall evidence-weighted progress:** 76% (71.5 of 94 hours)
+**Evidence date:** 20 July 2026
+**Milestone assessment:** M7 90%
+**Overall evidence-weighted progress:** 78% (73.1 of 94 hours)
 
 ## Delivered outcome
 
@@ -38,8 +38,10 @@ fingerprint.
   current saved-draft match.
 - Revision allocation, append-only insert and deletion of only the current
   draft occur in one Dexie transaction.
-- A concurrent double-publish test proves that one draft can create only one
-  published revision.
+- Concurrent double- and triple-publish tests prove that one draft can create
+  only one published revision.
+- An injected failure of the immutable-record insert proves transaction rollback
+  retains the draft and creates no partial publication.
 - Stored records are rechecked for identity, source fingerprint, timestamps and
   publication metadata when loaded.
 - Import row garbage collection retains report records. Explicit full reset
@@ -47,7 +49,7 @@ fingerprint.
 
 ## Verification
 
-- 250/250 Vitest tests pass across 40 files.
+- 254/254 Vitest tests pass across 40 files.
 - Oxlint passes with warnings denied.
 - Strict TypeScript checking passes.
 - The Vite production build passes.
@@ -72,10 +74,21 @@ A clean browser origin was exercised through the real interface:
 7. Checked the default desktop layout and a 390 × 844 viewport; neither had
    horizontal page overflow.
 
+## Print/PDF closure evidence
+
+- Live and published states are explicit DOM contracts shared by the control and
+  print stylesheet.
+- Cmd/Ctrl+P on a live preview prints one rejection notice and no report body.
+- A selected persisted Project QA revision produced a tagged three-page A4 PDF.
+- All three 150-DPI page renders were inspected with no clipping, overlap, split
+  heading or blank trailing page.
+- Exact page and provenance evidence is recorded in
+  [`M7_PRINT_EVIDENCE.md`](M7_PRINT_EVIDENCE.md).
+
 ## Deliberate limits
 
-- Formal two-to-four A4 page-count, page-break, clipping and cross-engine PDF
-  approval remains open.
+- The fixed full-ASTER PDF, practical Firefox and native WKWebView print checks,
+  and the fewer-than-five-actions moderated usability check remain open.
 - Version-1 JSON backup remains active-generation-only and does not include
   management registers, variance records, report drafts or publications.
 - Strict cross-tab atomicity for management-register edits awaits moving those
@@ -84,8 +97,7 @@ A clean browser origin was exercised through the real interface:
 
 ## Collaboration note
 
-Claude Code was invoked twice in read-only plan mode for the requested second
-opinion. The local CLI was reachable but returned `Credit balance is too low`
-both times, so no Claude findings were used and implementation did not wait.
-The increment was independently reviewed against the existing invariants and
-verified through tests plus the live journey above.
+Claude's independent review approved the immutable publication baseline and
+identified the operating-system print provenance gap. ADR-0005 and the print
+closure tests address that finding. The implementation remains subject to the
+final independent print-closure diff review.

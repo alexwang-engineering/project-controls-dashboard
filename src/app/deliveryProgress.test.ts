@@ -5,8 +5,8 @@ describe("delivery progress", () => {
   it("reconciles the evidence-weighted assessment to the 94-hour plan", () => {
     expect(deliveryMilestones).toHaveLength(9);
     expect(deliveryProgress.totalPlannedHours).toBe(94);
-    expect(deliveryProgress.evidencedPlanHours).toBe(71.5);
-    expect(deliveryProgress.completionPercent).toBe(76);
+    expect(deliveryProgress.evidencedPlanHours).toBe(73.1);
+    expect(deliveryProgress.completionPercent).toBe(78);
   });
 
   it("records the independently approved M1 gate as complete", () => {
@@ -21,9 +21,9 @@ describe("delivery progress", () => {
     });
   });
 
-  it("records the persisted M7 report publication workflow", () => {
+  it("records the evidenced M7 publication and print boundary", () => {
     expect(deliveryMilestones.find(({ id }) => id === "M7")).toMatchObject({
-      completionPercent: 75,
+      completionPercent: 90,
     });
   });
 
