@@ -1,11 +1,11 @@
 # M8 native WKWebView release inspection
 
-**Inspection date:** 20 July 2026
+**Inspection date:** 20–21 July 2026
 
 **Artifact:** `/Users/wjl/Desktop/Project Controls Dashboard.app`
 
-**Decision:** Native route, keyboard, file-validation recovery and immutable-
-publication print checks passed; assistive-technology, register-editing and the
+**Decision:** Native route, keyboard register editing, file-validation recovery
+and immutable-publication print checks passed; assistive-technology and the
 full-ASTER native print repetition remain open
 
 ## Outcome
@@ -18,9 +18,9 @@ setup/input state and authored controls in the accessibility tree.
 
 The clean native origin remained input-first: it showed no active project, no
 demonstration KPI region and no substituted schedule/cost performance. The
-visible delivery position now reconciles to **93% — 87.2 of 94 evidence-
-weighted hours** after the native input recovery and fail-closed publication
-print bridge were completed and the bundle was rebuilt.
+visible delivery position now reconciles to **94% — 87.9 of 94 evidence-
+weighted hours** after native input recovery, fail-closed publication printing,
+cold-launch hardening and keyboard-only register recovery were evidenced.
 
 This is useful native evidence, but it is not described as a VoiceOver test or
 a WCAG-conformance result.
@@ -203,12 +203,67 @@ first Overview without a reload. The accessible tree exposed the eight routes,
 — 87.2 / 94 weighted hours**. A screenshot was visually checked against that
 tree.
 
+## Keyboard-only register editing and error recovery
+
+A temporary controlled E2E project was imported to provide the WP100 registry
+needed by the risk form. The schedule picker, import navigation, validation and
+commit were operated with Option+Tab/Return. During setup only, macOS's second
+**Go to** path field stopped honouring Command+A; its path value and the registry
+checkbox were corrected through the accessibility action. Those two setup
+actions are not counted as keyboard-only register evidence.
+
+Inside the risk register, no pointer or direct accessibility value action was
+used:
+
+1. Option+Tab reached **Add risk** and Return opened the complete editor.
+2. The tab sequence accepted `R-KBD-001`, title, WP100, owner, category, the
+   cause-event-effect statement, six score controls, treatment, three complete
+   dates, early-warning trigger, key control, owner and evidence.
+3. Return on **Save risk** persisted the record. The live tree announced
+   **Risk R-KBD-001 saved**, the summary changed to one risk, the heatmap cell
+   reported one risk, and the register row showed Low, Stable, Clear, Within
+   Tolerance and 31 Jul 2026.
+4. Option+Tab traversed the five filters and all 25 heatmap buttons to
+   **Edit R-KBD-001**. The title was replaced and Return submitted the edit;
+   the updated title appeared in both the exception and register row.
+5. The edit was reopened, its selected required title was cleared, and Return
+   was pressed. WebKit blocked submission, focused the title and visibly showed
+   **Fill out this field**. Typing a recovered title and pressing Return saved
+   it, proving keyboard-only native error recovery rather than only happy-path
+   entry.
+
+This closes the native register-editing item for the user's current macOS link-
+focus setting. It is not a VoiceOver result. The temporary project and risk are
+awaiting the separately confirmed destructive reset so the origin can be
+returned to input-first state.
+
+## Post-inspection release-gate reconciliation
+
+The first post-inspection release run exposed test-host contention rather than
+product failures: four unrelated Vitest UI tests crossed their five-second
+limit only under file-level parallelism, while each passed in the focused
+reproduction. The full-ASTER restore rollback invariant also exceeded its old
+15-second test ceiling on the loaded host, completing successfully in about 21
+seconds. The evidence was kept at 1,020 rows; its ceiling was raised to 30
+seconds rather than replacing it with a smaller fixture.
+
+Vitest files now run serially and Playwright uses the same two-worker discipline
+locally and in CI, with tests in a file kept sequential. After correcting the
+input-first progress assertion from 93% to 94%, one uninterrupted
+`pnpm check:release` passed on 21 July 2026:
+
+- dependency audit: no known vulnerabilities;
+- lint and strict application/E2E type checking: passed;
+- Vitest: **305/305** tests in 45 files, 98.97 seconds;
+- production build: passed;
+- native private-server tests: **4/4** passed;
+- Playwright: **26/26** journeys across Chromium, Firefox, WebKit and the 390px
+  mobile profile, 2.0 minutes.
+
 ## Remaining native release gate
 
 - Run VoiceOver through launch, page landmarks, form names/help, validation
   errors, live import status, milestone recovery and report-publication state.
-- Confirm keyboard-only register editing and error recovery with the user's
-  actual macOS keyboard-navigation settings documented.
 - Repeat the selected-publication native preview with the full ASTER data pack
   and retain the exported native PDF; live/non-report rejection is already
   verified.

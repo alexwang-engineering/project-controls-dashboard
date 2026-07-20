@@ -125,7 +125,7 @@ describe("versioned backup and validated restore", () => {
     expect(
       await sourceDb.activities.where("importId").equals("RESTORE-FAIL").count(),
     ).toBe(0);
-  }, 15_000);
+  }, 30_000);
 
   it.each([
     ["unknown activity", "unknown_activity_reference", (value: any) => {

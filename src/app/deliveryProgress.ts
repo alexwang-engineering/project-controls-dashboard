@@ -67,8 +67,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M8",
     title: "Quality and portfolio release",
     plannedHours: 15,
-    completionPercent: 80,
-    evidence: "The isolated browser gate includes WCAG A/AA axe scans, keyboard/skip/focus, reflow, target sizing and user-preference evidence. The signed native WKWebView bundle has eight-route semantic/keyboard inspection, real CSV-picker malformed-file recovery, and a fail-closed native print bridge proven against both rejected live content and a visible three-page immutable-publication preview. VoiceOver, keyboard-only register editing, moderated research and portfolio evidence remain.",
+    completionPercent: 85,
+    evidence: "The isolated browser gate includes WCAG A/AA axe scans, keyboard/skip/focus, reflow, target sizing and user-preference evidence. The signed native WKWebView bundle has eight-route semantic inspection, real CSV-picker malformed-file recovery, keyboard-only risk creation/edit/required-field recovery, and a fail-closed native print bridge proven against both rejected live content and a visible three-page immutable-publication preview. VoiceOver, full-ASTER native print repetition, moderated research and portfolio evidence remain.",
   },
 ];
 

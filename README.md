@@ -33,6 +33,10 @@ presented as project data.
   inherent/residual scoring, trend, combined filters, a selectable accessible
   5 × 5 heatmap, objective tolerance, tested controls, overdue review/action
   exceptions, and evidenced escalation or authorised acceptance.
+- A practical native keyboard pass created, saved and edited a complete risk,
+  then deliberately triggered and recovered the required-title validation using
+  the user's macOS Option+Tab link-focus behaviour without pointer input in the
+  register.
 - Validated add/edit/delete change input with signed impacts and an
   approved-but-not-baselined integrity warning.
 - A controlled change state machine that prevents skipped decisions, locks the

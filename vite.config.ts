@@ -15,6 +15,9 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, "e2e/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // These integration-heavy UI files share finite CPU and IndexedDB capacity.
+    // Serial files keep the release gate deterministic on the packaged-app host.
+    fileParallelism: false,
     css: true,
     coverage: {
       provider: "v8",
