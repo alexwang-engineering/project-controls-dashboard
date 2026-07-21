@@ -2,7 +2,7 @@
 
 > **Superseded planning baseline:** This early roadmap remains for history. The
 > authoritative delivery baseline is
-> `/Users/wjl/Desktop/Project_Controls_Dashboard_Master_Plan.md` Version 1.1,
+> local `Project_Controls_Dashboard_Master_Plan.md` Version 1.1,
 > dated 18 July 2026, with 94 estimated hours and a 25 September 2026 release
 > target. See [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md) for current
 > evidence. Where dates or acceptance rules differ, the Version 1.1 master plan

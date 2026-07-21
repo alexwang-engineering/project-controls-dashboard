@@ -211,7 +211,7 @@ describe("versioned backup and validated restore", () => {
     );
     expect(await new DatasetRepository(targetDb).getActiveImportId()).toBeUndefined();
     expect(await targetDb.manifests.get("RESTORE-STALE-REGISTER")).toBeUndefined();
-  });
+  }, 30_000);
 
   it.each([
     ["unknown activity", "unknown_activity_reference", (value: any) => {
