@@ -2,7 +2,7 @@
 
 **Inspection date:** 20–21 July 2026
 
-**Artifact:** `/Users/wjl/Desktop/Project Controls Dashboard.app`
+**Artifact:** `$HOME/Desktop/Project Controls Dashboard.app`
 
 **Decision:** Native route, keyboard register editing, file-validation recovery
 and immutable-publication print checks passed; practical Firefox full-ASTER
@@ -32,10 +32,10 @@ Before the UI task, the following checks passed:
 
 ```bash
 codesign --verify --deep --strict \
-  '/Users/wjl/Desktop/Project Controls Dashboard.app'
+  "$HOME/Desktop/Project Controls Dashboard.app"
 
 diff -qr dist \
-  '/Users/wjl/Applications/Project Controls Dashboard.app/Contents/Resources/web'
+  "$HOME/Applications/Project Controls Dashboard.app/Contents/Resources/web"
 ```
 
 - The Desktop item is a symlink to the signed canonical bundle under the user's

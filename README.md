@@ -252,8 +252,8 @@ remain user responsibilities.
 
 ## Delivery baseline
 
-The source of truth is
-`/Users/wjl/Desktop/Project_Controls_Dashboard_Master_Plan.md` Version 1.1,
-dated 18 July 2026, with a target portfolio release of 25 September 2026.
+The source of truth is the local, uncommitted
+`Project_Controls_Dashboard_Master_Plan.md` Version 1.1, dated 18 July 2026,
+with a target portfolio release of 25 September 2026.
 Current completion evidence and the next implementation slice are recorded in
 [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
