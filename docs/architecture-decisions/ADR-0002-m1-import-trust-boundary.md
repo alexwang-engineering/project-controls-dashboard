@@ -11,7 +11,7 @@ columns, but it leaves several source-of-truth and validation-order questions
 open. These questions were identified in Claude's independent, read-only M1
 architecture review:
 
-- Source: `/Users/wjl/Desktop/Claude_M1_Architecture_Review.md`
+- Source: local `Claude_M1_Architecture_Review.md` (review artifact not committed)
 - SHA-256: `c54338fad4d521d534214ad7628f7a084659424ed173690e57061956eb063d60`
 
 The decisions below are normative for M1. They resolve the six blocking schema
