@@ -153,6 +153,9 @@ describe("settings and data page", () => {
     render(<SettingsPage dependencies={dependencies} />);
     await screen.findByRole("heading", { name: "Settings and data", level: 1 });
     const resetButton = screen.getByRole("button", { name: "Reset local data" });
+    expect(
+      screen.getByText(/Backup version 2 protects the active generation/),
+    ).toBeInTheDocument();
     expect(resetButton).toBeDisabled();
     await user.click(
       screen.getByRole("checkbox", {

@@ -338,7 +338,7 @@ export function SettingsPage({
       ) : null}
 
       <section className="panel settings-danger" aria-labelledby="reset-title">
-        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, project registry, management-register revision, risk-appetite revision, variance-analysis revision, report publication and lifecycle timestamp from this app's local storage. The current backup does not include these governed application records.</p></div>
+        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, project registry, management-register revision, risk-appetite revision, variance-analysis revision, report publication and lifecycle timestamp from this app's local storage. Backup version 2 protects the active generation, current register snapshot and appetite history, but not older register revisions, variance analyses or report publications.</p></div>
         <label className="confirmation-check"><input type="checkbox" checked={resetConfirmed} onChange={(event) => setResetConfirmed(event.target.checked)} /><span>I understand this action removes all local project-control data.</span></label>
         <button className="button button--danger" type="button" disabled={isBusy || !resetConfirmed} onClick={reset}><Trash2 size={17} aria-hidden="true" /> Reset local data</button>
       </section>
