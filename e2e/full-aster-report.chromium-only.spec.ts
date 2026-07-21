@@ -66,6 +66,46 @@ test("publishes and renders the full ASTER weekly report to A4", async ({
   await expect(
     page.getByRole("region", { name: "Publication scope boundary" }),
   ).toBeHidden();
+  const reportHeaderPrintStyle = await page.locator(".report-document__header")
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+      };
+    });
+  expect(reportHeaderPrintStyle).toEqual({
+    backgroundColor: "rgb(243, 250, 249)",
+    backgroundImage: "none",
+  });
+  const milestoneRegion = page.getByRole("region", {
+    name: "Milestone exceptions",
+  });
+  const milestonePrintStyle = await milestoneRegion.locator("li").first()
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        display: style.display,
+        breakInside: style.breakInside,
+        pageBreakInside: style.pageBreakInside,
+      };
+    });
+  expect(milestonePrintStyle).toEqual({
+    display: "inline-block",
+    breakInside: "avoid",
+    pageBreakInside: "avoid",
+  });
+  const milestoneEvidenceStyle = await milestoneRegion.locator("li > div")
+    .first().evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        display: style.display,
+        gridTemplateColumns: style.gridTemplateColumns,
+      };
+    });
+  expect(milestoneEvidenceStyle.display).toBe("grid");
+  expect(milestoneEvidenceStyle.gridTemplateColumns.split(" ")).toHaveLength(3);
+  await expect(milestoneRegion.locator("li p").last()).toBeVisible();
   const configuredOutput = process.env.ASTER_PDF_OUTPUT;
   const pdfPath = configuredOutput ?? testInfo.outputPath("full-aster-report.pdf");
   await mkdir(path.dirname(pdfPath), { recursive: true });

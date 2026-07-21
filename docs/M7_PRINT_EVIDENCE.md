@@ -1,6 +1,6 @@
 # M7 print/PDF provenance and layout evidence
 
-**Evidence date:** 20 July 2026
+**Evidence date:** 20–21 July 2026
 **Implementation baseline:** `818b6c8` plus the M7 print-closure increment
 **Decision:** ADR-0005
 
@@ -92,21 +92,59 @@ empty and ready for the user's own inputs.
 | Text extraction | 8,693 characters; identity, author, source, control result and every report section present |
 | Visual inspection | All four pages rendered at 144 DPI and inspected; no overlap, clipping, orphan heading, broken ID or blank trailing page |
 | Application chrome | Sticky scope boundary excluded from print |
-| SHA-256 | `ce16dc7995981f3fb538663817ea4940c9f64a6409093fa7751d3b2526f70d0e` |
+| SHA-256 | `b3422ed6c47bc56289376e95f14f53e3146b749695bcb31c428b88ac9a181f94` |
 
 Final local artifact:
 
-`output/pdf/Project_Controls_Weekly_Report_Full_ASTER_Revision_1.pdf`
+`output/pdf/Project_Controls_Weekly_Report_Full_ASTER_Revision_1_Print_Fixed.pdf`
 
 The print rules keep the detailed report inside the accepted 2–4-page target by
 using print-only 9-point body type, 8-point tables, three forecast columns and a
 four-column baseline reconciliation. No source or management evidence is
 removed to reach the page limit.
 
+## Practical Firefox publication
+
+The same complete 1,020-row import, 8-milestone/12-risk fixture, five signed
+variance revisions and immutable report-publication workflow was repeated in a
+headed Playwright Firefox Nightly instance. The real Firefox print dialog was
+opened with `Cmd+P`, headers/footers were disabled and background printing was
+enabled. The initial four-sheet candidate was rejected because Firefox split a
+milestone card across sheets 2 and 3. A second candidate was also rejected when
+Firefox/Quartz painted the layered header gradient black.
+
+The accepted print rules compact each milestone's cause, recovery, owner/due
+and decision evidence into a three-column atomic card and replace layered
+header gradients with a deterministic solid colour in print media. Engine-
+specific regression tests assert those computed styles in Firefox and the real
+full-ASTER Chromium journey. The corrected headed preview remained four sheets:
+two complete milestone cards finish sheet 2, the third starts complete on
+sheet 3, and no record text is cut across a boundary.
+
+| Check | Result |
+|---|---|
+| Publication state | Persisted immutable revision 1 selected before `Cmd+P` |
+| Page size and count | A4, 595 × 842 points; 4 pages |
+| PDF structure | No JavaScript; not encrypted; no form fields |
+| Practical controls | Firefox dialog, background printing on, browser headers/footers off |
+| Visual inspection | All four pages rendered at 144 DPI and inspected after save |
+| Pagination | Every milestone's structured evidence remains complete on one page |
+| Header | Solid pale management-report header; no Firefox/Quartz black fill |
+| SHA-256 | `8717c5dabb8128d09cbdcdbb145fba00dc600dc02d41964a81bb1ec630296a40` |
+
+Final local artifact:
+
+`output/pdf/Project_Controls_Weekly_Report_Full_ASTER_Firefox_Revision_1.pdf`
+
+After these corrections, one uninterrupted `pnpm check:release` passed the
+dependency audit, lint, strict application/E2E type check, **305/305 Vitest
+tests**, production build, **4/4 native-server tests** and **27/27 Playwright
+journeys** in 57.4 seconds.
+
 ## Remaining release evidence
 
-- Complete practical Firefox print-preview and repeat the native
-  AppKit/WKWebView preview with the full ASTER publication. A smaller but fully
+- Repeat the native AppKit/WKWebView preview with the full ASTER publication.
+  Practical Firefox preview and saved-PDF inspection are complete. A smaller but fully
   controlled native project has already proved live-content rejection, the
   report-button bridge, `Cmd+P`, and a visibly populated three-page A4 preview;
   see `docs/M8_NATIVE_RELEASE_INSPECTION.md`.
@@ -115,4 +153,4 @@ removed to reach the page limit.
 
 These remaining items prevent a claim of complete M7 release closure; they do
 not weaken the implemented live-versus-published provenance boundary or the
-completed full-ASTER Chromium evidence.
+completed full-ASTER Chromium and Firefox evidence.

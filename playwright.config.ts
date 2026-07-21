@@ -20,7 +20,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: /responsive\.spec\.ts/,
+      testIgnore: [/responsive\.spec\.ts/, /firefox-only\.spec\.ts/],
       use: devices["Desktop Chrome"],
     },
     {
@@ -30,7 +30,11 @@ export default defineConfig({
     },
     {
       name: "webkit",
-      testIgnore: [/responsive\.spec\.ts/, /chromium-only\.spec\.ts/],
+      testIgnore: [
+        /responsive\.spec\.ts/,
+        /chromium-only\.spec\.ts/,
+        /firefox-only\.spec\.ts/,
+      ],
       use: devices["Desktop Safari"],
     },
     {

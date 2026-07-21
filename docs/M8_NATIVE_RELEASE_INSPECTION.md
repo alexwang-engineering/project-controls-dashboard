@@ -5,7 +5,8 @@
 **Artifact:** `/Users/wjl/Desktop/Project Controls Dashboard.app`
 
 **Decision:** Native route, keyboard register editing, file-validation recovery
-and immutable-publication print checks passed; assistive-technology and the
+and immutable-publication print checks passed; practical Firefox full-ASTER
+printing also passed, while assistive-technology and the
 full-ASTER native print repetition remain open
 
 ## Outcome
@@ -254,11 +255,26 @@ input-first progress assertion from 93% to 94%, one uninterrupted
 
 - dependency audit: no known vulnerabilities;
 - lint and strict application/E2E type checking: passed;
-- Vitest: **305/305** tests in 45 files, 98.97 seconds;
+- Vitest: **305/305** tests in 45 files, 48.27 seconds;
 - production build: passed;
 - native private-server tests: **4/4** passed;
-- Playwright: **26/26** journeys across Chromium, Firefox, WebKit and the 390px
-  mobile profile, 2.0 minutes.
+- Playwright: **27/27** journeys across Chromium, Firefox, WebKit and the 390px
+  mobile profile, 57.4 seconds.
+
+## Practical Firefox full-ASTER print evidence
+
+A headed Firefox Nightly run repeated the real 60-activity/960-performance-row
+import, management-register seeding, five variance sign-offs and immutable
+revision publication. `Cmd+P` opened the browser's own preview with four A4
+sheets. Page-by-page inspection caught and rejected both a split milestone card
+and a Firefox/Quartz black header produced by the layered screen gradient.
+
+Print-only compact milestone evidence and a solid pale header resolved those
+engine defects. The accepted PDF has four A4 pages, no JavaScript or encryption,
+and was rendered at 144 DPI for inspection of every page. Its SHA-256 is
+`8717c5dabb8128d09cbdcdbb145fba00dc600dc02d41964a81bb1ec630296a40`.
+This closes practical Firefox printing; it does not replace the remaining
+full-ASTER native WKWebView repetition.
 
 ## Remaining native release gate
 

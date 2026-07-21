@@ -61,7 +61,7 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     title: "Weekly report",
     plannedHours: 11,
     completionPercent: 95,
-    evidence: "Immutable revisions now have an explicit live-versus-published print boundary, locked historical narrative, rollback and concurrency regression coverage, plus a visually inspected four-page A4 full-ASTER publication from the real 1,020-row import path; Firefox/WKWebView print evidence and moderated usability remain.",
+    evidence: "Immutable revisions now have an explicit live-versus-published print boundary, locked historical narrative, rollback and concurrency regression coverage, plus visually inspected four-page A4 full-ASTER publications from the real 1,020-row import path in Chromium and practical Firefox; full-ASTER WKWebView repetition and moderated usability remain.",
   },
   {
     id: "M8",

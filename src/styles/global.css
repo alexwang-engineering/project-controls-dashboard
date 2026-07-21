@@ -4428,6 +4428,7 @@ tfoot td {
 
   .report-document__header {
     grid-template-columns: minmax(0, 1.25fr) minmax(235px, 1fr);
+    background: #f3faf9;
   }
 
   .report-scenario-grid {
@@ -4484,6 +4485,48 @@ tfoot td {
     break-inside: avoid;
   }
 
+  /* Firefox can fragment grid/block list items even when break-inside is
+     avoided. Compact printable milestone evidence into atomic inline-block
+     cards so each complete cause/recovery/decision record fits on one sheet. */
+  .report-record-list {
+    display: block;
+  }
+
+  .report-record-list li {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 0.55rem;
+    padding: 0.42rem 0.5rem;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    vertical-align: top;
+  }
+
+  .report-record-list li > div {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 0.6rem;
+    row-gap: 0.08rem;
+  }
+
+  .report-record-list li strong,
+  .report-record-list li span {
+    grid-column: 1 / -1;
+  }
+
+  .report-record-list li p {
+    margin-top: 0.06rem;
+    font-size: 0.61rem;
+    line-height: 1.25;
+  }
+
+  .report-record-list li:last-child {
+    margin-bottom: 0;
+  }
+
+  .report-record-list li > svg {
+    display: none;
+  }
   .report-section:last-child {
     margin-bottom: 0;
     break-after: avoid;
