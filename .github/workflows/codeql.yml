@@ -13,6 +13,11 @@ permissions:
 
 jobs:
   analyse:
+    # GitHub code scanning is unavailable while this portfolio repository is
+    # private on the current account plan. Keep the workflow ready so it starts
+    # protecting the default branch automatically if the repository is made
+    # public after its release audit.
+    if: github.event.repository.private == false
     name: Analyse JavaScript and TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 15
