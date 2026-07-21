@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { ActiveDataset } from "../repositories/datasetRepository";
 import { getBrowserRepositories } from "../repositories/browserRepositories";
+import { loadProjectManagementControls } from "./store";
 
 export type ActiveDatasetStatus = "loading" | "ready" | "error";
 
@@ -35,7 +36,9 @@ export function ActiveDatasetProvider({ children }: { children: ReactNode }) {
     setStatus("loading");
     setError(undefined);
     try {
-      setDataset(await getBrowserRepositories().datasets.getActiveDataset());
+      const nextDataset = await getBrowserRepositories().datasets.getActiveDataset();
+      setDataset(nextDataset);
+      await loadProjectManagementControls(nextDataset?.manifest.projectId);
       setStatus("ready");
     } catch (readError) {
       setDataset(undefined);

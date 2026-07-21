@@ -35,6 +35,8 @@ import {
   periodicPerformanceForScope,
   type ProjectPerformanceSnapshot,
 } from "../viewModels/projectPerformance";
+import type { RiskAppetiteThresholds } from "../riskAppetite";
+import { defaultRiskAppetite } from "../riskAppetite";
 
 export type ReportControlCode =
   | "ACTIVE_IMPORT_REQUIRED"
@@ -172,6 +174,7 @@ export interface BuildWeeklyReportInput {
   changes: readonly ChangeRequest[];
   generatedAt: string;
   registerSource?: string;
+  riskAppetite?: RiskAppetiteThresholds;
 }
 
 interface ScopePosition {
@@ -626,6 +629,7 @@ export function buildWeeklyReportSnapshot(
       const flags = riskExceptionFlags(
         risk,
         input.performance.project.reportingDate,
+        input.riskAppetite ?? defaultRiskAppetite,
       );
       return (
         riskExposure(risk, "residual").rating === "critical" ||
@@ -752,6 +756,7 @@ export function buildWeeklyReportSnapshot(
         ? `Schedule and cost: active validated import ${input.performance.importId}.`
         : "Schedule and cost: labelled synthetic fallback; publication is blocked.",
       `${input.registerSource ?? "Supplied management registers"}: ${String(input.milestones.length)} milestones, ${String(input.risks.length)} risks and ${String(input.changes.length)} changes.`,
+      `Risk appetite maximum residual scores: safety/quality ${(input.riskAppetite ?? defaultRiskAppetite)["safety-quality"]}, schedule ${(input.riskAppetite ?? defaultRiskAppetite).schedule}, cost ${(input.riskAppetite ?? defaultRiskAppetite).cost}, operational readiness ${(input.riskAppetite ?? defaultRiskAppetite)["operational-readiness"]}.`,
       `Baseline evidence: ${String(input.performance.baselineSnapshots?.length ?? 0)} retained generation snapshot${(input.performance.baselineSnapshots?.length ?? 0) === 1 ? "" : "s"}; original and pre-effective performance are compared without rewriting source rows.`,
       ...(acceptedProjectPeriods.length === 1
         ? [

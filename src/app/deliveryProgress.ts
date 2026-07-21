@@ -46,8 +46,8 @@ export const deliveryMilestones: readonly DeliveryMilestoneProgress[] = [
     id: "M5",
     title: "Risk control",
     plannedHours: 9,
-    completionPercent: 90,
-    evidence: "Validated cause-event-effect input, inherent/residual scoring and trend, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence all work; configurable appetite history and revisioned register storage remain.",
+    completionPercent: 100,
+    evidence: "Validated cause-event-effect input, inherent/residual scoring and trend, combined filters, selectable accessible heatmap, authorised project-appetite history, revisioned project-bound register storage, governed backup/restore, control tests, overdue exceptions and escalation/acceptance evidence all pass.",
   },
   {
     id: "M6",
@@ -89,5 +89,6 @@ export const deliveryProgress = {
   totalPlannedHours,
   evidencedPlanHours,
   completionPercent: Math.round(weightedHourPercent / totalPlannedHours),
-  assessedOn: "2026-07-20",
+  productBuildPercent: 100,
+  assessedOn: "2026-07-21",
 } as const;

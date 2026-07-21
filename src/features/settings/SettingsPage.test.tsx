@@ -11,7 +11,7 @@ import {
 
 const envelope = {
   format: "project-controls-dashboard",
-  formatVersion: 1,
+  formatVersion: 2,
   exportedAt: "2026-07-19T10:00:00.000Z",
   scope: "active-generation",
   dataset: {
@@ -26,7 +26,10 @@ const envelope = {
     activities: [],
     performance: [],
   },
-  applicationRecords: { risks: [], changes: [], reportDrafts: [] },
+  applicationRecords: {
+    managementRegister: null,
+    riskAppetiteHistory: [],
+  },
 } as unknown as BackupEnvelope;
 
 const restoredManifest = {
@@ -48,7 +51,7 @@ describe("settings and data page", () => {
     dependencies = {
       load: vi.fn().mockResolvedValue({
         lifecycle: {
-          schemaVersion: "5",
+          schemaVersion: "6",
           activeImportId: "IMPORT-001",
           lastImportAt: "2026-07-19T09:00:00.000Z",
           manifestCount: 1,
@@ -56,6 +59,8 @@ describe("settings and data page", () => {
           performanceCount: 5,
           varianceAnalysisCount: 2,
           publishedReportCount: 1,
+          managementRegisterRevisionCount: 4,
+          riskAppetiteRevisionCount: 2,
         },
         storage: {
           availability: "supported",

@@ -11,8 +11,13 @@ import {
   type StoredBaselineSnapshot,
 } from "../domain/baselineSnapshot";
 import type { WeeklyReportPublicationRecord } from "../domain/reports/reportPublication";
+import type { RiskAppetiteRevision } from "../domain/riskAppetite";
+import type {
+  ManagementRegisterRevision,
+  ManagementRegisterSnapshot,
+} from "./managementRegisterRepository";
 
-export const DATABASE_SCHEMA_VERSION = "5" as const;
+export const DATABASE_SCHEMA_VERSION = "6" as const;
 
 export interface MetaRecord {
   key:
@@ -48,6 +53,13 @@ export interface ProjectConfigurationHistoryRecord {
   reason: "created" | "additive-update";
 }
 
+export interface ManagementRegisterHeadRecord {
+  projectId: string;
+  revision: number;
+  fingerprint: string;
+  updatedAt: string;
+}
+
 export class ProjectControlsDb extends Dexie {
   meta!: Table<MetaRecord, string>;
   manifests!: Table<ImportManifest, string>;
@@ -61,6 +73,12 @@ export class ProjectControlsDb extends Dexie {
   varianceAnalyses!: Table<VarianceAnalysisRecord, string>;
   baselineSnapshots!: Table<StoredBaselineSnapshot, string>;
   reportPublications!: Table<WeeklyReportPublicationRecord, string>;
+  managementRegisterHeads!: Table<ManagementRegisterHeadRecord, string>;
+  managementRegisterRevisions!: Table<
+    ManagementRegisterRevision & { snapshot: ManagementRegisterSnapshot },
+    [string, number]
+  >;
+  riskAppetiteRevisions!: Table<RiskAppetiteRevision, [string, number]>;
 
   constructor(name = "project-controls-dashboard", options?: DexieOptions) {
     super(name, options);
@@ -213,6 +231,34 @@ export class ProjectControlsDb extends Dexie {
           "&importId, projectId, [projectId+baselineVersion], importedAt",
         reportPublications:
           "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, publishedAt",
+      })
+      .upgrade((transaction) =>
+        transaction.table("meta").put({
+          key: "schemaVersion",
+          value: DATABASE_SCHEMA_VERSION,
+        }),
+      );
+    this.version(6)
+      .stores({
+        meta: "&key",
+        manifests: "&importId, projectId, importedAt",
+        activities: "[importId+activityId], importId, activityId",
+        performance:
+          "[importId+activityId+periodEnd], importId, [importId+activityId], periodEnd",
+        projectConfigurations: "&projectId",
+        projectConfigurationHistory:
+          "[projectId+revision], projectId, recordedAt",
+        varianceAnalyses:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, signedAt",
+        baselineSnapshots:
+          "&importId, projectId, [projectId+baselineVersion], importedAt",
+        reportPublications:
+          "&recordId, contextKey, [contextKey+recordType], projectId, sourceImportId, publishedAt",
+        managementRegisterHeads: "&projectId, updatedAt",
+        managementRegisterRevisions:
+          "[projectId+revision], projectId, recordedAt",
+        riskAppetiteRevisions:
+          "[projectId+revision], projectId, recordedAt, effectiveFrom",
       })
       .upgrade((transaction) =>
         transaction.table("meta").put({

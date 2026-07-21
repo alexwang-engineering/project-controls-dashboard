@@ -16,6 +16,9 @@ import { DatasetRepository } from "./datasetRepository";
 import { ProjectControlsDb } from "./db";
 import { ImportRepository } from "./importRepository";
 import { ProjectConfigurationRepository } from "./projectConfigurationRepository";
+import { ManagementRegisterRepository } from "./managementRegisterRepository";
+import { RiskAppetiteRepository } from "./riskAppetiteRepository";
+import { defaultRiskAppetite } from "../domain/riskAppetite";
 
 let sequence = 0;
 
@@ -64,6 +67,45 @@ describe("versioned backup and validated restore", () => {
 
   it("exports and restores the active generation through the atomic commit path", async () => {
     await commitSynthetic(sourceDb);
+    await new ManagementRegisterRepository(sourceDb).commitSnapshot(
+      "ASTER",
+      {
+        milestones: [],
+        risks: [
+          {
+            id: "R-001",
+            title: "Supplier delivery delay",
+            owner: "Supply lead",
+            wbsId: "WP200",
+            category: "Delivery",
+            residualProbability: 3,
+            residualImpact: 4,
+            residualScore: 12,
+            rating: "high",
+            treatment: "Expedite the order and review dated dispatch evidence.",
+            treatmentDue: "2026-07-28",
+            triggerStatus: "watch",
+            controlEffectiveness: "partly-effective",
+          },
+        ],
+        changes: [],
+      },
+      {
+        expectedRevision: 0,
+        recordedAt: "2026-07-19T09:30:00.000Z",
+        reason: "created",
+      },
+    );
+    await new RiskAppetiteRepository(sourceDb).commitRevision({
+      projectId: "ASTER",
+      expectedRevision: 0,
+      thresholds: defaultRiskAppetite,
+      changeReason: "Use the approved project tolerance matrix.",
+      authorisedBy: "Project director",
+      effectiveFrom: "2026-07-19",
+      recordedAt: "2026-07-19T09:35:00.000Z",
+      confirmed: true,
+    });
     const sourceDatasets = new DatasetRepository(sourceDb);
     const sourceActive = await sourceDatasets.getActiveDataset();
     const sourceBackups = new BackupRepository(sourceDb);
@@ -77,6 +119,9 @@ describe("versioned backup and validated restore", () => {
     expect(envelope.dataset.activeImportId).toBe("IMPORT-BACKUP-SOURCE");
     expect(envelope.dataset.activities).toHaveLength(60);
     expect(envelope.dataset.performance).toHaveLength(960);
+    expect(envelope.formatVersion).toBe(2);
+    expect(envelope.applicationRecords.managementRegister?.snapshot.risks).toHaveLength(1);
+    expect(envelope.applicationRecords.riskAppetiteHistory).toHaveLength(1);
 
     const targetBackups = new BackupRepository(targetDb);
     const preview = await targetBackups.previewRestore(json, {
@@ -94,6 +139,11 @@ describe("versioned backup and validated restore", () => {
     expect(targetActive?.configuration).toEqual(sourceActive?.configuration);
     expect(targetActive?.manifest.files).toEqual(sourceActive?.manifest.files);
     expect(targetActive?.manifest.totals).toEqual(sourceActive?.manifest.totals);
+    expect(
+      (await new ManagementRegisterRepository(targetDb).loadCurrent("ASTER"))
+        ?.snapshot.risks,
+    ).toHaveLength(1);
+    expect(await new RiskAppetiteRepository(targetDb).loadHistory("ASTER")).toHaveLength(1);
     expect((await targetBackups.getLifecycleStatus()).lastRestoreAt).toBe(
       "2026-07-19T11:00:00.000Z",
     );
@@ -126,6 +176,42 @@ describe("versioned backup and validated restore", () => {
       await sourceDb.activities.where("importId").equals("RESTORE-FAIL").count(),
     ).toBe(0);
   }, 30_000);
+
+  it("rolls back the restored generation when governed-register state changes after preview", async () => {
+    await commitSynthetic(sourceDb);
+    await new ManagementRegisterRepository(sourceDb).commitSnapshot(
+      "ASTER",
+      { milestones: [], risks: [], changes: [] },
+      {
+        expectedRevision: 0,
+        recordedAt: "2026-07-19T09:30:00.000Z",
+        reason: "created",
+      },
+    );
+    const envelope = await new BackupRepository(sourceDb).createActiveBackup(
+      "2026-07-19T10:00:00.000Z",
+    );
+    const targetBackups = new BackupRepository(targetDb);
+    const preview = await targetBackups.previewRestore(encodeBackupJson(envelope), {
+      restoredAt: "2026-07-19T11:00:00.000Z",
+      restoreImportId: "RESTORE-STALE-REGISTER",
+    });
+    await new ManagementRegisterRepository(targetDb).commitSnapshot(
+      "ASTER",
+      { milestones: [], risks: [], changes: [] },
+      {
+        expectedRevision: 0,
+        recordedAt: "2026-07-19T10:30:00.000Z",
+        reason: "created",
+      },
+    );
+
+    await expect(targetBackups.restorePreview(preview)).rejects.toThrow(
+      "management register changed",
+    );
+    expect(await new DatasetRepository(targetDb).getActiveImportId()).toBeUndefined();
+    expect(await targetDb.manifests.get("RESTORE-STALE-REGISTER")).toBeUndefined();
+  });
 
   it.each([
     ["unknown activity", "unknown_activity_reference", (value: any) => {
@@ -169,6 +255,56 @@ describe("versioned backup and validated restore", () => {
       ),
     ).toThrow("Backup schema error");
     expect(await targetDb.manifests.count()).toBe(0);
+  });
+
+  it("normalises a supported version 1 backup with empty governed records", async () => {
+    await commitSynthetic(sourceDb);
+    const current = await new BackupRepository(sourceDb).createActiveBackup(
+      "2026-07-19T10:00:00.000Z",
+    );
+    const legacy = {
+      ...current,
+      formatVersion: 1,
+      applicationRecords: {
+        risks: [],
+        changes: [],
+        reportDrafts: [],
+      },
+    };
+
+    const parsed = parseBackupJson(JSON.stringify(legacy));
+
+    expect(parsed.formatVersion).toBe(2);
+    expect(parsed.applicationRecords).toEqual({
+      managementRegister: null,
+      riskAppetiteHistory: [],
+    });
+  });
+
+  it("rejects malformed governed application records before repository writes", async () => {
+    await commitSynthetic(sourceDb);
+    const envelope = await new BackupRepository(sourceDb).createActiveBackup(
+      "2026-07-19T10:00:00.000Z",
+    );
+    const malformed = JSON.parse(encodeBackupJson(envelope));
+    malformed.applicationRecords.managementRegister = {
+      revision: 1,
+      recordedAt: "2026-07-19T09:30:00.000Z",
+      reason: "created",
+      snapshot: {
+        milestones: [],
+        risks: [{ id: "R-001", title: "Incomplete record" }],
+        changes: [],
+      },
+    };
+
+    await expect(
+      new BackupRepository(targetDb).previewRestore(JSON.stringify(malformed), {
+        restoredAt: "2026-07-19T11:00:00.000Z",
+      }),
+    ).rejects.toThrow("Backup schema error");
+    expect(await targetDb.manifests.count()).toBe(0);
+    expect(await targetDb.managementRegisterRevisions.count()).toBe(0);
   });
 
   it("rejects an invalid schedule date relationship before repository writes", async () => {
@@ -253,12 +389,14 @@ describe("versioned backup and validated restore", () => {
     await backups.resetAllLocalData();
     const status = await backups.getLifecycleStatus();
     expect(status).toMatchObject({
-      schemaVersion: "5",
+      schemaVersion: "6",
       manifestCount: 0,
       activityCount: 0,
       performanceCount: 0,
       varianceAnalysisCount: 0,
       publishedReportCount: 0,
+      managementRegisterRevisionCount: 0,
+      riskAppetiteRevisionCount: 0,
     });
     expect(status.activeImportId).toBeUndefined();
     expect(status.lastBackupAt).toBeUndefined();

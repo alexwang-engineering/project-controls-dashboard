@@ -27,6 +27,7 @@ import type {
 import type {
   ProjectPerformanceSnapshot,
 } from "../../domain/viewModels/projectPerformance";
+import type { RiskAppetiteThresholds } from "../../domain/riskAppetite";
 import { getBrowserRepositories } from "../../repositories/browserRepositories";
 import {
   VarianceAnalysisRepository,
@@ -163,6 +164,7 @@ export function ReportPage({
     milestones,
     risks,
     changes,
+    riskAppetite,
   } = useProjectStore();
   const performance = performanceOverride ?? performanceState.snapshot;
   const registers = registerOverride ?? { milestones, risks, changes };
@@ -198,6 +200,7 @@ export function ReportPage({
       dependencies={dependencies}
       performance={performance}
       registers={registers}
+      riskAppetite={riskAppetite}
     />
   );
 }
@@ -206,10 +209,12 @@ function ReportWorkspace({
   dependencies,
   performance,
   registers,
+  riskAppetite,
 }: {
   dependencies: ReportPageDependencies;
   performance: ProjectPerformanceSnapshot;
   registers: ReportRegisterInput;
+  riskAppetite: RiskAppetiteThresholds;
 }) {
   const [liveReport, setLiveReport] = useState<WeeklyReportSnapshot>();
   const [sourceEvidence, setSourceEvidence] =
@@ -252,7 +257,8 @@ function ReportWorkspace({
             risks: registers.risks,
             changes: registers.changes,
             generatedAt: dependencies.now(),
-            registerSource: "User-entered local management registers",
+            registerSource: "Revisioned local management registers",
+            riskAppetite,
           });
         const evidence: WeeklyReportSourceEvidence = {
           activeImportId: performance.importId,
@@ -260,6 +266,7 @@ function ReportWorkspace({
           milestones: registers.milestones,
           risks: registers.risks,
           changes: registers.changes,
+          riskAppetite,
         };
         const fingerprint = buildReportSourceFingerprint(built, evidence);
         return dependencies
@@ -300,6 +307,7 @@ function ReportWorkspace({
     registers.changes,
     registers.milestones,
     registers.risks,
+    riskAppetite,
   ]);
 
   const report = selectedPublication?.report ?? liveReport;

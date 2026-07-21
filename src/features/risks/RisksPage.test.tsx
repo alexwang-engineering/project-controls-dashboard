@@ -1,7 +1,8 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useProjectStore } from "../../app/store";
+import { defaultRiskAppetite } from "../../domain/riskAppetite";
 import type { Risk } from "../../domain/types";
 import { RisksPage } from "./RisksPage";
 
@@ -89,6 +90,8 @@ const risks: Risk[] = [
   }),
 ];
 
+const realSaveRiskAppetite = useProjectStore.getState().saveRiskAppetite;
+
 describe("risk-control page", () => {
   beforeEach(() => {
     useProjectStore.setState({
@@ -96,6 +99,14 @@ describe("risk-control page", () => {
       milestones: [],
       changes: [],
       selectedWorkPackage: "all",
+      registerProjectId: "ASTER",
+      registerRevision: 2,
+      registerPersistenceStatus: "saved",
+      registerPersistenceError: undefined,
+      riskAppetite: defaultRiskAppetite,
+      riskAppetiteRevision: 0,
+      riskAppetiteHistory: [],
+      saveRiskAppetite: realSaveRiskAppetite,
     });
   });
 
@@ -165,6 +176,37 @@ describe("risk-control page", () => {
     expect(item).toHaveTextContent("Review overdue");
     expect(item).toHaveTextContent("Breached trigger");
     expect(item).toHaveTextContent("Ineffective control");
+  });
+
+  it("submits an explicitly confirmed authorised appetite revision", async () => {
+    const user = userEvent.setup();
+    const saveRiskAppetite = vi.fn().mockResolvedValue(undefined);
+    useProjectStore.setState({ saveRiskAppetite });
+    render(<RisksPage reportingDateOverride="2026-07-20" />);
+
+    await user.clear(screen.getByLabelText("Schedule maximum score"));
+    await user.type(screen.getByLabelText("Schedule maximum score"), "16");
+    await user.type(screen.getByLabelText("Authorised by"), "Project director");
+    await user.type(
+      screen.getByLabelText("Change reason"),
+      "Raise the schedule tolerance for the approved test window.",
+    );
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: /confirm this risk-appetite change is authorised/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Save appetite revision" }),
+    );
+
+    expect(saveRiskAppetite).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thresholds: expect.objectContaining({ schedule: 16 }),
+        authorisedBy: "Project director",
+        confirmed: true,
+      }),
+    );
   });
 
   it("clears local filters when the global work-package scope changes", async () => {

@@ -22,6 +22,8 @@ import {
   ImportRepository,
   type PreparedImportGeneration,
 } from "./importRepository";
+import { ManagementRegisterRepository } from "./managementRegisterRepository";
+import { RiskAppetiteRepository } from "./riskAppetiteRepository";
 
 const backupSource = <Value>(
   values: readonly Value[],
@@ -91,6 +93,9 @@ export interface BackupRestorePreview {
   prepared: PreparedImportGeneration;
   issues: readonly ValidationIssue[];
   createsProjectRegistry: boolean;
+  expectedRegisterRevision: number;
+  expectedRiskAppetiteRevision: number;
+  restoreRiskAppetiteHistory: boolean;
 }
 
 export interface BackupLifecycleStatus {
@@ -104,11 +109,15 @@ export interface BackupLifecycleStatus {
   performanceCount: number;
   varianceAnalysisCount: number;
   publishedReportCount: number;
+  managementRegisterRevisionCount: number;
+  riskAppetiteRevisionCount: number;
 }
 
 export class BackupRepository {
   private readonly datasets: DatasetRepository;
   private readonly imports: ImportRepository;
+  private readonly managementRegisters: ManagementRegisterRepository;
+  private readonly riskAppetite: RiskAppetiteRepository;
 
   constructor(
     private readonly db: ProjectControlsDb,
@@ -116,6 +125,8 @@ export class BackupRepository {
   ) {
     this.datasets = new DatasetRepository(db);
     this.imports = imports ?? new ImportRepository(db);
+    this.managementRegisters = new ManagementRegisterRepository(db);
+    this.riskAppetite = new RiskAppetiteRepository(db);
   }
 
   async createActiveBackup(exportedAt: string): Promise<BackupEnvelope> {
@@ -123,6 +134,10 @@ export class BackupRepository {
     if (dataset === undefined) {
       throw new Error("There is no active imported generation to back up.");
     }
+    const [managementRegister, riskAppetiteHistory] = await Promise.all([
+      this.managementRegisters.loadCurrent(dataset.manifest.projectId),
+      this.riskAppetite.loadHistory(dataset.manifest.projectId),
+    ]);
     return backupEnvelopeSchema.parse({
       format: BACKUP_FORMAT,
       formatVersion: BACKUP_FORMAT_VERSION,
@@ -136,9 +151,16 @@ export class BackupRepository {
         performance: dataset.performance,
       },
       applicationRecords: {
-        risks: [],
-        changes: [],
-        reportDrafts: [],
+        managementRegister:
+          managementRegister === undefined
+            ? null
+            : {
+                revision: managementRegister.revision,
+                snapshot: managementRegister.snapshot,
+                recordedAt: managementRegister.recordedAt,
+                reason: managementRegister.reason,
+              },
+        riskAppetiteHistory,
       },
     });
   }
@@ -157,11 +179,19 @@ export class BackupRepository {
     const validated = validateBackupDomain(envelope);
     const candidateImportId =
       options.restoreImportId ?? restoreId(options.restoredAt);
-    const [activeImportId, storedConfiguration, existingManifest] =
+    const [
+      activeImportId,
+      storedConfiguration,
+      existingManifest,
+      currentRegister,
+      currentRiskAppetiteHistory,
+    ] =
       await Promise.all([
         this.datasets.getActiveImportId(),
         this.db.projectConfigurations.get(envelope.dataset.manifest.projectId),
         this.db.manifests.get(candidateImportId),
+        this.managementRegisters.loadCurrent(envelope.dataset.manifest.projectId),
+        this.riskAppetite.loadHistory(envelope.dataset.manifest.projectId),
       ]);
     if (existingManifest !== undefined) {
       throw new BackupValidationError("Restore generation ID already exists.");
@@ -173,6 +203,27 @@ export class BackupRepository {
     ) {
       throw new BackupValidationError(
         "Backup registry does not match the confirmed local project registry.",
+      );
+    }
+    if (
+      envelope.applicationRecords.riskAppetiteHistory.some(
+        ({ projectId }) => projectId !== envelope.dataset.manifest.projectId,
+      )
+    ) {
+      throw new BackupValidationError(
+        "Backup risk-appetite history does not match the manifest project.",
+      );
+    }
+    const canonicalAppetite = (history: typeof currentRiskAppetiteHistory) =>
+      JSON.stringify([...history].sort((left, right) => left.revision - right.revision));
+    if (
+      currentRiskAppetiteHistory.length > 0 &&
+      envelope.applicationRecords.riskAppetiteHistory.length > 0 &&
+      canonicalAppetite(currentRiskAppetiteHistory) !==
+        canonicalAppetite(envelope.applicationRecords.riskAppetiteHistory)
+    ) {
+      throw new BackupValidationError(
+        "Backup risk-appetite history conflicts with the authorised local history.",
       );
     }
 
@@ -205,11 +256,75 @@ export class BackupRepository {
       },
       issues: validated.issues,
       createsProjectRegistry: storedConfiguration === undefined,
+      expectedRegisterRevision: currentRegister?.revision ?? 0,
+      expectedRiskAppetiteRevision:
+        currentRiskAppetiteHistory[0]?.revision ?? 0,
+      restoreRiskAppetiteHistory:
+        currentRiskAppetiteHistory.length === 0 &&
+        envelope.applicationRecords.riskAppetiteHistory.length > 0,
     };
   }
 
   async restorePreview(preview: BackupRestorePreview) {
-    const manifest = await this.imports.commitGeneration(preview.prepared);
+    let restoredManifest: Awaited<ReturnType<ImportRepository["commitGeneration"]>> | undefined;
+    await this.db.transaction(
+      "rw",
+      [
+        this.db.meta,
+        this.db.manifests,
+        this.db.activities,
+        this.db.performance,
+        this.db.projectConfigurations,
+        this.db.projectConfigurationHistory,
+        this.db.baselineSnapshots,
+        this.db.managementRegisterHeads,
+        this.db.managementRegisterRevisions,
+        this.db.riskAppetiteRevisions,
+      ],
+      () =>
+        this.imports
+          .commitGeneration(preview.prepared)
+          .then((manifest) => {
+            restoredManifest = manifest;
+            const managementRegister =
+              preview.envelope.applicationRecords.managementRegister;
+            if (managementRegister === null) return undefined;
+            return this.managementRegisters.commitSnapshot(
+              manifest.projectId,
+              managementRegister.snapshot,
+              {
+                expectedRevision: preview.expectedRegisterRevision,
+                recordedAt: manifest.importedAt,
+                reason: "restore",
+              },
+            );
+          })
+          .then(() => {
+            if (!preview.restoreRiskAppetiteHistory) return undefined;
+            return this.db.riskAppetiteRevisions
+              .where("projectId")
+              .equals(preview.prepared.manifest.projectId)
+              .toArray()
+              .then((current) => {
+                const currentRevision = current.reduce(
+                  (highest, revision) => Math.max(highest, revision.revision),
+                  0,
+                );
+                if (currentRevision !== preview.expectedRiskAppetiteRevision) {
+                  throw new BackupValidationError(
+                    "Risk appetite changed after restore preview; validate the backup again.",
+                  );
+                }
+                return this.db.riskAppetiteRevisions.bulkAdd(
+                  preview.envelope.applicationRecords.riskAppetiteHistory,
+                );
+              });
+          }),
+    );
+    if (restoredManifest === undefined) {
+      throw new Error("Restore transaction completed without a manifest.");
+    }
+    const manifest = restoredManifest;
     // The dataset is already committed at this point. A cosmetic lifecycle
     // timestamp must not make a successful atomic restore appear to have failed.
     await this.db.meta
@@ -222,7 +337,15 @@ export class BackupRepository {
   }
 
   async getLifecycleStatus(): Promise<BackupLifecycleStatus> {
-    const [meta, active, manifestCount, varianceAnalysisCount, publishedReportCount] =
+    const [
+      meta,
+      active,
+      manifestCount,
+      varianceAnalysisCount,
+      publishedReportCount,
+      managementRegisterRevisionCount,
+      riskAppetiteRevisionCount,
+    ] =
       await Promise.all([
         this.db.meta.toArray(),
         this.datasets.getActiveDataset(),
@@ -235,6 +358,8 @@ export class BackupRepository {
               records.filter(({ recordType }) => recordType === "published")
                 .length,
           ),
+        this.db.managementRegisterRevisions.count(),
+        this.db.riskAppetiteRevisions.count(),
       ]);
     const metaValue = (key: string) =>
       meta.find((record) => record.key === key)?.value;
@@ -249,6 +374,8 @@ export class BackupRepository {
       performanceCount: active?.performance.length ?? 0,
       varianceAnalysisCount,
       publishedReportCount,
+      managementRegisterRevisionCount,
+      riskAppetiteRevisionCount,
     };
   }
 
@@ -265,6 +392,9 @@ export class BackupRepository {
         this.db.varianceAnalyses,
         this.db.baselineSnapshots,
         this.db.reportPublications,
+        this.db.managementRegisterHeads,
+        this.db.managementRegisterRevisions,
+        this.db.riskAppetiteRevisions,
       ],
       () =>
         this.db.performance
@@ -276,6 +406,9 @@ export class BackupRepository {
           .then(() => this.db.varianceAnalyses.clear())
           .then(() => this.db.baselineSnapshots.clear())
           .then(() => this.db.reportPublications.clear())
+          .then(() => this.db.managementRegisterHeads.clear())
+          .then(() => this.db.managementRegisterRevisions.clear())
+          .then(() => this.db.riskAppetiteRevisions.clear())
           .then(() => this.db.meta.clear())
           .then(() =>
             this.db.meta.add({

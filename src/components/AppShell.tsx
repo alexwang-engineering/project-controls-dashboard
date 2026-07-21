@@ -137,21 +137,21 @@ export function AppShell() {
           <div className="topbar__status">
             <div
               className="build-progress"
-              aria-label={`MVP build progress: ${deliveryProgress.completionPercent} percent, based on ${deliveryProgress.evidencedPlanHours} of ${deliveryProgress.totalPlannedHours} evidence-weighted plan hours`}
+              aria-label={`Product build: ${deliveryProgress.productBuildPercent} percent. Release evidence: ${deliveryProgress.completionPercent} percent, based on ${deliveryProgress.evidencedPlanHours} of ${deliveryProgress.totalPlannedHours} evidence-weighted plan hours`}
             >
               <div className="build-progress__label">
-                <span>MVP build</span>
-                <strong>{deliveryProgress.completionPercent}%</strong>
+                <span>Product build</span>
+                <strong>{deliveryProgress.productBuildPercent}%</strong>
               </div>
               <progress
                 max="100"
-                value={deliveryProgress.completionPercent}
-                aria-label="MVP build progress"
+                value={deliveryProgress.productBuildPercent}
+                aria-label="Product build progress"
               >
-                {deliveryProgress.completionPercent}%
+                {deliveryProgress.productBuildPercent}%
               </progress>
               <small>
-                {deliveryProgress.evidencedPlanHours} / {deliveryProgress.totalPlannedHours} weighted hours
+                Release evidence {deliveryProgress.completionPercent}% · {deliveryProgress.evidencedPlanHours} / {deliveryProgress.totalPlannedHours} hours
               </small>
             </div>
             <div

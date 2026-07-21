@@ -4,6 +4,8 @@ import { ImportRepository } from "./importRepository";
 import { BackupRepository } from "./backupRepository";
 import { ProjectConfigurationRepository } from "./projectConfigurationRepository";
 import { ReportPublicationRepository } from "./reportPublicationRepository";
+import { ManagementRegisterRepository } from "./managementRegisterRepository";
+import { RiskAppetiteRepository } from "./riskAppetiteRepository";
 
 let browserRepositories:
   | {
@@ -13,6 +15,8 @@ let browserRepositories:
       backups: BackupRepository;
       configurations: ProjectConfigurationRepository;
       reportPublications: ReportPublicationRepository;
+      managementRegisters: ManagementRegisterRepository;
+      riskAppetite: RiskAppetiteRepository;
     }
   | undefined;
 
@@ -28,6 +32,8 @@ export function getBrowserRepositories() {
     backups: new BackupRepository(db, imports),
     configurations: new ProjectConfigurationRepository(db),
     reportPublications: new ReportPublicationRepository(db),
+    managementRegisters: new ManagementRegisterRepository(db),
+    riskAppetite: new RiskAppetiteRepository(db),
   };
   return browserRepositories;
 }

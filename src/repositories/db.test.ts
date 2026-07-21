@@ -63,10 +63,12 @@ describe("project-controls database migrations", () => {
       activeImportId: "IMPORT-001",
       reason: "created",
     });
-    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "5" });
+    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "6" });
     expect(await upgraded.varianceAnalyses.count()).toBe(0);
     expect(await upgraded.baselineSnapshots.count()).toBe(0);
     expect(await upgraded.reportPublications.count()).toBe(0);
+    expect(await upgraded.managementRegisterRevisions.count()).toBe(0);
+    expect(await upgraded.riskAppetiteRevisions.count()).toBe(0);
     upgraded.close();
   });
 
@@ -131,7 +133,7 @@ describe("project-controls database migrations", () => {
         }),
       ],
     });
-    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "5" });
+    expect(await upgraded.meta.get("schemaVersion")).toMatchObject({ value: "6" });
     expect(await upgraded.reportPublications.count()).toBe(0);
     upgraded.close();
   });

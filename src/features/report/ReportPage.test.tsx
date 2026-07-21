@@ -385,7 +385,7 @@ describe("weekly management report page", () => {
     expect(within(baseline).getByText("£77,000")).toBeInTheDocument();
     expect(within(baseline).getByText("B1")).toBeInTheDocument();
     expect(
-      screen.getByText(/User-entered local management registers/),
+      screen.getByText(/Revisioned local management registers/),
     ).toBeInTheDocument();
   });
 });

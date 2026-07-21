@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { VarianceAnalysisRecord } from "../varianceAnalysis";
 import type { ChangeRequest, Milestone, Risk } from "../types";
 import type { WeeklyReportSnapshot } from "./weeklyReport";
+import type { RiskAppetiteThresholds } from "../riskAppetite";
 
 const draftText = (maximum: number) => z.string().trim().max(maximum);
 
@@ -59,6 +60,7 @@ export interface WeeklyReportSourceEvidence {
   milestones: readonly Milestone[];
   risks: readonly Risk[];
   changes: readonly ChangeRequest[];
+  riskAppetite?: RiskAppetiteThresholds;
 }
 
 export interface WeeklyReportPublicationRecord {
@@ -127,6 +129,7 @@ export function buildReportSourceFingerprint(
         milestones: byId(evidence.milestones),
         risks: byId(evidence.risks),
         changes: byId(evidence.changes),
+        riskAppetite: evidence.riskAppetite,
       },
     }),
   );

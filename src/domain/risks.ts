@@ -5,6 +5,10 @@ import type {
   RiskRating,
   RiskTrend,
 } from "./types";
+import {
+  defaultRiskAppetite,
+  type RiskAppetiteThresholds,
+} from "./riskAppetite";
 
 export interface RiskExposure {
   probability: number;
@@ -22,13 +26,6 @@ export interface RiskExceptionFlags {
   escalationRequired: boolean;
 }
 
-const objectiveTolerance: Record<RiskObjective, number> = {
-  "safety-quality": 4,
-  schedule: 9,
-  cost: 9,
-  "operational-readiness": 9,
-};
-
 export const riskRating = (score: number): RiskRating => {
   if (score >= 15) return "critical";
   if (score >= 10) return "high";
@@ -36,8 +33,10 @@ export const riskRating = (score: number): RiskRating => {
   return "low";
 };
 
-export const riskToleranceForObjective = (objective?: RiskObjective): number =>
-  objectiveTolerance[objective ?? "schedule"];
+export const riskToleranceForObjective = (
+  objective?: RiskObjective,
+  appetite: RiskAppetiteThresholds = defaultRiskAppetite,
+): number => appetite[objective ?? "schedule"];
 
 export const riskExposure = (
   risk: Risk,
@@ -77,6 +76,7 @@ const isOverdue = (date: string | undefined, reportingDate: string): boolean =>
 export const riskExceptionFlags = (
   risk: Risk,
   reportingDate: string,
+  appetite: RiskAppetiteThresholds = defaultRiskAppetite,
 ): RiskExceptionFlags => {
   if (risk.status === "closed") {
     return {
@@ -91,7 +91,7 @@ export const riskExceptionFlags = (
 
   const residualScore = riskExposure(risk, "residual").score;
   const aboveTolerance =
-    residualScore > riskToleranceForObjective(risk.objective);
+    residualScore > riskToleranceForObjective(risk.objective, appetite);
   const hasText = (value: string | undefined) => Boolean(value?.trim());
   const escalationEvidenceComplete =
     risk.disposition === "escalated"

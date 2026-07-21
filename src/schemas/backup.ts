@@ -6,9 +6,13 @@ import type {
 } from "../domain/records";
 import { strictIsoDateSchema } from "./fields";
 import { importManifestSchema } from "./manifest";
+import {
+  riskAppetiteRevisionSchema,
+} from "../domain/riskAppetite";
+import { managementRegisterSnapshotSchema } from "./managementRegisters";
 
 export const BACKUP_FORMAT = "project-controls-dashboard" as const;
-export const BACKUP_FORMAT_VERSION = 1 as const;
+export const BACKUP_FORMAT_VERSION = 2 as const;
 export const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
 
 const identifier = z
@@ -156,21 +160,70 @@ const projectConfigurationSchema = z
   })
   .transform((value) => value as unknown as ProjectConfigurationInput);
 
-export const backupEnvelopeSchema = z
+const backupDatasetSchema = z
+  .object({
+    activeImportId: z.string().min(1).max(100),
+    manifest: importManifestSchema,
+    configuration: projectConfigurationSchema,
+    activities: z.array(normalisedActivitySchema).min(1).max(10_000),
+    performance: z.array(performanceRecordSchema).min(1).max(250_000),
+  })
+  .strict();
+
+const reconcileEnvelope = (
+  backup: {
+    dataset: z.infer<typeof backupDatasetSchema>;
+  },
+  context: z.RefinementCtx,
+) => {
+  const { manifest } = backup.dataset;
+  if (backup.dataset.activeImportId !== manifest.importId) {
+    context.addIssue({
+      code: "custom",
+      path: ["dataset", "activeImportId"],
+      message: "The backup pointer must identify its included manifest.",
+    });
+  }
+  if (backup.dataset.configuration.projectId !== manifest.projectId) {
+    context.addIssue({
+      code: "custom",
+      path: ["dataset", "configuration", "projectId"],
+      message: "The backup registry must match the manifest project.",
+    });
+  }
+  if (
+    manifest.totals.acceptedRows !==
+    backup.dataset.activities.length + backup.dataset.performance.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["dataset"],
+      message: "Backup rows must reconcile with manifest accepted counts.",
+    });
+  }
+  if (manifest.files[0].counts.acceptedRows !== backup.dataset.activities.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["dataset", "activities"],
+      message: "Schedule rows must reconcile with the schedule manifest count.",
+    });
+  }
+  if (manifest.files[1].counts.acceptedRows !== backup.dataset.performance.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["dataset", "performance"],
+      message: "Performance rows must reconcile with the performance manifest count.",
+    });
+  }
+};
+
+const legacyBackupEnvelopeSchema = z
   .object({
     format: z.literal(BACKUP_FORMAT),
-    formatVersion: z.literal(BACKUP_FORMAT_VERSION),
+    formatVersion: z.literal(1),
     exportedAt: z.iso.datetime({ offset: true }),
     scope: z.literal("active-generation"),
-    dataset: z
-      .object({
-        activeImportId: z.string().min(1).max(100),
-        manifest: importManifestSchema,
-        configuration: projectConfigurationSchema,
-        activities: z.array(normalisedActivitySchema).min(1).max(10_000),
-        performance: z.array(performanceRecordSchema).min(1).max(250_000),
-      })
-      .strict(),
+    dataset: backupDatasetSchema,
     applicationRecords: z
       .object({
         risks: z.array(z.never()).max(0),
@@ -180,46 +233,58 @@ export const backupEnvelopeSchema = z
       .strict(),
   })
   .strict()
+  .superRefine(reconcileEnvelope);
+
+export const backupEnvelopeSchema = z
+  .object({
+    format: z.literal(BACKUP_FORMAT),
+    formatVersion: z.literal(BACKUP_FORMAT_VERSION),
+    exportedAt: z.iso.datetime({ offset: true }),
+    scope: z.literal("active-generation"),
+    dataset: backupDatasetSchema,
+    applicationRecords: z
+      .object({
+        managementRegister: z
+          .object({
+            revision: z.number().int().positive(),
+            snapshot: managementRegisterSnapshotSchema,
+            recordedAt: z.iso.datetime({ offset: true }),
+            reason: z.enum([
+              "created",
+              "user-update",
+              "schedule-sync",
+              "legacy-migration",
+              "restore",
+            ]),
+          })
+          .strict()
+          .nullable(),
+        riskAppetiteHistory: z.array(riskAppetiteRevisionSchema).max(1_000),
+      })
+      .strict(),
+  })
+  .strict()
   .superRefine((backup, context) => {
-    const { manifest } = backup.dataset;
-    if (backup.dataset.activeImportId !== manifest.importId) {
-      context.addIssue({
-        code: "custom",
-        path: ["dataset", "activeImportId"],
-        message: "The backup pointer must identify its included manifest.",
-      });
-    }
-    if (backup.dataset.configuration.projectId !== manifest.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["dataset", "configuration", "projectId"],
-        message: "The backup registry must match the manifest project.",
-      });
-    }
-    if (
-      manifest.totals.acceptedRows !==
-      backup.dataset.activities.length + backup.dataset.performance.length
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["dataset"],
-        message: "Backup rows must reconcile with manifest accepted counts.",
-      });
-    }
-    if (manifest.files[0].counts.acceptedRows !== backup.dataset.activities.length) {
-      context.addIssue({
-        code: "custom",
-        path: ["dataset", "activities"],
-        message: "Schedule rows must reconcile with the schedule manifest count.",
-      });
-    }
-    if (manifest.files[1].counts.acceptedRows !== backup.dataset.performance.length) {
-      context.addIssue({
-        code: "custom",
-        path: ["dataset", "performance"],
-        message: "Performance rows must reconcile with the performance manifest count.",
-      });
-    }
+    reconcileEnvelope(backup, context);
+    const history = [...backup.applicationRecords.riskAppetiteHistory].sort(
+      (left, right) => left.revision - right.revision,
+    );
+    history.forEach((revision, index) => {
+      if (revision.projectId !== backup.dataset.manifest.projectId) {
+        context.addIssue({
+          code: "custom",
+          path: ["applicationRecords", "riskAppetiteHistory", index, "projectId"],
+          message: "Risk-appetite history must match the manifest project.",
+        });
+      }
+      if (revision.revision !== index + 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["applicationRecords", "riskAppetiteHistory", index, "revision"],
+          message: "Risk-appetite revisions must be unique and contiguous from revision 1.",
+        });
+      }
+    });
   });
 
 export type BackupEnvelope = z.infer<typeof backupEnvelopeSchema>;
@@ -243,6 +308,19 @@ export function parseBackupJson(text: string): BackupEnvelope {
     throw new BackupValidationError("Backup is not valid JSON.");
   }
   const parsed = backupEnvelopeSchema.safeParse(value);
+  if (!parsed.success) {
+    const legacy = legacyBackupEnvelopeSchema.safeParse(value);
+    if (legacy.success) {
+      return backupEnvelopeSchema.parse({
+        ...legacy.data,
+        formatVersion: BACKUP_FORMAT_VERSION,
+        applicationRecords: {
+          managementRegister: null,
+          riskAppetiteHistory: [],
+        },
+      });
+    }
+  }
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0];
     throw new BackupValidationError(

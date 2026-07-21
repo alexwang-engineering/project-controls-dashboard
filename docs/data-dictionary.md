@@ -2,7 +2,7 @@
 
 **Contract version:** M1 / schema version 1 draft
 
-**Local database schema:** Version 2 (adds revisioned project-configuration history)
+**Local database schema:** Version 6 (adds governed management-register and risk-appetite history)
 
 **Status date:** 20 July 2026
 
@@ -207,6 +207,9 @@ Every successful import is an immutable generation keyed by `importId`.
 | `performance` | `(importId, activityId, periodEnd)`; normalised performance generation rows |
 | `projectConfigurations` | `projectId`; confirmed registries and authorised schedule endpoints |
 | `projectConfigurationHistory` | `(projectId, revision)`; immutable creation/additive-update evidence |
+| `managementRegisterHeads` | `projectId`; current immutable register revision pointer and fingerprint |
+| `managementRegisterRevisions` | `(projectId, revision)`; immutable milestone/risk/change snapshots |
+| `riskAppetiteRevisions` | `(projectId, revision)`; authorised objective thresholds, reason and effective date |
 
 The commit transaction reads the expected pointer and checksum history, verifies
 configuration, writes configuration when required, writes both row sets and the
@@ -222,20 +225,24 @@ generations, and never deletes manifests or checksum history.
 
 ## Versioned backup schema
 
-Backup format version 1 exports the current active generation rather than a raw
+Backup format version 2 exports a governed project snapshot rather than a raw
 database copy. It contains the source manifest, normalised activity and
-performance rows, confirmed project configuration, and empty reserved arrays
-for future risk, change and report-draft records. The active pointer, manifest
+performance rows, confirmed project configuration, the current management-
+register snapshot and authorised risk-appetite history. Legacy version 1 files
+remain readable and normalise to empty governed records. The active pointer, manifest
 identity, project identity, row counts, registry uniqueness, field rules and
 schedule relationships must all reconcile. Input is capped at 20 MiB.
-Older manifests, checksum-detection history and superseded row generations are
+Older register revisions, variance-analysis and report-publication records,
+older manifests, checksum-detection history and superseded row generations are
 not included, so restoring into a fresh origin cannot reproduce the previous-
-generation revert option or the source origin's complete duplicate history.
+generation revert option or the source origin's complete history.
 
 Restore first parses the strict versioned schema, then re-runs cross-file and
 schedule-graph domain validation. A valid preview must be explicitly confirmed.
 Commit creates a new immutable `RESTORE-*` generation through the same
-pointer-last transaction as import; it does not overwrite the source manifest.
+pointer-last transaction as import, nested inside one outer transaction that
+also restores the current register snapshot and compatible appetite history; it
+does not overwrite the source manifest.
 Malformed, unsupported, inconsistent or blocking backups write nothing. Last
 backup and last restore timestamps are lifecycle evidence, not part of the
 atomic dataset contract.

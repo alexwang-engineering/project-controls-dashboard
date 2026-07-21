@@ -196,7 +196,7 @@ describe("generation and active-pointer repository", () => {
       ]),
       configuration: { source: "active" },
     });
-    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "5" });
+    expect(await db.meta.get("schemaVersion")).toMatchObject({ value: "6" });
     expect(await db.manifests.count()).toBe(1);
     expect(await db.projectConfigurations.get("ASTER")).toMatchObject({
       revision: 1,

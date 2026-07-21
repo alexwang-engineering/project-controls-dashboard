@@ -7,6 +7,10 @@ import {
 } from "./milestones";
 import { riskRating, riskToleranceForObjective } from "./risks";
 import type { ChangeRequest, Milestone, Risk } from "./types";
+import {
+  defaultRiskAppetite,
+  type RiskAppetiteThresholds,
+} from "./riskAppetite";
 
 const identifier = z
   .string()
@@ -82,7 +86,9 @@ export const createMilestoneInputSchema = (reportingDate: string) =>
 
 export { riskRating } from "./risks";
 
-export const riskInputSchema = z
+export const createRiskInputSchema = (
+  appetite: RiskAppetiteThresholds = defaultRiskAppetite,
+) => z
   .object({
     id: identifier,
     title: shortText("Risk title"),
@@ -135,7 +141,7 @@ export const riskInputSchema = z
   .superRefine((record, context) => {
     const residualScore = record.residualProbability * record.residualImpact;
     const aboveTolerance =
-      residualScore > riskToleranceForObjective(record.objective);
+      residualScore > riskToleranceForObjective(record.objective, appetite);
 
     if (aboveTolerance && record.disposition === "within-tolerance") {
       context.addIssue({
@@ -183,6 +189,8 @@ export const riskInputSchema = z
       rating: riskRating(residualScore),
     };
   });
+
+export const riskInputSchema = createRiskInputSchema();
 
 export const changeInputSchema = z
   .object({

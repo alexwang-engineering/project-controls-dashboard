@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useActiveDataset } from "../../app/ActiveDatasetContext";
-import { useProjectStore } from "../../app/store";
+import { resetProjectManagementControlsRuntime } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import {
@@ -217,7 +217,7 @@ export function SettingsPage({
     if (!resetConfirmed) return;
     return run("reset", async () => {
       await dependencies.reset();
-      useProjectStore.getState().clearRegisters();
+      resetProjectManagementControlsRuntime();
       await refresh();
       await load();
       setResetConfirmed(false);
@@ -281,7 +281,7 @@ export function SettingsPage({
           <Archive size={21} aria-hidden="true" />
           <span>Storage schema</span>
           <strong>Version {lifecycle?.schemaVersion ?? "…"}</strong>
-          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} · {lifecycle?.varianceAnalysisCount ?? 0} variance-analysis record{lifecycle?.varianceAnalysisCount === 1 ? "" : "s"} · {lifecycle?.publishedReportCount ?? 0} published report revision{lifecycle?.publishedReportCount === 1 ? "" : "s"}</small>
+          <small>{lifecycle?.manifestCount ?? 0} immutable manifest{lifecycle?.manifestCount === 1 ? "" : "s"} · {lifecycle?.managementRegisterRevisionCount ?? 0} register revision{lifecycle?.managementRegisterRevisionCount === 1 ? "" : "s"} · {lifecycle?.riskAppetiteRevisionCount ?? 0} appetite revision{lifecycle?.riskAppetiteRevisionCount === 1 ? "" : "s"} · {lifecycle?.varianceAnalysisCount ?? 0} variance-analysis record{lifecycle?.varianceAnalysisCount === 1 ? "" : "s"} · {lifecycle?.publishedReportCount ?? 0} published report revision{lifecycle?.publishedReportCount === 1 ? "" : "s"}</small>
         </article>
       </section>
 
@@ -305,7 +305,7 @@ export function SettingsPage({
       <section className="settings-action-grid">
         <article className="panel settings-action" aria-labelledby="backup-title">
           <div className="settings-action__icon"><Download size={22} aria-hidden="true" /></div>
-          <div><p className="eyebrow">Protect current data</p><h2 id="backup-title">Download versioned backup</h2><p>Exports the active schedule, performance rows, manifest and confirmed registry. Variance-analysis drafts and signed revisions are currently local-only and are not included in this active-generation backup.</p></div>
+          <div><p className="eyebrow">Protect current data</p><h2 id="backup-title">Download versioned backup</h2><p>Exports the active schedule, performance rows, manifest, confirmed project registry, current management registers and authorised risk-appetite history. Older register revisions, variance analyses and report publications remain local-only.</p></div>
           <button className="button button--primary" type="button" onClick={createBackup} disabled={isBusy || lifecycle?.activeImportId === undefined}>
             {busyAction === "backup" ? <LoaderCircle aria-hidden="true" className="spin" size={17} /> : <Download size={17} aria-hidden="true" />} Download JSON backup
           </button>
@@ -329,14 +329,16 @@ export function SettingsPage({
             <div><dt>Baseline</dt><dd>{preview.envelope.dataset.manifest.baselineVersion}</dd></div>
             <div><dt>Data date</dt><dd>{formatDate(preview.envelope.dataset.manifest.dataDate)}</dd></div>
             <div><dt>Accepted rows</dt><dd>{preview.envelope.dataset.manifest.totals.acceptedRows}</dd></div>
+            <div><dt>Management records</dt><dd>{preview.envelope.applicationRecords.managementRegister === null ? "No register snapshot" : `${preview.envelope.applicationRecords.managementRegister.snapshot.milestones.length} milestones · ${preview.envelope.applicationRecords.managementRegister.snapshot.risks.length} risks · ${preview.envelope.applicationRecords.managementRegister.snapshot.changes.length} changes`}</dd></div>
+            <div><dt>Risk appetite</dt><dd>{preview.envelope.applicationRecords.riskAppetiteHistory.length} authorised revision{preview.envelope.applicationRecords.riskAppetiteHistory.length === 1 ? "" : "s"}</dd></div>
           </dl>
           <label className="confirmation-check"><input type="checkbox" checked={restoreConfirmed} onChange={(event) => setRestoreConfirmed(event.target.checked)} /><span>I understand this will create and activate a new immutable generation; the current generation remains in history.</span></label>
-          <div className="restore-preview__actions"><span>{preview.createsProjectRegistry ? "This restore will also create the confirmed project registry." : "The backup registry matches the confirmed local registry."}</span><button className="button button--primary" type="button" disabled={isBusy || !restoreConfirmed} onClick={restoreBackup}>{busyAction === "restore" ? <LoaderCircle aria-hidden="true" className="spin" size={17} /> : <Database size={17} aria-hidden="true" />} Commit atomic restore</button></div>
+          <div className="restore-preview__actions"><span>{preview.createsProjectRegistry ? "This restore will also create the confirmed project registry." : "The backup registry matches the confirmed local registry."} The included management-register snapshot and compatible appetite history commit in the same outer transaction.</span><button className="button button--primary" type="button" disabled={isBusy || !restoreConfirmed} onClick={restoreBackup}>{busyAction === "restore" ? <LoaderCircle aria-hidden="true" className="spin" size={17} /> : <Database size={17} aria-hidden="true" />} Commit atomic restore</button></div>
         </section>
       ) : null}
 
       <section className="panel settings-danger" aria-labelledby="reset-title">
-        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, registry, variance-analysis revision and lifecycle timestamp from this app's local storage. The current backup does not include analysis records.</p></div>
+        <div><p className="eyebrow">Destructive control</p><h2 id="reset-title">Reset all local data</h2><p>Removes every local row generation, manifest, project registry, management-register revision, risk-appetite revision, variance-analysis revision, report publication and lifecycle timestamp from this app's local storage. The current backup does not include these governed application records.</p></div>
         <label className="confirmation-check"><input type="checkbox" checked={resetConfirmed} onChange={(event) => setResetConfirmed(event.target.checked)} /><span>I understand this action removes all local project-control data.</span></label>
         <button className="button button--danger" type="button" disabled={isBusy || !resetConfirmed} onClick={reset}><Trash2 size={17} aria-hidden="true" /> Reset local data</button>
       </section>

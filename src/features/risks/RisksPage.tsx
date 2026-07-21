@@ -1,10 +1,17 @@
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { History, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useProjectStore } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { firstRegisterError, riskInputSchema } from "../../domain/registers";
+import {
+  createRiskInputSchema,
+  firstRegisterError,
+} from "../../domain/registers";
+import {
+  riskObjectiveKeys,
+  riskObjectiveLabel,
+} from "../../domain/riskAppetite";
 import {
   riskExceptionFlags,
   riskExposure,
@@ -68,6 +75,14 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
     reportingDate: storedReportingDate,
     upsertRisk,
     removeRisk,
+    registerProjectId,
+    registerRevision,
+    registerPersistenceStatus,
+    registerPersistenceError,
+    riskAppetite,
+    riskAppetiteRevision,
+    riskAppetiteHistory,
+    saveRiskAppetite,
   } = useProjectStore();
   const reportingDate = reportingDateOverride ?? storedReportingDate;
   const [editing, setEditing] = useState<Risk>();
@@ -79,6 +94,9 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   const [status, setStatus] = useState("active");
   const [rating, setRating] = useState("all");
   const [selectedCell, setSelectedCell] = useState<RiskHeatmapCell>();
+  const [appetiteConfirmed, setAppetiteConfirmed] = useState(false);
+  const [appetiteMessage, setAppetiteMessage] = useState("");
+  const [appetiteError, setAppetiteError] = useState("");
 
   useEffect(() => {
     setOwner("all");
@@ -126,7 +144,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   const exceptionRisks = filteredRisks
     .map((risk) => ({
       risk,
-      flags: riskExceptionFlags(risk, reportingDate),
+      flags: riskExceptionFlags(risk, reportingDate, riskAppetite),
     }))
     .filter(({ flags }) => Object.values(flags).some(Boolean));
   const criticalOrHigh = filteredRisks.filter((risk) =>
@@ -136,7 +154,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
     ({ triggerStatus }) => triggerStatus === "breached",
   ).length;
   const aboveTolerance = filteredRisks.filter(
-    (risk) => riskExceptionFlags(risk, reportingDate).aboveTolerance,
+    (risk) => riskExceptionFlags(risk, reportingDate, riskAppetite).aboveTolerance,
   ).length;
   const editorOpen = isAdding || editing !== undefined;
 
@@ -148,7 +166,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
 
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const parsed = riskInputSchema.safeParse(
+    const parsed = createRiskInputSchema(riskAppetite).safeParse(
       Object.fromEntries(new FormData(event.currentTarget)),
     );
     if (!parsed.success) {
@@ -166,6 +184,39 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
     }
     upsertRisk(parsed.data);
     closeEditor();
+  };
+
+  const saveAppetite = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    setAppetiteMessage("");
+    setAppetiteError("");
+    try {
+      await saveRiskAppetite({
+        thresholds: {
+          "safety-quality": Number(values.get("safety-quality")),
+          schedule: Number(values.get("schedule")),
+          cost: Number(values.get("cost")),
+          "operational-readiness": Number(
+            values.get("operational-readiness"),
+          ),
+        },
+        changeReason: String(values.get("changeReason") ?? ""),
+        authorisedBy: String(values.get("authorisedBy") ?? ""),
+        effectiveFrom: String(values.get("effectiveFrom") ?? ""),
+        confirmed: appetiteConfirmed,
+      });
+      setAppetiteConfirmed(false);
+      setAppetiteMessage("Authorised risk-appetite revision saved.");
+      form.reset();
+    } catch (error) {
+      setAppetiteError(
+        error instanceof Error
+          ? error.message
+          : "The risk-appetite revision could not be saved.",
+      );
+    }
   };
 
   const clearFilters = () => {
@@ -214,6 +265,107 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
           },
         ]}
       />
+
+      <section className="panel risk-appetite" aria-labelledby="risk-appetite-title">
+        <div className="panel__header">
+          <div>
+            <p className="eyebrow">Governance threshold</p>
+            <h2 id="risk-appetite-title">Authorised risk appetite</h2>
+            <p className="panel__description">
+              Set the highest residual score allowed for each objective. Every change creates an immutable, dated revision; it never rewrites earlier decisions.
+            </p>
+          </div>
+          <span className="delivery-state">
+            {riskAppetiteRevision === 0
+              ? "Documented defaults"
+              : `Revision ${String(riskAppetiteRevision)}`}
+          </span>
+        </div>
+
+        <dl className="risk-appetite__current" aria-label="Current risk-appetite thresholds">
+          {riskObjectiveKeys.map((objective) => (
+            <div key={objective}>
+              <dt>{riskObjectiveLabel[objective]}</dt>
+              <dd>{riskAppetite[objective]} / 25</dd>
+            </div>
+          ))}
+        </dl>
+
+        <form className="risk-appetite__form" onSubmit={saveAppetite} key={riskAppetiteRevision}>
+          <fieldset disabled={registerProjectId === undefined}>
+            <legend>Create an authorised revision</legend>
+            <div className="risk-appetite__thresholds">
+              {riskObjectiveKeys.map((objective) => (
+                <label key={objective}>
+                  {riskObjectiveLabel[objective]} maximum score
+                  <input
+                    name={objective}
+                    type="number"
+                    min="1"
+                    max="25"
+                    required
+                    defaultValue={riskAppetite[objective]}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="risk-appetite__authority">
+              <label>
+                Effective from
+                <input
+                  name="effectiveFrom"
+                  type="date"
+                  required
+                  defaultValue={reportingDate || new Date().toISOString().slice(0, 10)}
+                />
+              </label>
+              <label>
+                Authorised by
+                <input name="authorisedBy" required placeholder="Project director" />
+              </label>
+              <label className="risk-appetite__reason">
+                Change reason
+                <textarea name="changeReason" rows={2} required placeholder="Explain why these tolerances are appropriate for the project." />
+              </label>
+            </div>
+            <label className="confirmation-check">
+              <input
+                type="checkbox"
+                checked={appetiteConfirmed}
+                onChange={(event) => setAppetiteConfirmed(event.target.checked)}
+              />
+              <span>I confirm this risk-appetite change is authorised for the active project.</span>
+            </label>
+            <button className="button button--primary" type="submit" disabled={!appetiteConfirmed}>
+              <Save size={17} aria-hidden="true" /> Save appetite revision
+            </button>
+          </fieldset>
+        </form>
+        {registerProjectId === undefined ? <p className="register-empty">Import project data before authorising risk appetite.</p> : null}
+        {appetiteError ? <p className="register-form-error" role="alert">{appetiteError}</p> : null}
+        {appetiteMessage ? <p className="settings-success" role="status">{appetiteMessage}</p> : null}
+        {registerPersistenceError ? <p className="register-form-error" role="alert">{registerPersistenceError}</p> : null}
+        <p className="risk-appetite__storage" role="status">
+          Management registers: revision {String(registerRevision)} · {registerPersistenceStatus}
+        </p>
+
+        <details className="change-history risk-appetite__history">
+          <summary><History size={16} aria-hidden="true" /> View appetite history ({riskAppetiteHistory.length})</summary>
+          {riskAppetiteHistory.length === 0 ? (
+            <p>No authorised revision has been saved. The documented defaults remain active.</p>
+          ) : (
+            <ol>
+              {riskAppetiteHistory.map((revision) => (
+                <li key={revision.revision}>
+                  <strong>Revision {String(revision.revision)} · effective {formatDate(revision.effectiveFrom)}</strong>
+                  <span>{revision.authorisedBy} · {revision.changeReason}</span>
+                  <p>{riskObjectiveKeys.map((objective) => `${riskObjectiveLabel[objective]} ${String(revision.thresholds[objective])}`).join(" · ")}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </details>
+      </section>
 
       {editorOpen ? (
         <RegisterEditor

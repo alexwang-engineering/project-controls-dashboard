@@ -1,8 +1,8 @@
 # M5 risk-control evidence
 
-**Evidence date:** 20 July 2026
+**Evidence date:** 21 July 2026
 
-**Milestone assessment:** 90%
+**Milestone assessment:** 100% technical scope
 
 **Scope:** Risk identification, prioritisation, control evidence and management exception routing
 
@@ -17,6 +17,15 @@ above-tolerance exposure to escalation or authorised acceptance.
 The heatmap is a filterable ordinal view. It deliberately does not sum matrix
 scores or present them as financial/probabilistic portfolio exposure.
 
+The project can now replace the documented defaults through an explicitly
+confirmed risk-appetite revision containing four objective thresholds, an
+effective date, change reason and authorising role. Earlier revisions remain
+read-only. Milestone, risk and change records are stored as immutable project-
+bound snapshots with a current-head pointer, stale-writer protection and
+duplicate-snapshot suppression. Backup format version 2 includes the current
+register snapshot and full authorised appetite history; restore rolls the
+dataset and governed records back together if either side fails.
+
 ## Control rules
 
 1. Probability and impact are integers from 1 to 5.
@@ -24,7 +33,8 @@ scores or present them as financial/probabilistic portfolio exposure.
 3. Inherent and residual positions remain separate; neither overwrites the other.
 4. Trend compares the previous residual score with the current residual score.
 5. Default maximum tolerated residual score is 4 for safety/quality and 9 for
-   schedule, cost and operational readiness.
+   schedule, cost and operational readiness until an authorised project
+   revision replaces those values.
 6. A risk above tolerance cannot be recorded as within tolerance.
 7. Escalation requires a named escalation owner and date.
 8. Authorised acceptance requires an authority, rationale and review date.
@@ -48,6 +58,10 @@ scores or present them as financial/probabilistic portfolio exposure.
 - Heatmap controls retain a 44 px minimum target and visible keyboard focus.
 - The interface explains that the matrix is an ordinal prioritisation aid and
   does not aggregate exposure.
+- The current appetite revision and all four thresholds are visible beside the
+  authorised change form and expandable revision history.
+- Register persistence state exposes the active immutable revision and any
+  storage error rather than silently claiming a save.
 
 ## Automated evidence
 
@@ -60,13 +74,15 @@ scores or present them as financial/probabilistic portfolio exposure.
   selection, exception presentation and the full controlled-input journey.
 - The application navigation test continues to exercise the heatmap through the
   routed application.
+- Repository tests prove append-only register revisions, duplicate suppression,
+  stale-writer rejection, authorised appetite history and stale-form rejection.
+- Backup tests prove governed records round-trip and that a stale register after
+  preview rolls the newly restored dataset back.
 
-## Remaining before formal closure
+## Remaining release assurance
 
-- Move tolerances from documented defaults to a revisioned project appetite
-  configuration with an authorised change history.
-- Move the locally persisted management register behind revisioned storage and
-  include it in the broader backup policy.
 - Add an independent M5 closure review and moderated risk-page usability run.
 
-These limits are why the milestone is assessed at 90%, not complete.
+The scoped engineering deliverables are complete. Independent review and a
+moderated usability run remain release evidence rather than missing product
+behaviour.

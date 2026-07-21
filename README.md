@@ -31,8 +31,13 @@ presented as project data.
   weekly-report publication; the evidence view never claims to calculate CPM.
 - Validated add/edit/delete risk input with cause–event–effect statements,
   inherent/residual scoring, trend, combined filters, a selectable accessible
-  5 × 5 heatmap, objective tolerance, tested controls, overdue review/action
-  exceptions, and evidenced escalation or authorised acceptance.
+  5 × 5 heatmap, project-configurable objective tolerance with immutable
+  authorised history, tested controls, overdue review/action exceptions, and
+  evidenced escalation or authorised acceptance.
+- Project-bound milestone, risk and change registers now persist as immutable
+  Dexie revisions behind a current-head pointer. Stale writers are rejected,
+  identical snapshots do not create noise revisions, and legacy flat
+  local-storage records migrate only after a successful governed commit.
 - A practical native keyboard pass created, saved and edited a complete risk,
   then deliberately triggered and recovered the required-title validation using
   the user's macOS Option+Tab link-focus behaviour without pointer input in the
@@ -108,14 +113,17 @@ presented as project data.
 - Explicit setup-required screens whenever no validated import is active; the
   Overview, Schedule & Cost and report never substitute demonstration figures.
 - A Settings & Data workflow with browser storage health, persistence requests,
-  versioned active-generation backup, schema/domain-validated atomic restore,
+  versioned governed-project backup, schema/domain-validated atomic restore,
   and an explicitly confirmed local reset.
 
-Backups intentionally contain the active imported generation and its confirmed
-registry only. They do not yet contain the locally entered milestone, risk and
-change registers, variance-analysis drafts or signed revisions, weekly-report
-drafts or published revisions, older manifests, checksum-detection history, or
-the rows needed by **Revert to previous**. Keep
+Backup format version 2 contains the active imported generation, its confirmed
+project registry, the current milestone/risk/change register snapshot and the
+authorised risk-appetite history. Restore commits the dataset and governed
+records in one outer transaction; a stale register or conflicting appetite
+history rolls the whole restore back. Backups do not yet contain older register
+revisions, variance-analysis drafts or signed revisions, weekly-report drafts or
+published revisions, older manifests, checksum-detection history, or the rows
+needed by **Revert to previous**. Keep
 the original CSV files and local app data when those records are required. The
 backup input limit is 20 MiB; each source CSV remains limited to 5 MiB.
 
@@ -134,7 +142,7 @@ and a visibly populated three-page WKWebView preview through both the in-page
 button and `Cmd+P`; the full-ASTER native repetition remains.
 The M2 global-scope increment is recorded in
 [`M2_GLOBAL_SCOPE_EVIDENCE.md`](docs/M2_GLOBAL_SCOPE_EVIDENCE.md). The M5
-risk-control increment and its remaining limitations are recorded in
+risk-control technical closure and remaining independent assurance are recorded in
 [`M5_RISK_CONTROL_EVIDENCE.md`](docs/M5_RISK_CONTROL_EVIDENCE.md).
 The completed M4 milestone-control contract and its bounded CPM limitation are
 recorded in

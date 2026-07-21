@@ -76,6 +76,19 @@ describe("risk-control rules", () => {
     expect(riskToleranceForObjective("schedule")).toBe(9);
   });
 
+  it("uses an authorised project appetite instead of the defaults", () => {
+    const appetite = {
+      "safety-quality": 4,
+      schedule: 16,
+      cost: 9,
+      "operational-readiness": 9,
+    } as const;
+    expect(riskToleranceForObjective("schedule", appetite)).toBe(16);
+    expect(
+      riskExceptionFlags(risk(), "2026-07-20", appetite).aboveTolerance,
+    ).toBe(false);
+  });
+
   it("derives improving, stable and worsening residual trend", () => {
     expect(riskTrend(risk())).toBe("worsening");
     expect(

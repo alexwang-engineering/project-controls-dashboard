@@ -3,9 +3,10 @@
 **Status date:** 21 July 2026
 **Baseline:** Master Plan Version 1.1  
 **Release target:** 25 September 2026  
-**Current increment:** Practical Firefox full-ASTER print/PDF evidence
+**Current increment:** Governed risk appetite and revisioned management registers
 
-**Evidence-weighted MVP progress:** 94% (87.9 of 94 planned hours)
+**Product engineering:** 100% of the scoped MVP capabilities
+**Evidence-weighted release progress:** 94% (88.8 of 94 planned hours)
 
 ## Delivered evidence
 
@@ -17,13 +18,13 @@
 | Management overview | Active-import KPI cards, decision headline, curve, WP reconciliation, source status and globally scoped exceptions | Working |
 | Schedule and cost | Global WP scope, period filter, cumulative EVM, WP reconciliation and activity-level source trace | Working slice |
 | Milestones | Source-linked import/refresh, reporting-date-derived six-state status, movement filters, iterative predecessor evidence, logic warnings, structured recovery/decision control and publication gates | Complete technical milestone |
-| Risks | Global WP scope, cause–event–effect input, inherent/residual score and trend, local persistence, combined filters, selectable accessible heatmap, objective tolerance, control tests, overdue exceptions and escalation/acceptance evidence | Working slice |
+| Risks | Global WP scope, cause–event–effect input, inherent/residual score and trend, project-bound immutable register revisions, authorised appetite history, combined filters, selectable accessible heatmap, control tests, overdue exceptions and escalation/acceptance evidence | Complete technical milestone |
 | Changes | Complete impact input, enforced state machine, decision authority/history, retained generation baselines, exact BAC/finish reconciliation, pre/post performance comparison and historical-value publication gate | Working |
 | Accessibility | WCAG A/AA axe scans over input-first and active project states in three engines; skip link, visible keyboard focus, valid semantics, named keyboard-scroll tables, text spacing, reduced motion and forced colours; manual assistive-technology review remains | Automated working evidence |
 | Responsive layout | Automated all-route 320 px reflow with WCAG text spacing, 390 × 844 overflow/24 px target checks and a reachable mobile milestone editor | Verified |
 | Security and privacy | Restrictive CSP without unsafe-eval, CSP-safe schema runtime, loopback response headers, path/listing controls, native regression tests, no-external-request browser diagnostics, dependency audit, Dependabot and CodeQL configuration | Tested local baseline |
 | Native release inspection | Signed/exact bundle, readiness-probed cold launch, live headers, all eight input-first routes exposed through WKWebView accessibility, macOS link-focus skip path, real CSV open panel, malformed-file recovery, keyboard-only risk create/edit/required-field recovery, fail-closed print preflight and visible three-page immutable-publication preview | Partial manual evidence |
-| Quality gate | Deterministic serial-file Vitest and two-worker Playwright execution; lint, strict application/E2E type check, 305 Vitest tests, 4 native-server tests, 27 browser journeys, dependency audit and production build | Passing |
+| Quality gate | Deterministic serial-file Vitest and two-worker Playwright execution; lint, strict application/E2E type check, 316 Vitest tests, 4 native-server tests, 27 browser journeys, dependency audit and production build | Passing |
 | Cross-browser journeys | Fresh-context input-first launch, eight page guides, CSV review/registry/atomic commit, calculated KPI evidence, imported-milestone recovery controls, 48 axe-scanned states and an automatic external-network guard in Chromium, Firefox and WebKit | Passing |
 | M1 architecture review | Independent Claude review plus accepted import-contract ADR | Complete |
 | M1 fixture/parser boundary | 29 checksum-pinned RFC/hostile/limit files, scalar grammars, safe export with explicit trust policy, manual headers | Tested increment |
@@ -43,7 +44,7 @@
 | EAC sensitivity | Budget-rate, CPI-continuation and CPI × SPI scenarios expose formulas, assumptions, VAC and TCPI consequences | Tested working slice |
 | Variance analysis | Generation-aware draft, structured impacts/actions, ownership, sign-off validation and immutable revisions | Tested working slice |
 | Weekly management report | Deterministic reconciliation, editable narrative, exact source fingerprint, source-bound draft, append-only revisions, exact selected-revision narrative display, rollback/race evidence, OS-print provenance guard and inspected four-page A4 full-ASTER publication PDFs in Chromium and practical Firefox | Working slice |
-| Backup and recovery | Versioned active-generation JSON, strict schema/domain preview and pointer-last atomic restore | Tested |
+| Backup and recovery | Version 2 governed-project JSON, legacy v1 read support, strict schema/domain preview and atomic dataset/register/appetite restore | Tested |
 | Storage settings | Usage/quota status, persistence request, lifecycle history and explicitly confirmed local reset | Working |
 | Desktop review build | Signed native AppKit/WebKit macOS window, readiness-probed app-owned private server, SPA route fallback and repeatable packaging command | Verified |
 
@@ -56,7 +57,7 @@
 | M2 — Overview | 9 Aug | Global WP scope across Overview calculations/chart, Schedule & Cost and matching milestone/risk/change records; full-project publication/baseline boundary; active-generation source trace and setup-required state | Error browser QA and research round |
 | M3 — Variance engine | 16 Aug | Core formulas, precision, thresholds, three EAC scenarios, imported aggregation, cumulative trace, signed variance-analysis revisions and weekly-report reconciliation | Independent M3 calculation/closure review |
 | M4 — Milestones | 20 Aug | All MIL-001–009 controls: schedule mapping/refresh, six derived statuses, variance/movement, exception/next-30 filters, predecessor evidence/warnings, structured recovery and report gates | Technical exit criteria complete; evidence retained for release review |
-| M5 — Risks | 28 Aug | Persistent cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, tolerance rules, control evidence, overdue exceptions and controlled escalation/acceptance | Project-configurable tolerance revisions, immutable register history and final independent review |
+| M5 — Risks | 28 Aug | Project-bound immutable register revisions, cause–event–effect CRUD, inherent/residual comparison and trend, AND filters, selectable heatmap, authorised appetite revisions, governed backup, control evidence, overdue exceptions and controlled escalation/acceptance | Technical scope complete; independent review and moderated usability remain release evidence |
 | M6 — Changes | 4 Sep | Complete impact case, enforced transitions, immutable decisions, retained original/current baselines, cost/schedule reconciliation, effective-period comparison and preserved historical variance | Technical exit criteria complete; closure evidence is retained for release review |
 | M7 — Weekly report | 13 Sep | Deterministic builder, source-bound narrative, immutable revisions, active-pointer CAS, exact stored-snapshot rendering, live-print rejection and inspected four-page A4 publications from the complete 1,020-row ASTER journey in Chromium and practical Firefox | Full-ASTER WKWebView print check and fewer-than-five-actions usability evidence |
 | M8 — Release gate | 25 Sep | Repeatable native build plus 27 isolated browser runs, 48 axe-scanned states, accessibility/responsive preferences, CSP/external-network checks, native-server tests, readiness-probed cold launch, eight-route WKWebView inspection, native malformed-file recovery, keyboard-only risk creation/edit/error recovery and gated populated print preview | VoiceOver, full-ASTER native print repetition, moderated research and portfolio assets |
@@ -67,18 +68,17 @@
 2. Run the M2 moderated comprehension study and record the findings.
 3. Repeat native WKWebView print preview against the approved full-ASTER
    publication; practical Firefox evidence is complete.
-4. Add project-calendar definitions so schedule-change reconciliation can
-   move from explicit calendar-day arithmetic to source working days.
-5. Move management registers into revisioned backup-aware persistence.
+4. Evaluate project-calendar definitions as a post-MVP enhancement so schedule-
+   change reconciliation can move from explicit calendar-day arithmetic to
+   source working days without overstating the current calculation basis.
+5. Complete the independent M3/M5 closure reviews without changing the verified product data boundary.
 
 ## Known limitations
 
-- Milestone, risk and change inputs persist locally and feed the Overview and
-  report, but the active-generation JSON backup does not yet include them or
-  the multi-generation baseline evidence ledger.
-- The risk workflow uses documented default objective tolerances; it does not
-  yet maintain project-specific appetite revisions or immutable register
-  history. Milestone dependency evidence deliberately does not claim CPM or
+- Backup version 2 includes the current milestone/risk/change snapshot and
+  appetite history, but not older register revisions, variance analyses, report
+  publications or the full multi-generation baseline evidence ledger.
+- Milestone dependency evidence deliberately does not claim CPM or
   critical-path status because total float and working-time definitions are not
   imported. Baseline finish reconciliation currently treats entered
   schedule-impact days as calendar days because the
@@ -87,9 +87,10 @@
 - Weekly reporting now persists editable source-bound drafts and append-only
   publications; both the UI and OS print path limit report output to a selected
   stored revision. Four-page full-ASTER Chromium and practical Firefox PDFs are
-  approved, while the full-ASTER WKWebView repetition remains. Report records, variance
-  analysis and management registers remain outside active-generation JSON
-  backups and variance sign-off is not yet linked to approved baseline revisions.
+  approved, while the full-ASTER WKWebView repetition remains. Report records
+  and variance analysis remain outside governed-project JSON backups; the
+  current management-register snapshot and authorised appetite history are
+  included. Variance sign-off is not yet linked to approved baseline revisions.
 - Automated browser QA covers the input-first, controlled-import and imported-
   milestone journeys and automatically detectable WCAG A/AA issues in Chromium,
   Firefox and WebKit, plus 320/390 px layout and target checks. Automated scans
@@ -97,7 +98,8 @@
   keyboard, file-recovery, register create/edit/error-recovery and controlled-
   publication print check, but actual VoiceOver announcements still require
   manual release inspection; the native preview must also be repeated with full
-  ASTER.
+  ASTER. Variance-analysis and report-publication records remain outside the
+  governed-project JSON backup.
 - The web entry point enforces CSP from a meta policy and the packaged native
   server adds header-only controls such as `frame-ancestors`. Runtime chart
   layout still requires CSP `style-src 'unsafe-inline'`; script evaluation is

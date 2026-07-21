@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createRiskInputSchema,
   changeInputSchema,
   createMilestoneInputSchema,
   riskInputSchema,
@@ -215,6 +216,22 @@ describe("risk input validation", () => {
         "disposition",
       );
     }
+  });
+
+  it("validates disposition against the active authorised appetite", () => {
+    const schema = createRiskInputSchema({
+      "safety-quality": 4,
+      schedule: 16,
+      cost: 9,
+      "operational-readiness": 9,
+    });
+    const parsed = schema.safeParse({
+      ...fullRisk,
+      disposition: "within-tolerance",
+      escalationOwner: "",
+      escalationDate: "",
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it("requires complete authorised acceptance evidence", () => {
