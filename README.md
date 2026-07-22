@@ -1,5 +1,9 @@
 # Project Controls Dashboard
 
+[![E2E](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/e2e.yml/badge.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/e2e.yml)
+[![CodeQL](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml/badge.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 A local-first project-controls application for turning your engineering
 schedule, cost, milestone, risk, and change inputs into a concise management
 position.
@@ -296,6 +300,13 @@ The source of truth is the local, uncommitted
 with a target portfolio release of 25 September 2026.
 Current completion evidence and the next implementation slice are recorded in
 [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
+
+## Contributing
+
+Issues and pull requests are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md)
+for the development setup, the quality gate to run before a PR, the domain-layer
+purity boundary, and the commit convention. Participation is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
