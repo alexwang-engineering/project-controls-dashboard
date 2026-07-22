@@ -8,6 +8,13 @@ The current implementation is a tested local-first slice based on the Version
 1.1 master plan. A new installation starts empty: no demonstration figures are
 presented as project data.
 
+## Demo
+
+A 70-second walkthrough — empty first-run state, earned-value KPIs, milestone
+recovery controls, the risk heatmap and the change-control baseline guard — is
+attached to the [v0.1.0 release](https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0)
+([direct download](https://github.com/alexwang-engineering/project-controls-dashboard/releases/download/v0.1.0/pcd-demo.mp4)).
+
 ## Case study
 
 **Problem.** Project controls staff assemble a defensible weekly management
