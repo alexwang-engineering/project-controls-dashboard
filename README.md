@@ -1,5 +1,6 @@
 # Project Controls Dashboard
 
+[![Status: Released](https://img.shields.io/badge/status-released-brightgreen.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0)
 [![E2E](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/e2e.yml/badge.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/e2e.yml)
 [![CodeQL](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml/badge.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
