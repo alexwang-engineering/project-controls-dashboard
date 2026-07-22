@@ -8,6 +8,38 @@ The current implementation is a tested local-first slice based on the Version
 1.1 master plan. A new installation starts empty: no demonstration figures are
 presented as project data.
 
+## Case study
+
+**Problem.** Project controls staff assemble a defensible weekly management
+position from disconnected schedule, cost, milestone, risk and change inputs.
+That report is often a spreadsheet exercise: the figures are hard to audit, easy
+to overwrite, and detached from the evidence meant to justify them.
+
+**Approach.** This application treats the management report as a governed
+artefact rather than a presentation. Earned-value figures are computed in a pure
+domain layer with no dependence on React, storage, network state or browser
+time, so every KPI is reproducible from its inputs. Registers persist as
+immutable Dexie revisions behind a current-head pointer; stale writers are
+rejected and authorised baseline facts cannot be silently rewritten. Weekly
+publication is gated — unresolved schedule logic, incomplete risk recovery, or a
+rewritten historical PV, EV or AC value block it.
+
+**Deliberate constraints.**
+
+- **Local-first, no telemetry.** No analytics or remote API path; automated
+  browser journeys fail on any unexpected external request. Data stays on the
+  device.
+- **Empty on first launch.** A new install presents no demonstration figures
+  dressed up as project data — the starting state is honest.
+- **Synthetic fixtures only.** No CV, employer, client or confidential project
+  data lives in the repository.
+
+**What it demonstrates.** Beyond the React and TypeScript build, it shows
+controls-domain judgement: separating calculation from presentation, designing
+for auditability and evidence, and encoding governance rules — baseline
+integrity, a change-control state machine, escalation versus authorised
+acceptance — as software the tool will not let you bypass.
+
 ## What is working now
 
 - Responsive, keyboard-accessible application shell and feature navigation.
@@ -257,3 +289,7 @@ The source of truth is the local, uncommitted
 with a target portfolio release of 25 September 2026.
 Current completion evidence and the next implementation slice are recorded in
 [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
