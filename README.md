@@ -5,6 +5,14 @@
 [![CodeQL](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml/badge.svg)](https://github.com/alexwang-engineering/project-controls-dashboard/actions/workflows/codeql.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
+<p align="center">
+  <a href="https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0">
+    <img src="docs/media/demo-poster.png" alt="Project Controls Dashboard — watch the demo" width="760">
+  </a>
+  <br>
+  <a href="https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0"><strong>▶&nbsp;Watch the 70-second demo</strong></a>
+</p>
+
 A local-first project-controls application for turning your engineering
 schedule, cost, milestone, risk, and change inputs into a concise management
 position.
