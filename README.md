@@ -6,11 +6,9 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 <p align="center">
-  <a href="https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0">
-    <img src="docs/media/demo-poster.png" alt="Project Controls Dashboard — watch the demo" width="760">
-  </a>
+  <video src="https://github.com/user-attachments/assets/880837a9-db51-4854-9462-9d80349e40a0" poster="https://raw.githubusercontent.com/alexwang-engineering/project-controls-dashboard/main/docs/media/demo-poster.png" width="760" controls muted></video>
   <br>
-  <a href="https://github.com/alexwang-engineering/project-controls-dashboard/releases/tag/v0.1.0"><strong>▶&nbsp;Watch the 70-second demo</strong></a>
+  <em>70-second walkthrough — empty first run, earned-value KPIs, milestone recovery, the risk heatmap and the change-control baseline guard.</em>
 </p>
 
 A local-first project-controls application for turning your engineering
