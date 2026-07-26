@@ -14,6 +14,12 @@ interface WorkerScope {
 const workerScope = globalThis as unknown as WorkerScope;
 
 workerScope.onmessage = (event) => {
+  // DedicatedWorker messages from the owning document have an empty origin.
+  // Reject any event carrying a document origin before reading its payload.
+  if (event.origin !== "") {
+    return;
+  }
+
   const request = event.data;
   if (
     request.protocolVersion !== IMPORT_WORKER_PROTOCOL_VERSION ||
