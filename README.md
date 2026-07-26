@@ -6,7 +6,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/880837a9-db51-4854-9462-9d80349e40a0" poster="https://raw.githubusercontent.com/alexwang-engineering/project-controls-dashboard/main/docs/media/demo-poster.png" width="760" controls muted></video>
+  <video src="https://github.com/user-attachments/assets/dbd2750b-0489-42d9-bed0-e9fc373c9d45" poster="https://raw.githubusercontent.com/alexwang-engineering/project-controls-dashboard/main/docs/media/demo-poster.png" width="760" controls muted></video>
   <br>
   <em>70-second walkthrough — empty first run, earned-value KPIs, milestone recovery, the risk heatmap and the change-control baseline guard.</em>
 </p>
