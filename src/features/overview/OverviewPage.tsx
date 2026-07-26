@@ -1,6 +1,6 @@
 import { AlertTriangle, ArrowRight, CalendarDays, Database } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
