@@ -1,5 +1,5 @@
 import { ArrowRight, FolderInput } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 export function ProjectSetupRequired({
   title = "Import project data to continue",
