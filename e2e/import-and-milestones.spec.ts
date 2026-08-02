@@ -8,6 +8,7 @@ test("commits a validated CSV pair and calculates the active management position
 
   await page.getByRole("link", { name: "Overview", exact: true }).click();
   await expect(page.getByText("Active import", { exact: true })).toBeVisible();
+  await page.getByText("Method, data source and page guidance").click();
   await expect(
     page.getByRole("region", { name: "Dashboard data source" }),
   ).toContainText("1 schedule rows and 1 performance rows");

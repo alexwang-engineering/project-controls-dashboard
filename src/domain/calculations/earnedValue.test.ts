@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { calculateEarnedValue, efficiencyStatus } from "./earnedValue";
+import {
+  calculateEarnedValue,
+  efficiencyStatus,
+  efficiencyStatusLabel,
+  isEfficiencyBreach,
+} from "./earnedValue";
 
 describe("calculateEarnedValue", () => {
   it("reproduces the independently checked project fixture", () => {
@@ -51,12 +56,20 @@ describe("calculateEarnedValue", () => {
 describe("efficiencyStatus", () => {
   it.each([
     [1, "positive"],
-    [0.98, "positive"],
-    [0.9799, "attention"],
-    [0.95, "attention"],
-    [0.9499, "adverse"],
+    [0.9999, "attention"],
+    [0.98, "attention"],
+    [0.9799, "adverse"],
+    [0.95, "adverse"],
     [null, "neutral"],
   ] as const)("maps %s to %s", (metric, expected) => {
     expect(efficiencyStatus(metric)).toBe(expected);
+  });
+
+  it("uses the same tolerance for labels and recovery breaches", () => {
+    expect(efficiencyStatusLabel(1)).toBe("On plan");
+    expect(efficiencyStatusLabel(0.99)).toBe("Within tolerance");
+    expect(efficiencyStatusLabel(0.97)).toBe("Recovery required");
+    expect(isEfficiencyBreach(0.98)).toBe(false);
+    expect(isEfficiencyBreach(0.9799)).toBe(true);
   });
 });

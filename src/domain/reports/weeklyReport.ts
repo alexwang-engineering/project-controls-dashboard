@@ -5,7 +5,11 @@ import type {
   Risk,
   WorkPackageSnapshot,
 } from "../types";
-import { calculateEarnedValue, type EarnedValueResult } from "../calculations/earnedValue";
+import {
+  calculateEarnedValue,
+  isEfficiencyBreach,
+  type EarnedValueResult,
+} from "../calculations/earnedValue";
 import {
   buildEacScenarios,
   type EacScenario,
@@ -674,13 +678,13 @@ export function buildWeeklyReportSnapshot(
   const schedulePosition =
     cumulativeMetrics.spi === null
       ? "Schedule efficiency is unavailable"
-      : cumulativeMetrics.spi < 0.98
+      : isEfficiencyBreach(cumulativeMetrics.spi)
         ? "Behind plan"
         : "On or ahead of plan";
   const costPosition =
     cumulativeMetrics.cpi === null
       ? "cost efficiency is unavailable"
-      : cumulativeMetrics.cpi < 0.98
+      : isEfficiencyBreach(cumulativeMetrics.cpi)
         ? "over cost"
         : "cost efficient";
   const movement = `This period produced SV ${currency.format(projectScope.current.metrics.sv)} and CV ${currency.format(projectScope.current.metrics.cv)}; current-period SPI is ${formatIndex(projectScope.current.metrics.spi)} and CPI is ${formatIndex(projectScope.current.metrics.cpi)}.${acceptedProjectPeriods.length === 1 ? " The source contains one accepted performance period, so current-period and cumulative values are identical." : ""}`;

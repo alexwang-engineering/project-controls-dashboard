@@ -10,6 +10,7 @@ import { StatusPill } from "../../components/StatusPill";
 import {
   calculateEarnedValue,
   efficiencyStatus,
+  efficiencyStatusLabel,
 } from "../../domain/calculations/earnedValue";
 import {
   buildEacScenarios,
@@ -190,7 +191,7 @@ function ScheduleCostWorkspace({
           },
           {
             title: "Compare the indices",
-            detail: "SPI below 1.00 is behind plan; CPI below 1.00 means the work is costing more than its earned value.",
+            detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; below 0.98 requires recovery.",
           },
           {
             title: "Trace and assign",
@@ -246,7 +247,7 @@ function ScheduleCostWorkspace({
           label="Earned value"
           value={formatCompactCurrency(metrics.ev)}
           status={efficiencyStatus(metrics.spi)}
-          statusLabel={metrics.sv < 0 ? "Behind plan" : "On plan"}
+          statusLabel={efficiencyStatusLabel(metrics.spi)}
           delta={formatCompactCurrency(metrics.sv)}
           detail={`${formatPercent(metrics.earnedCompletion)} earned complete`}
         />
@@ -254,7 +255,7 @@ function ScheduleCostWorkspace({
           label="Actual cost"
           value={formatCompactCurrency(metrics.ac)}
           status={efficiencyStatus(metrics.cpi)}
-          statusLabel={metrics.cv < 0 ? "Over cost" : "Controlled"}
+          statusLabel={efficiencyStatusLabel(metrics.cpi)}
           delta={formatCompactCurrency(metrics.cv)}
           detail={`${formatPercent(metrics.budgetSpent)} of BAC spent`}
         />
@@ -262,15 +263,15 @@ function ScheduleCostWorkspace({
           label="Schedule performance index"
           value={formatIndex(metrics.spi)}
           status={efficiencyStatus(metrics.spi)}
-          statusLabel={metrics.sv < 0 ? "Adverse" : "Controlled"}
-          detail="EV ÷ PV; below 1.00 is behind plan"
+          statusLabel={efficiencyStatusLabel(metrics.spi)}
+          detail="EV ÷ PV; below 0.98 requires recovery"
         />
         <MetricCard
           label="Cost performance index"
           value={formatIndex(metrics.cpi)}
           status={efficiencyStatus(metrics.cpi)}
-          statusLabel={metrics.cv < 0 ? "Adverse" : "Controlled"}
-          detail="EV ÷ AC; below 1.00 is inefficient"
+          statusLabel={efficiencyStatusLabel(metrics.cpi)}
+          detail="EV ÷ AC; below 0.98 requires recovery"
         />
         <MetricCard
           label="Estimate at completion"

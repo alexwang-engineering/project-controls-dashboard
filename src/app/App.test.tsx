@@ -42,10 +42,8 @@ describe("project controls application", () => {
     expect(within(projectTotal).getByText("-£150,000")).toBeInTheDocument();
     expect(within(projectTotal).getByText("-£90,000")).toBeInTheDocument();
 
-    expect(
-      screen.getByRole("progressbar", { name: "Product build progress" }),
-    ).toHaveAttribute("value", "100");
-    expect(screen.getByText("Release evidence 94% · 88.8 / 94 hours")).toBeInTheDocument();
+    expect(screen.getByText(/Baseline B0 · Data date/)).toBeInTheDocument();
+    expect(screen.queryByText("Product build")).not.toBeInTheDocument();
   });
 
   it.each([
@@ -65,6 +63,11 @@ describe("project controls application", () => {
       await screen.findByRole("heading", { name: pageName, level: 1 }),
     ).toBeInTheDocument();
 
+    if (path === "/") {
+      await userEvent.setup().click(
+        screen.getByText("Method, data source and page guidance"),
+      );
+    }
     const guide = screen.getByRole("region", {
       name: `How to use ${pageName}`,
     });
@@ -233,6 +236,9 @@ describe("project controls application", () => {
     });
     await user.click(
       within(navigation).getByRole("link", { name: "Overview" }),
+    );
+    await user.click(
+      screen.getByText("Method, data source and page guidance"),
     );
     const dashboardSource = await screen.findByRole("region", {
       name: "Dashboard data source",
