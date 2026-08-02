@@ -191,7 +191,7 @@ function ScheduleCostWorkspace({
           },
           {
             title: "Compare the indices",
-            detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; below 0.98 requires recovery.",
+            detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; 0.95–0.979 requires attention; below 0.95 requires recovery.",
           },
           {
             title: "Trace and assign",
@@ -264,14 +264,14 @@ function ScheduleCostWorkspace({
           value={formatIndex(metrics.spi)}
           status={efficiencyStatus(metrics.spi)}
           statusLabel={efficiencyStatusLabel(metrics.spi)}
-          detail="EV ÷ PV; below 0.98 requires recovery"
+          detail="EV ÷ PV; below 0.98 requires analysis"
         />
         <MetricCard
           label="Cost performance index"
           value={formatIndex(metrics.cpi)}
           status={efficiencyStatus(metrics.cpi)}
           statusLabel={efficiencyStatusLabel(metrics.cpi)}
-          detail="EV ÷ AC; below 0.98 requires recovery"
+          detail="EV ÷ AC; below 0.98 requires analysis"
         />
         <MetricCard
           label="Estimate at completion"
@@ -363,7 +363,7 @@ function ScheduleCostWorkspace({
                       <td className={activityMetrics.sv < 0 ? "number--adverse" : undefined}>{formatCurrency(activityMetrics.sv)}</td>
                       <td className={activityMetrics.cv < 0 ? "number--adverse" : undefined}>{formatCurrency(activityMetrics.cv)}</td>
                       <td>{performance.physicalPercentComplete === undefined ? "Not reported" : `${performance.physicalPercentComplete.toFixed(1)}%`}</td>
-                      <td><StatusPill status={position}>{position === "positive" ? "Controlled" : position === "attention" ? "Watch" : "Recover"}</StatusPill><span className="table-secondary">{performance.commentary ?? activity.commentary}</span></td>
+                      <td><StatusPill status={position}>{efficiencyStatusLabel(activityMetrics.spi === null || activityMetrics.cpi === null ? null : Math.min(activityMetrics.spi, activityMetrics.cpi))}</StatusPill><span className="table-secondary">{performance.commentary ?? activity.commentary}</span></td>
                     </tr>
                   );
                 })}

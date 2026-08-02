@@ -14,6 +14,7 @@ import {
   efficiencyStatus,
   efficiencyStatusLabel,
   isEfficiencyBreach,
+  isEfficiencyRecoveryRequired,
 } from "../../domain/calculations/earnedValue";
 import { riskExposure } from "../../domain/risks";
 import {
@@ -207,10 +208,14 @@ export function OverviewPage() {
     parseISO(baselineFinish),
   );
   const sourceDescription = `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`;
-  const recoveryNeeded =
+  const attentionNeeded =
     isEfficiencyBreach(projectMetrics.spi) ||
     isEfficiencyBreach(projectMetrics.cpi) ||
     finishVarianceDays > 0;
+  const recoveryRequired =
+    isEfficiencyRecoveryRequired(projectMetrics.spi) ||
+    isEfficiencyRecoveryRequired(projectMetrics.cpi) ||
+    finishVarianceDays > 5;
 
   return (
     <div className="page-stack">
@@ -227,14 +232,16 @@ export function OverviewPage() {
         <div>
           <p className="eyebrow">Management attention</p>
           <h2 id="decision-title">
-            {recoveryNeeded
+            {recoveryRequired
               ? "Recovery action is needed to protect the current forecast."
-              : `The current ${selectedPackage ? "work-package" : "project"} position is within the control thresholds.`}
+              : attentionNeeded
+                ? "Management attention is needed to protect the current forecast."
+                : `The current ${selectedPackage ? "work-package" : "project"} position is within the control thresholds.`}
           </h2>
           <p>
             {scopeLabel} is {formatPercent(projectMetrics.earnedCompletion)} earned
             complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
-            The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. Trace the adverse variance to its work package and activity before agreeing recovery action.
+            The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. {attentionNeeded ? "Trace the adverse variance to its work package and activity before agreeing the proportionate management response." : "Continue monitoring the validated position at the next reporting period."}
           </p>
           {managementAction ? (
             <dl className="decision-banner__action">
@@ -338,7 +345,7 @@ export function OverviewPage() {
               },
               {
                 title: "Read the position",
-                detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; below 0.98 requires recovery.",
+                detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; 0.95–0.979 requires attention; below 0.95 requires recovery.",
               },
               {
                 title: "Close the action",

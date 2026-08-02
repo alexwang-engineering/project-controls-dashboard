@@ -7,7 +7,7 @@ import type {
 } from "../types";
 import {
   calculateEarnedValue,
-  isEfficiencyBreach,
+  efficiencyBand,
   type EarnedValueResult,
 } from "../calculations/earnedValue";
 import {
@@ -675,18 +675,22 @@ export function buildWeeklyReportSnapshot(
     }));
 
   const cumulativeMetrics = projectScenario.metrics;
-  const schedulePosition =
-    cumulativeMetrics.spi === null
-      ? "Schedule efficiency is unavailable"
-      : isEfficiencyBreach(cumulativeMetrics.spi)
-        ? "Behind plan"
-        : "On or ahead of plan";
-  const costPosition =
-    cumulativeMetrics.cpi === null
-      ? "cost efficiency is unavailable"
-      : isEfficiencyBreach(cumulativeMetrics.cpi)
-        ? "over cost"
-        : "cost efficient";
+  const schedulePosition = (() => {
+    const band = efficiencyBand(cumulativeMetrics.spi);
+    if (band === "on-plan") return "On or ahead of plan";
+    if (band === "within-tolerance") return "Within schedule tolerance";
+    if (band === "attention") return "Behind plan with attention required";
+    if (band === "recovery") return "Behind plan with recovery required";
+    return "Schedule efficiency is unavailable";
+  })();
+  const costPosition = (() => {
+    const band = efficiencyBand(cumulativeMetrics.cpi);
+    if (band === "on-plan") return "cost efficient";
+    if (band === "within-tolerance") return "within cost tolerance";
+    if (band === "attention") return "over cost with attention required";
+    if (band === "recovery") return "over cost with recovery required";
+    return "cost efficiency is unavailable";
+  })();
   const movement = `This period produced SV ${currency.format(projectScope.current.metrics.sv)} and CV ${currency.format(projectScope.current.metrics.cv)}; current-period SPI is ${formatIndex(projectScope.current.metrics.spi)} and CPI is ${formatIndex(projectScope.current.metrics.cpi)}.${acceptedProjectPeriods.length === 1 ? " The source contains one accepted performance period, so current-period and cumulative values are identical." : ""}`;
 
   return {

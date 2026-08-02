@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculateEarnedValue } from "./calculations/earnedValue";
 import {
   createVarianceAnalysisContext,
+  determineVarianceBreaches,
   emptyVarianceAnalysisDetails,
   validateVarianceAnalysisForSignOff,
 } from "./varianceAnalysis";
@@ -15,6 +16,12 @@ const fixtureMetrics = calculateEarnedValue({
 });
 
 describe("variance analysis domain", () => {
+  it("opens analysis below tolerance while preserving the amber/red distinction", () => {
+    expect(determineVarianceBreaches({ spi: 0.98, cpi: 1, vac: 0 })).toEqual([]);
+    expect(determineVarianceBreaches({ spi: 0.9799, cpi: 1, vac: 0 })).toEqual(["SPI"]);
+    expect(determineVarianceBreaches({ spi: 0.9499, cpi: 1, vac: 0 })).toEqual(["SPI"]);
+  });
+
   it("creates a stable project-period context and pence-normalised fact snapshot", () => {
     const context = createVarianceAnalysisContext({
       projectId: "ASTER",

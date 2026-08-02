@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateEarnedValue,
+  efficiencyBand,
   efficiencyStatus,
   efficiencyStatusLabel,
   isEfficiencyBreach,
+  isEfficiencyRecoveryRequired,
 } from "./earnedValue";
 
 describe("calculateEarnedValue", () => {
@@ -56,20 +58,34 @@ describe("calculateEarnedValue", () => {
 describe("efficiencyStatus", () => {
   it.each([
     [1, "positive"],
-    [0.9999, "attention"],
-    [0.98, "attention"],
-    [0.9799, "adverse"],
-    [0.95, "adverse"],
+    [0.9999, "positive"],
+    [0.98, "positive"],
+    [0.9799, "attention"],
+    [0.95, "attention"],
+    [0.9499, "adverse"],
     [null, "neutral"],
   ] as const)("maps %s to %s", (metric, expected) => {
     expect(efficiencyStatus(metric)).toBe(expected);
   });
 
-  it("uses the same tolerance for labels and recovery breaches", () => {
+  it("keeps four explicit meanings across the controlled thresholds", () => {
+    expect(efficiencyBand(1)).toBe("on-plan");
+    expect(efficiencyBand(0.99)).toBe("within-tolerance");
+    expect(efficiencyBand(0.97)).toBe("attention");
+    expect(efficiencyBand(0.94)).toBe("recovery");
+    expect(efficiencyBand(null)).toBe("unavailable");
     expect(efficiencyStatusLabel(1)).toBe("On plan");
     expect(efficiencyStatusLabel(0.99)).toBe("Within tolerance");
-    expect(efficiencyStatusLabel(0.97)).toBe("Recovery required");
+    expect(efficiencyStatusLabel(0.97)).toBe("Attention required");
+    expect(efficiencyStatusLabel(0.94)).toBe("Recovery required");
+    expect(efficiencyStatusLabel(null)).toBe("Unavailable");
+  });
+
+  it("opens variance analysis below tolerance and reserves recovery for red", () => {
     expect(isEfficiencyBreach(0.98)).toBe(false);
     expect(isEfficiencyBreach(0.9799)).toBe(true);
+    expect(isEfficiencyRecoveryRequired(0.95)).toBe(false);
+    expect(isEfficiencyRecoveryRequired(0.9499)).toBe(true);
+    expect(isEfficiencyRecoveryRequired(null)).toBe(false);
   });
 });

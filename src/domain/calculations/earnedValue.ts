@@ -31,9 +31,17 @@ export interface EarnedValueResult {
   budgetSpent: number | null;
 }
 
-export const PERFORMANCE_TOLERANCE = {
+export type PerformanceBand =
+  | "on-plan"
+  | "within-tolerance"
+  | "attention"
+  | "recovery"
+  | "unavailable";
+
+export const PERFORMANCE_THRESHOLDS = {
   onPlan: 1,
-  recovery: 0.98,
+  withinTolerance: 0.98,
+  recovery: 0.95,
 } as const;
 
 const value = (input: number) => new Decimal(input);
@@ -107,32 +115,39 @@ export function calculateEarnedValue(
 export function efficiencyStatus(
   valueToAssess: number | null,
 ): "positive" | "attention" | "adverse" | "neutral" {
-  if (valueToAssess === null) {
-    return "neutral";
-  }
+  const band = efficiencyBand(valueToAssess);
+  if (band === "on-plan" || band === "within-tolerance") return "positive";
+  if (band === "attention") return "attention";
+  if (band === "recovery") return "adverse";
+  return "neutral";
+}
 
-  if (valueToAssess >= PERFORMANCE_TOLERANCE.onPlan) {
-    return "positive";
+export function efficiencyBand(valueToAssess: number | null): PerformanceBand {
+  if (valueToAssess === null) return "unavailable";
+  if (valueToAssess >= PERFORMANCE_THRESHOLDS.onPlan) return "on-plan";
+  if (valueToAssess >= PERFORMANCE_THRESHOLDS.withinTolerance) {
+    return "within-tolerance";
   }
-
-  if (valueToAssess >= PERFORMANCE_TOLERANCE.recovery) {
-    return "attention";
-  }
-
-  return "adverse";
+  if (valueToAssess >= PERFORMANCE_THRESHOLDS.recovery) return "attention";
+  return "recovery";
 }
 
 export function efficiencyStatusLabel(valueToAssess: number | null): string {
-  const status = efficiencyStatus(valueToAssess);
-  if (status === "positive") return "On plan";
-  if (status === "attention") return "Within tolerance";
-  if (status === "adverse") return "Recovery required";
+  const band = efficiencyBand(valueToAssess);
+  if (band === "on-plan") return "On plan";
+  if (band === "within-tolerance") return "Within tolerance";
+  if (band === "attention") return "Attention required";
+  if (band === "recovery") return "Recovery required";
   return "Unavailable";
 }
 
 export function isEfficiencyBreach(valueToAssess: number | null): boolean {
-  return (
-    valueToAssess !== null &&
-    valueToAssess < PERFORMANCE_TOLERANCE.recovery
-  );
+  const band = efficiencyBand(valueToAssess);
+  return band === "attention" || band === "recovery";
+}
+
+export function isEfficiencyRecoveryRequired(
+  valueToAssess: number | null,
+): boolean {
+  return efficiencyBand(valueToAssess) === "recovery";
 }
