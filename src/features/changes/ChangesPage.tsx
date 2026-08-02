@@ -1,5 +1,6 @@
 import { FileCheck2, History, Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { PageGuide } from "../../components/PageGuide";
@@ -52,6 +53,7 @@ const decisionStatuses: readonly ChangeStatus[] = [
 ];
 
 export function ChangesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { changes, selectedWorkPackage, upsertChange, removeChange } =
     useProjectStore();
   const { snapshot: performance } = useProjectPerformance();
@@ -113,8 +115,27 @@ export function ChangesPage() {
       changes,
     });
   }, [changes, performance]);
+  const requestedRecordId = searchParams.get("record");
+
+  useEffect(() => {
+    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    const requestedRecord = changes.find(({ id }) => id === requestedRecordId);
+    if (requestedRecord === undefined) return;
+    setEditing(requestedRecord);
+    setIsAdding(false);
+    setFormStatus(requestedRecord.status);
+    setFormError("");
+  }, [changes, editing?.id, requestedRecordId]);
+
+  const clearRequestedRecord = () => {
+    if (!searchParams.has("record")) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("record");
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const closeEditor = () => {
+    clearRequestedRecord();
     setEditing(undefined);
     setIsAdding(false);
     setFormStatus("draft");
@@ -122,6 +143,7 @@ export function ChangesPage() {
   };
 
   const openNew = () => {
+    clearRequestedRecord();
     setIsAdding(true);
     setEditing(undefined);
     setFormStatus("draft");
@@ -129,6 +151,7 @@ export function ChangesPage() {
   };
 
   const openEdit = (change: ChangeRequest) => {
+    clearRequestedRecord();
     setEditing(change);
     setIsAdding(false);
     setFormStatus(change.status);

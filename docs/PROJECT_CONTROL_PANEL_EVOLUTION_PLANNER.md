@@ -1,6 +1,6 @@
 # Project Control Panel Evolution Planner
 
-> Status: First delivery wave approved; Phase 0 completed
+> Status: First delivery wave approved; Phases 0–1 completed; Phase 2 in progress
 >
 > Prepared: 2 August 2026
 >

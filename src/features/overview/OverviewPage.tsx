@@ -13,14 +13,8 @@ import {
   calculateEarnedValue,
   efficiencyStatus,
   efficiencyStatusLabel,
-  isEfficiencyBreach,
-  isEfficiencyRecoveryRequired,
 } from "../../domain/calculations/earnedValue";
-import { riskExposure } from "../../domain/risks";
-import {
-  isAdverseMilestoneStatus,
-  milestoneStatusAt,
-} from "../../domain/milestones";
+import { buildManagementExceptions } from "../../domain/managementExceptions";
 import {
   cumulativePerformanceForScope,
   resolveWorkPackageScope,
@@ -32,6 +26,7 @@ import {
   formatIndex,
   formatPercent,
 } from "../../utils/format";
+import { ManagementExceptionQueue } from "./ManagementExceptionQueue";
 const PerformanceChart = lazy(() =>
   import("./PerformanceChart").then((module) => ({
     default: module.PerformanceChart,
@@ -44,6 +39,7 @@ export function OverviewPage() {
     milestones,
     risks,
     changes,
+    riskAppetite,
   } = useProjectStore();
   const { snapshot, status, error } = useProjectPerformance();
 
@@ -110,74 +106,6 @@ export function OverviewPage() {
     (change) =>
       effectiveWorkPackage === "all" || change.wbsId === effectiveWorkPackage,
   );
-  const activeRisks = scopedRisks.filter((risk) => risk.status !== "closed");
-  const criticalRiskCount = activeRisks.filter(
-    (risk) => riskExposure(risk, "residual").rating === "critical",
-  ).length;
-  const lateMilestones = scopedMilestones
-    .map((milestone) => ({
-      ...milestone,
-      status: milestoneStatusAt(milestone, snapshot.project.reportingDate),
-    }))
-    .filter((milestone) => isAdverseMilestoneStatus(milestone.status));
-  const pendingChanges = scopedChanges.filter(
-    (change) => change.status === "submitted",
-  );
-  const leadingMilestone = lateMilestones
-    .slice()
-    .sort((left, right) => left.forecastDate.localeCompare(right.forecastDate))
-    .at(0);
-  const leadingRisk = activeRisks
-    .slice()
-    .sort(
-      (left, right) =>
-        riskExposure(right, "residual").score -
-        riskExposure(left, "residual").score,
-    )
-    .at(0);
-  const leadingChange = pendingChanges
-    .slice()
-    .sort((left, right) => left.decisionDue.localeCompare(right.decisionDue))
-    .at(0);
-  const managementAction = leadingMilestone
-    ? {
-        kind: "Milestone recovery",
-        title: leadingMilestone.name,
-        owner: leadingMilestone.actionOwner || leadingMilestone.owner,
-        action:
-          leadingMilestone.recoveryAction ||
-          leadingMilestone.decisionRequired ||
-          "Agree and record a recovery action",
-        due: leadingMilestone.actionDueDate || leadingMilestone.forecastDate,
-        route: "/milestones",
-        cta: "Open milestone",
-      }
-    : leadingRisk
-      ? {
-          kind: "Risk treatment",
-          title: leadingRisk.title,
-          owner: leadingRisk.controlOwner || leadingRisk.owner,
-          action: leadingRisk.treatment || "Agree and record a risk treatment",
-          due: leadingRisk.treatmentDue,
-          route: "/risks",
-          cta: "Open risk",
-        }
-      : leadingChange
-        ? {
-            kind: "Change decision",
-            title: leadingChange.title,
-            owner:
-              leadingChange.decisionAuthority ||
-              leadingChange.approver ||
-              "Decision authority not assigned",
-            action:
-              leadingChange.recommendation ||
-              "Review and record the decision",
-            due: leadingChange.decisionDue,
-            route: "/changes",
-            cta: "Open change",
-          }
-        : undefined;
   const currentPoint =
     [...scopeTrend]
       .reverse()
@@ -208,14 +136,28 @@ export function OverviewPage() {
     parseISO(baselineFinish),
   );
   const sourceDescription = `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`;
-  const attentionNeeded =
-    isEfficiencyBreach(projectMetrics.spi) ||
-    isEfficiencyBreach(projectMetrics.cpi) ||
-    finishVarianceDays > 0;
-  const recoveryRequired =
-    isEfficiencyRecoveryRequired(projectMetrics.spi) ||
-    isEfficiencyRecoveryRequired(projectMetrics.cpi) ||
-    finishVarianceDays > 5;
+  const managementExceptions = buildManagementExceptions({
+    reportingDate: snapshot.project.reportingDate,
+    scopeId: effectiveWorkPackage,
+    scopeOwner: selectedPackage?.owner ?? "Project Controls Manager",
+    metrics: {
+      spi: projectMetrics.spi,
+      cpi: projectMetrics.cpi,
+    },
+    finishVarianceDays,
+    milestones: scopedMilestones,
+    risks: scopedRisks,
+    changes: scopedChanges,
+    riskAppetite,
+    bac: projectMetrics.bac,
+  });
+  const managementAction = managementExceptions.at(0);
+  const attentionNeeded = managementExceptions.some(
+    ({ severity }) => severity === "attention" || severity === "recovery",
+  );
+  const recoveryRequired = managementExceptions.some(
+    ({ severity }) => severity === "recovery",
+  );
 
   return (
     <div className="page-stack">
@@ -224,6 +166,19 @@ export function OverviewPage() {
         title="Project overview"
         description="A decision-first view of the latest validated schedule, cost and delivery position."
       />
+
+      <section
+        className="source-banner source-banner--active source-banner--compact"
+        aria-label="Dashboard data source"
+      >
+        <Database size={19} aria-hidden="true" />
+        <div>
+          <strong>
+            {status === "loading" ? "Checking local data…" : "Validated active generation"}
+          </strong>
+          <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
+        </div>
+      </section>
 
       <section className="decision-banner" aria-labelledby="decision-title">
         <div className="decision-banner__icon" aria-hidden="true">
@@ -241,14 +196,15 @@ export function OverviewPage() {
           <p>
             {scopeLabel} is {formatPercent(projectMetrics.earnedCompletion)} earned
             complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
-            The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. {attentionNeeded ? "Trace the adverse variance to its work package and activity before agreeing the proportionate management response." : "Continue monitoring the validated position at the next reporting period."}
+            The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. {attentionNeeded ? "Open the priority control record, confirm its evidence and agree the proportionate management response." : "Continue monitoring the validated position at the next reporting period."}
           </p>
           {managementAction ? (
             <dl className="decision-banner__action">
-              <div><dt>Priority</dt><dd>{managementAction.kind}: {managementAction.title}</dd></div>
+              <div><dt>Priority</dt><dd>{managementAction.kindLabel}: {managementAction.title}</dd></div>
               <div><dt>Owner</dt><dd>{managementAction.owner}</dd></div>
               <div><dt>Next action</dt><dd>{managementAction.action}</dd></div>
-              <div><dt>Due</dt><dd>{formatDate(managementAction.due)}</dd></div>
+              <div><dt>Due</dt><dd>{managementAction.dueDate ? formatDate(managementAction.dueDate) : "This reporting cycle"}</dd></div>
+              <div><dt>Why priority</dt><dd>{managementAction.priorityReason}</dd></div>
             </dl>
           ) : null}
         </div>
@@ -311,6 +267,8 @@ export function OverviewPage() {
         />
       </section>
 
+      <ManagementExceptionQueue exceptions={managementExceptions} />
+
       <Suspense fallback={<div className="chart-loading" role="status">Loading performance trend…</div>}>
         <PerformanceChart
           trend={scopeTrend}
@@ -321,20 +279,8 @@ export function OverviewPage() {
       </Suspense>
 
       <details className="overview-support">
-        <summary>Method, data source and page guidance</summary>
+        <summary>Method and page guidance</summary>
         <div className="overview-support__content">
-          <section
-            className="source-banner source-banner--active"
-            aria-label="Dashboard data source"
-          >
-            <Database size={19} aria-hidden="true" />
-            <div>
-              <strong>
-                {status === "loading" ? "Checking local data…" : "Validated active generation"}
-              </strong>
-              <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
-            </div>
-          </section>
           <PageGuide
             pageName="Project overview"
             purpose="Use the global scope, read the management decision, then trace the numbers that need action."
@@ -395,6 +341,10 @@ export function OverviewPage() {
                   metrics.spi !== null && metrics.cpi !== null
                     ? efficiencyStatus(Math.min(metrics.spi, metrics.cpi))
                     : "neutral";
+                const combinedLabel =
+                  metrics.spi !== null && metrics.cpi !== null
+                    ? efficiencyStatusLabel(Math.min(metrics.spi, metrics.cpi))
+                    : "Unavailable";
                 return (
                   <tr
                     key={workPackage.id}
@@ -416,11 +366,7 @@ export function OverviewPage() {
                     <td>{formatIndex(metrics.cpi)}</td>
                     <td>
                       <StatusPill status={combinedStatus}>
-                        {combinedStatus === "positive"
-                          ? "Controlled"
-                          : combinedStatus === "attention"
-                            ? "Watch"
-                            : "Recover"}
+                        {combinedLabel}
                       </StatusPill>
                     </td>
                   </tr>
@@ -442,93 +388,6 @@ export function OverviewPage() {
         </div>
       </section>
 
-      <section className="register-source-note" aria-label="Supporting register data source">
-        <strong>Supporting registers follow the global work-package scope.</strong>
-        <span>Add or edit milestones, risks and changes on their register pages; matching entries appear here immediately.</span>
-      </section>
-
-      <section className="exception-grid" aria-label="Management exceptions">
-        <article className="panel exception-card">
-          <div className="panel__header">
-            <div>
-              <p className="eyebrow">Milestone movement</p>
-              <h2>{lateMilestones.length} require attention</h2>
-            </div>
-            <Link to="/milestones">View register</Link>
-          </div>
-          <ul className="exception-list">
-            {lateMilestones.map((milestone) => (
-                <li key={milestone.id}>
-                  <div>
-                    <strong>{milestone.name}</strong>
-                    <span>{milestone.owner}</span>
-                  </div>
-                  <span>{formatDate(milestone.forecastDate)}</span>
-                </li>
-              ))}
-            {lateMilestones.length === 0 ? <li>No milestone exception is recorded.</li> : null}
-          </ul>
-        </article>
-
-        <article className="panel exception-card">
-          <div className="panel__header">
-            <div>
-              <p className="eyebrow">Risk exposure</p>
-              <h2>
-                {criticalRiskCount +
-                  (criticalRiskCount === 1 ? " critical risk" : " critical risks")}
-              </h2>
-            </div>
-            <Link to="/risks">Open heatmap</Link>
-          </div>
-          <ul className="exception-list">
-            {[...activeRisks]
-              .sort(
-                (left, right) =>
-                  riskExposure(right, "residual").score -
-                  riskExposure(left, "residual").score,
-              )
-              .slice(0, 2)
-              .map((risk) => {
-                const exposure = riskExposure(risk, "residual");
-                return (
-              <li key={risk.id}>
-                <div>
-                  <strong>{risk.title}</strong>
-                  <span>{risk.owner}</span>
-                </div>
-                <StatusPill status={exposure.rating === "critical" ? "adverse" : "attention"}>
-                  {String(exposure.score)} / 25
-                </StatusPill>
-              </li>
-                );
-              })}
-            {activeRisks.length === 0 ? <li>No active risk is entered.</li> : null}
-          </ul>
-        </article>
-
-        <article className="panel exception-card">
-          <div className="panel__header">
-            <div>
-              <p className="eyebrow">Change control</p>
-              <h2>{pendingChanges.length} decisions pending</h2>
-            </div>
-            <Link to="/changes">View changes</Link>
-          </div>
-          <ul className="exception-list">
-            {pendingChanges.map((change) => (
-                <li key={change.id}>
-                  <div>
-                    <strong>{change.title}</strong>
-                    <span>{change.id + " · " + change.wbsId}</span>
-                  </div>
-                  <span>{formatCompactCurrency(change.costImpact)}</span>
-                </li>
-              ))}
-            {pendingChanges.length === 0 ? <li>No submitted change is awaiting a decision.</li> : null}
-          </ul>
-        </article>
-      </section>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { History, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
@@ -69,6 +70,7 @@ interface RisksPageProps {
 }
 
 export function RisksPage({ reportingDateOverride }: RisksPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     risks,
     selectedWorkPackage,
@@ -157,8 +159,26 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
     (risk) => riskExceptionFlags(risk, reportingDate, riskAppetite).aboveTolerance,
   ).length;
   const editorOpen = isAdding || editing !== undefined;
+  const requestedRecordId = searchParams.get("record");
+
+  useEffect(() => {
+    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    const requestedRecord = risks.find(({ id }) => id === requestedRecordId);
+    if (requestedRecord === undefined) return;
+    setEditing(requestedRecord);
+    setIsAdding(false);
+    setFormError("");
+  }, [editing?.id, requestedRecordId, risks]);
+
+  const clearRequestedRecord = () => {
+    if (!searchParams.has("record")) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("record");
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const closeEditor = () => {
+    clearRequestedRecord();
     setEditing(undefined);
     setIsAdding(false);
     setFormError("");
@@ -238,6 +258,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
             className="button button--primary"
             type="button"
             onClick={() => {
+              clearRequestedRecord();
               setIsAdding(true);
               setEditing(undefined);
               setFormError("");
@@ -522,7 +543,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
                         <td><span className={`trigger trigger--${risk.triggerStatus}`}>{titleCase(risk.triggerStatus)}</span><span className="table-secondary">{titleCase(risk.controlEffectiveness)}</span></td>
                         <td>{titleCase(risk.disposition ?? "not-recorded")}</td>
                         <td>{formatDate(risk.treatmentDue)}</td>
-                        <td><div className="register-row-actions"><button type="button" aria-label={`Edit ${risk.id}`} onClick={() => { setEditing(risk); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${risk.id}`} onClick={() => { if (window.confirm(`Delete risk ${risk.id}?`)) removeRisk(risk.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td>
+                        <td><div className="register-row-actions"><button type="button" aria-label={`Edit ${risk.id}`} onClick={() => { clearRequestedRecord(); setEditing(risk); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${risk.id}`} onClick={() => { if (window.confirm(`Delete risk ${risk.id}?`)) removeRisk(risk.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td>
                       </tr>
                     );
                   })}

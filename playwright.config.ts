@@ -26,7 +26,12 @@ export default defineConfig({
     {
       name: "firefox",
       testIgnore: [/responsive\.spec\.ts/, /chromium-only\.spec\.ts/],
-      use: devices["Desktop Firefox"],
+      use: {
+        ...devices["Desktop Firefox"],
+        // Firefox 148 reports axe-core's injected evaluator as a page CSP error.
+        // Chromium continues to exercise and assert the production CSP itself.
+        bypassCSP: true,
+      },
     },
     {
       name: "webkit",

@@ -65,7 +65,7 @@ describe("project controls application", () => {
 
     if (path === "/") {
       await userEvent.setup().click(
-        screen.getByText("Method, data source and page guidance"),
+        screen.getByText("Method and page guidance"),
       );
     }
     const guide = screen.getByRole("region", {
@@ -236,9 +236,6 @@ describe("project controls application", () => {
     });
     await user.click(
       within(navigation).getByRole("link", { name: "Overview" }),
-    );
-    await user.click(
-      screen.getByText("Method, data source and page guidance"),
     );
     const dashboardSource = await screen.findByRole("region", {
       name: "Dashboard data source",

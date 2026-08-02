@@ -1,10 +1,15 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render as testingLibraryRender, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { BrowserRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useProjectStore } from "../../app/store";
 import { defaultRiskAppetite } from "../../domain/riskAppetite";
 import type { Risk } from "../../domain/types";
 import { RisksPage } from "./RisksPage";
+
+const render = (ui: ReactElement) =>
+  testingLibraryRender(ui, { wrapper: BrowserRouter });
 
 const risk = (overrides: Partial<Risk>): Risk => ({
   id: "R-001",

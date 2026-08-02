@@ -1,4 +1,4 @@
-import type { FormEvent, ReactNode } from "react";
+import { useEffect, useRef, type FormEvent, type ReactNode } from "react";
 
 export function RegisterEditor({
   title,
@@ -18,8 +18,28 @@ export function RegisterEditor({
   children: ReactNode;
 }) {
   const headingId = `register-editor-${title.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
+  const editorRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (editor === null) return;
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    editor.focus({ preventScroll: true });
+    editor.scrollIntoView?.({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [title]);
+
   return (
-    <section className="panel register-editor" aria-labelledby={headingId}>
+    <section
+      ref={editorRef}
+      className="panel register-editor"
+      aria-labelledby={headingId}
+      tabIndex={-1}
+    >
       <div className="panel__header">
         <div>
           <p className="eyebrow">Controlled input</p>

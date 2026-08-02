@@ -1,13 +1,24 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render as testingLibraryRender, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { BrowserRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useProjectStore } from "../../app/store";
+import {
+  changes as demoChanges,
+  milestones as demoMilestones,
+  risks as demoRisks,
+} from "../../data/demo";
 import { ChangesPage } from "../changes/ChangesPage";
 import { MilestonesPage } from "../milestones/MilestonesPage";
 import { RisksPage } from "../risks/RisksPage";
 
+const render = (ui: ReactElement) =>
+  testingLibraryRender(ui, { wrapper: BrowserRouter });
+
 describe("input-first management registers", () => {
   beforeEach(() => {
+    window.history.replaceState({}, "", "/");
     useProjectStore.setState({ milestones: [], risks: [], changes: [] });
   });
 
@@ -50,6 +61,46 @@ describe("input-first management registers", () => {
     const row = screen.getByRole("row", { name: /Design approved/ });
     expect(within(row).getByText("M-001 · WP100")).toBeInTheDocument();
     expect(useProjectStore.getState().milestones).toHaveLength(1);
+  });
+
+  it("opens an exact milestone record from the URL and moves focus to its editor", async () => {
+    const record = demoMilestones.at(0);
+    if (record === undefined) throw new Error("Demo milestone fixture is missing.");
+    useProjectStore.setState({ milestones: [record] });
+    window.history.replaceState({}, "", `/milestones?record=${record.id}`);
+
+    render(<MilestonesPage />);
+
+    const editor = await screen.findByRole("region", {
+      name: `Edit milestone ${record.id}`,
+    });
+    expect(editor).toHaveFocus();
+  });
+
+  it("opens an exact risk record from the URL", async () => {
+    const record = demoRisks.at(0);
+    if (record === undefined) throw new Error("Demo risk fixture is missing.");
+    useProjectStore.setState({ risks: [record] });
+    window.history.replaceState({}, "", `/risks?record=${record.id}`);
+
+    render(<RisksPage />);
+
+    expect(
+      await screen.findByRole("region", { name: `Edit risk ${record.id}` }),
+    ).toHaveFocus();
+  });
+
+  it("opens an exact change record from the URL", async () => {
+    const record = demoChanges.at(0);
+    if (record === undefined) throw new Error("Demo change fixture is missing.");
+    useProjectStore.setState({ changes: [record] });
+    window.history.replaceState({}, "", `/changes?record=${record.id}`);
+
+    render(<ChangesPage />);
+
+    expect(
+      await screen.findByRole("region", { name: `Edit change ${record.id}` }),
+    ).toHaveFocus();
   });
 
   it("creates source-linked milestones from the imported schedule", async () => {

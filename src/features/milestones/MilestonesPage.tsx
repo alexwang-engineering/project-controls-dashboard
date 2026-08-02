@@ -1,6 +1,7 @@
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { Network, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { PageHeader } from "../../components/PageHeader";
@@ -48,6 +49,7 @@ const signedDays = (days: number) => {
 type MilestoneFilter = "all" | "exceptions" | "next-30";
 
 export function MilestonesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     milestones,
     reportingDate,
@@ -113,8 +115,26 @@ export function MilestonesPage() {
       ),
   );
   const editorOpen = isAdding || editing !== undefined;
+  const requestedRecordId = searchParams.get("record");
+
+  useEffect(() => {
+    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    const requestedRecord = milestones.find(({ id }) => id === requestedRecordId);
+    if (requestedRecord === undefined) return;
+    setEditing(requestedRecord);
+    setIsAdding(false);
+    setFormError("");
+  }, [editing?.id, milestones, requestedRecordId]);
+
+  const clearRequestedRecord = () => {
+    if (!searchParams.has("record")) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("record");
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const closeEditor = () => {
+    clearRequestedRecord();
     setEditing(undefined);
     setIsAdding(false);
     setFormError("");
@@ -199,6 +219,7 @@ export function MilestonesPage() {
               className="button button--primary"
               type="button"
               onClick={() => {
+                clearRequestedRecord();
                 setIsAdding(true);
                 setEditing(undefined);
                 setFormError("");
@@ -296,7 +317,7 @@ export function MilestonesPage() {
                   <td><StatusPill status={presentation.tone}>{presentation.label}</StatusPill></td>
                   <td>{missingRecovery.length === 0 ? <span className="control-complete">Complete</span> : <><span className="control-incomplete">{missingRecovery.length} fields missing</span><span className="table-secondary">Publication blocked</span></>}</td>
                   <td><StatusPill status={logicPresentation.tone}>{logicPresentation.label}</StatusPill><span className="table-secondary">{trace.chain.length} predecessor links</span></td>
-                  <td><div className="register-row-actions"><button type="button" aria-label={`Review dependency and recovery for ${milestone.sourceActivityId ?? milestone.id}`} aria-expanded={expanded} onClick={() => setExpandedMilestoneId(expanded ? undefined : milestone.id)}><Network size={15} aria-hidden="true" /></button><button type="button" aria-label={`Edit ${milestone.id}`} onClick={() => { setEditing(milestone); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${milestone.id}`} onClick={() => { if (window.confirm(`Delete milestone ${milestone.id}?`)) removeMilestone(milestone.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td>
+                  <td><div className="register-row-actions"><button type="button" aria-label={`Review dependency and recovery for ${milestone.sourceActivityId ?? milestone.id}`} aria-expanded={expanded} onClick={() => setExpandedMilestoneId(expanded ? undefined : milestone.id)}><Network size={15} aria-hidden="true" /></button><button type="button" aria-label={`Edit ${milestone.id}`} onClick={() => { clearRequestedRecord(); setEditing(milestone); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${milestone.id}`} onClick={() => { if (window.confirm(`Delete milestone ${milestone.id}?`)) removeMilestone(milestone.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td>
                 </tr>,
                 expanded ? (
                   <tr key={`${milestone.id}-detail`} className="milestone-detail-row"><td colSpan={6}>
