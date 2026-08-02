@@ -1,5 +1,6 @@
-import { AlertTriangle, ArrowRight, CalendarDays, Database } from "lucide-react";
+import { AlertTriangle, ArrowRight, Database } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
@@ -11,6 +12,8 @@ import { StatusPill } from "../../components/StatusPill";
 import {
   calculateEarnedValue,
   efficiencyStatus,
+  efficiencyStatusLabel,
+  isEfficiencyBreach,
 } from "../../domain/calculations/earnedValue";
 import { riskExposure } from "../../domain/risks";
 import {
@@ -28,7 +31,11 @@ import {
   formatIndex,
   formatPercent,
 } from "../../utils/format";
-import { PerformanceChart } from "./PerformanceChart";
+const PerformanceChart = lazy(() =>
+  import("./PerformanceChart").then((module) => ({
+    default: module.PerformanceChart,
+  })),
+);
 
 export function OverviewPage() {
   const {
@@ -115,6 +122,61 @@ export function OverviewPage() {
   const pendingChanges = scopedChanges.filter(
     (change) => change.status === "submitted",
   );
+  const leadingMilestone = lateMilestones
+    .slice()
+    .sort((left, right) => left.forecastDate.localeCompare(right.forecastDate))
+    .at(0);
+  const leadingRisk = activeRisks
+    .slice()
+    .sort(
+      (left, right) =>
+        riskExposure(right, "residual").score -
+        riskExposure(left, "residual").score,
+    )
+    .at(0);
+  const leadingChange = pendingChanges
+    .slice()
+    .sort((left, right) => left.decisionDue.localeCompare(right.decisionDue))
+    .at(0);
+  const managementAction = leadingMilestone
+    ? {
+        kind: "Milestone recovery",
+        title: leadingMilestone.name,
+        owner: leadingMilestone.actionOwner || leadingMilestone.owner,
+        action:
+          leadingMilestone.recoveryAction ||
+          leadingMilestone.decisionRequired ||
+          "Agree and record a recovery action",
+        due: leadingMilestone.actionDueDate || leadingMilestone.forecastDate,
+        route: "/milestones",
+        cta: "Open milestone",
+      }
+    : leadingRisk
+      ? {
+          kind: "Risk treatment",
+          title: leadingRisk.title,
+          owner: leadingRisk.controlOwner || leadingRisk.owner,
+          action: leadingRisk.treatment || "Agree and record a risk treatment",
+          due: leadingRisk.treatmentDue,
+          route: "/risks",
+          cta: "Open risk",
+        }
+      : leadingChange
+        ? {
+            kind: "Change decision",
+            title: leadingChange.title,
+            owner:
+              leadingChange.decisionAuthority ||
+              leadingChange.approver ||
+              "Decision authority not assigned",
+            action:
+              leadingChange.recommendation ||
+              "Review and record the decision",
+            due: leadingChange.decisionDue,
+            route: "/changes",
+            cta: "Open change",
+          }
+        : undefined;
   const currentPoint =
     [...scopeTrend]
       .reverse()
@@ -146,8 +208,8 @@ export function OverviewPage() {
   );
   const sourceDescription = `${snapshot.importId} is active: ${snapshot.activities.length} schedule rows and ${snapshot.performance.length} performance rows feed these figures.`;
   const recoveryNeeded =
-    (projectMetrics.spi !== null && projectMetrics.spi < 0.98) ||
-    (projectMetrics.cpi !== null && projectMetrics.cpi < 0.98) ||
+    isEfficiencyBreach(projectMetrics.spi) ||
+    isEfficiencyBreach(projectMetrics.cpi) ||
     finishVarianceDays > 0;
 
   return (
@@ -156,47 +218,6 @@ export function OverviewPage() {
         eyebrow="Management control room"
         title="Project overview"
         description="A decision-first view of the latest validated schedule, cost and delivery position."
-        actions={
-          <div className="snapshot-chip">
-            <CalendarDays size={17} aria-hidden="true" />
-            <span>
-              <small>Data date</small>
-              {formatDate(snapshot.project.reportingDate)}
-            </span>
-          </div>
-        }
-      />
-
-      <section
-        className="source-banner source-banner--active"
-        aria-label="Dashboard data source"
-      >
-        <Database size={19} aria-hidden="true" />
-        <div>
-          <strong>
-            {status === "loading" ? "Checking local data…" : "Validated active generation"}
-          </strong>
-          <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
-        </div>
-      </section>
-
-      <PageGuide
-        pageName="Project overview"
-        purpose="Start here each week: use the global scope, read the exceptions first, then trace the numbers that need action."
-        steps={[
-          {
-            title: "Set the scope",
-            detail: "Use the global bar above to choose the full project or one work package; the same scope follows you through each management view.",
-          },
-          {
-            title: "Read the position",
-            detail: "Start with adverse cards; SPI or CPI below 1.00 means behind plan or over cost.",
-          },
-          {
-            title: "Follow the exception",
-            detail: "Open the milestone, risk or change register and confirm an owner, action and due date.",
-          },
-        ]}
       />
 
       <section className="decision-banner" aria-labelledby="decision-title">
@@ -215,9 +236,17 @@ export function OverviewPage() {
             complete against {formatPercent(projectMetrics.plannedCompletion)} planned.
             The forecast finish is {Math.abs(finishVarianceDays)} calendar days {finishVarianceDays > 0 ? "late" : finishVarianceDays < 0 ? "early" : "on baseline"}. Trace the adverse variance to its work package and activity before agreeing recovery action.
           </p>
+          {managementAction ? (
+            <dl className="decision-banner__action">
+              <div><dt>Priority</dt><dd>{managementAction.kind}: {managementAction.title}</dd></div>
+              <div><dt>Owner</dt><dd>{managementAction.owner}</dd></div>
+              <div><dt>Next action</dt><dd>{managementAction.action}</dd></div>
+              <div><dt>Due</dt><dd>{formatDate(managementAction.due)}</dd></div>
+            </dl>
+          ) : null}
         </div>
-        <Link className="button button--light" to="/schedule-cost">
-          Trace variance <ArrowRight size={17} aria-hidden="true" />
+        <Link className="button button--light" to={managementAction?.route ?? "/schedule-cost"}>
+          {managementAction?.cta ?? "Trace variance"} <ArrowRight size={17} aria-hidden="true" />
         </Link>
       </section>
 
@@ -226,7 +255,7 @@ export function OverviewPage() {
           label="Earned completion"
           value={formatPercent(projectMetrics.earnedCompletion)}
           status={efficiencyStatus(projectMetrics.spi)}
-          statusLabel={projectMetrics.spi !== null && projectMetrics.spi >= 0.98 ? "On plan" : "Behind plan"}
+          statusLabel={efficiencyStatusLabel(projectMetrics.spi)}
           delta={formatPercent(
             projectMetrics.earnedCompletion === null || projectMetrics.plannedCompletion === null
               ? null
@@ -238,7 +267,7 @@ export function OverviewPage() {
           label="Schedule performance index"
           value={formatIndex(projectMetrics.spi)}
           status={efficiencyStatus(projectMetrics.spi)}
-          statusLabel={projectMetrics.spi !== null && projectMetrics.spi >= 0.98 ? "Controlled" : "Adverse"}
+          statusLabel={efficiencyStatusLabel(projectMetrics.spi)}
           delta={formatCompactCurrency(projectMetrics.sv)}
           detail="Earned value for each £1.00 planned"
         />
@@ -246,7 +275,7 @@ export function OverviewPage() {
           label="Cost performance index"
           value={formatIndex(projectMetrics.cpi)}
           status={efficiencyStatus(projectMetrics.cpi)}
-          statusLabel={projectMetrics.cpi !== null && projectMetrics.cpi >= 0.98 ? "Controlled" : "Adverse"}
+          statusLabel={efficiencyStatusLabel(projectMetrics.cpi)}
           delta={formatCompactCurrency(projectMetrics.cv)}
           detail="Earned value for each £1.00 spent"
         />
@@ -275,12 +304,50 @@ export function OverviewPage() {
         />
       </section>
 
-      <PerformanceChart
-        trend={scopeTrend}
-        reportingPeriod={currentPoint.label}
-        reportingDate={snapshot.project.reportingDate}
-        scopeLabel={scopeLabel}
-      />
+      <Suspense fallback={<div className="chart-loading" role="status">Loading performance trend…</div>}>
+        <PerformanceChart
+          trend={scopeTrend}
+          reportingPeriod={currentPoint.label}
+          reportingDate={snapshot.project.reportingDate}
+          scopeLabel={scopeLabel}
+        />
+      </Suspense>
+
+      <details className="overview-support">
+        <summary>Method, data source and page guidance</summary>
+        <div className="overview-support__content">
+          <section
+            className="source-banner source-banner--active"
+            aria-label="Dashboard data source"
+          >
+            <Database size={19} aria-hidden="true" />
+            <div>
+              <strong>
+                {status === "loading" ? "Checking local data…" : "Validated active generation"}
+              </strong>
+              <span>{error ? `Local read failed: ${error}` : sourceDescription}</span>
+            </div>
+          </section>
+          <PageGuide
+            pageName="Project overview"
+            purpose="Use the global scope, read the management decision, then trace the numbers that need action."
+            steps={[
+              {
+                title: "Set the scope",
+                detail: "Choose the full project or one work package; the scope follows you through management views.",
+              },
+              {
+                title: "Read the position",
+                detail: "At or above 1.00 is on plan; 0.98–0.999 is within tolerance; below 0.98 requires recovery.",
+              },
+              {
+                title: "Close the action",
+                detail: "Confirm the priority owner, next action and due date, then open the supporting register.",
+              },
+            ]}
+          />
+        </div>
+      </details>
 
       <section className="panel" aria-labelledby="work-package-title">
         <div className="panel__header">

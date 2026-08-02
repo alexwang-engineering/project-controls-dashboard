@@ -10,8 +10,7 @@ test("opens without demonstration data and directs the user to controlled input"
   ).toBeVisible();
   await expect(page.getByText("No project loaded", { exact: true })).toBeVisible();
   await expect(page.getByText("Project setup required", { exact: true })).toBeVisible();
-  await expect(page.getByRole("progressbar", { name: "Product build progress" }))
-    .toHaveAttribute("value", "100");
+  await expect(page.getByText("Product build", { exact: true })).toHaveCount(0);
   await expect(
     page.getByRole("region", { name: "How to use Project overview" }),
   ).toContainText("Import project data");

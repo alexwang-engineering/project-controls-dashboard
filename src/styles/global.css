@@ -1251,6 +1251,66 @@ h2 {
   font-size: 0.87rem;
 }
 
+.decision-banner__action {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.4fr) minmax(120px, 0.7fr) minmax(220px, 1.7fr) minmax(90px, 0.55fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgb(255 255 255 / 16%);
+}
+
+.decision-banner__action div {
+  min-width: 0;
+}
+
+.decision-banner__action dt {
+  color: #8ee1dc;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.decision-banner__action dd {
+  margin-top: 0.24rem;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.overview-support {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.overview-support > summary {
+  padding: 0.85rem 1rem;
+  color: var(--navy-950);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.overview-support__content {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0 1rem 1rem;
+}
+
+.chart-loading {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4371,6 +4431,10 @@ tfoot td {
     width: 100%;
   }
 
+  .decision-banner__action {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .metric-grid,
   .scope-list,
   .settings-health-grid,
@@ -4466,6 +4530,10 @@ tfoot td {
 }
 
 @media (max-width: 440px) {
+  .decision-banner__action {
+    grid-template-columns: 1fr;
+  }
+
   .risk-appetite__current,
   .risk-appetite__thresholds,
   .risk-appetite__authority {

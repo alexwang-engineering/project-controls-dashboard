@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { deliveryProgress } from "../app/deliveryProgress";
 import { useProjectStore } from "../app/store";
 import { useProjectPerformance } from "../app/useProjectPerformance";
 import { resolveWorkPackageScope } from "../domain/viewModels/projectPerformance";
@@ -108,19 +107,9 @@ export function AppShell() {
         <div className="sidebar__project">
           <p className="sidebar__label">Current project</p>
           <strong>{snapshot?.project.name ?? "No project loaded"}</strong>
-          <dl className="sidebar__meta">
-            <div>
-              <dt>Data date</dt>
-              <dd>{snapshot ? formatDate(snapshot.project.reportingDate) : "Not available"}</dd>
-            </div>
-            <div>
-              <dt>Baseline</dt>
-              <dd>{snapshot?.project.baselineVersion ?? "Not available"}</dd>
-            </div>
-          </dl>
           <button className="button button--sidebar" type="button" onClick={resetView}>
             <RefreshCw size={16} aria-hidden="true" />
-            Reset view
+            Clear filters &amp; scope
           </button>
         </div>
       </aside>
@@ -129,31 +118,15 @@ export function AppShell() {
         <div className="workspace__topbar">
           <div>
             <span className="topbar__project">{snapshot?.project.name ?? "Project setup required"}</span>
-            <span className="topbar__separator" aria-hidden="true">
-              /
-            </span>
-            <span className="topbar__baseline">{snapshot ? `Baseline ${snapshot.project.baselineVersion}` : "Import schedule and performance data"}</span>
+            {snapshot ? (
+              <span className="topbar__baseline">
+                Baseline {snapshot.project.baselineVersion} · Data date {formatDate(snapshot.project.reportingDate)}
+              </span>
+            ) : (
+              <span className="topbar__baseline">Import schedule and performance data</span>
+            )}
           </div>
           <div className="topbar__status">
-            <div
-              className="build-progress"
-              aria-label={`Product build: ${deliveryProgress.productBuildPercent} percent. Release evidence: ${deliveryProgress.completionPercent} percent, based on ${deliveryProgress.evidencedPlanHours} of ${deliveryProgress.totalPlannedHours} evidence-weighted plan hours`}
-            >
-              <div className="build-progress__label">
-                <span>Product build</span>
-                <strong>{deliveryProgress.productBuildPercent}%</strong>
-              </div>
-              <progress
-                max="100"
-                value={deliveryProgress.productBuildPercent}
-                aria-label="Product build progress"
-              >
-                {deliveryProgress.productBuildPercent}%
-              </progress>
-              <small>
-                Release evidence {deliveryProgress.completionPercent}% · {deliveryProgress.evidencedPlanHours} / {deliveryProgress.totalPlannedHours} hours
-              </small>
-            </div>
             <div
               className={
                 "data-quality " +

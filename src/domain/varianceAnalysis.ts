@@ -1,7 +1,10 @@
 import Decimal from "decimal.js";
 import { z } from "zod";
 import { strictIsoDateSchema } from "../schemas/fields";
-import type { EarnedValueResult } from "./calculations/earnedValue";
+import {
+  isEfficiencyBreach,
+  type EarnedValueResult,
+} from "./calculations/earnedValue";
 import type { EacScenarioId } from "./calculations/eacScenarios";
 
 export const varianceMetricSchema = z.enum(["SPI", "CPI", "VAC"]);
@@ -176,8 +179,8 @@ export function determineVarianceBreaches(
   metrics: Pick<EarnedValueResult, "spi" | "cpi" | "vac">,
 ): readonly VarianceMetric[] {
   const breaches: VarianceMetric[] = [];
-  if (metrics.spi !== null && metrics.spi < 0.98) breaches.push("SPI");
-  if (metrics.cpi !== null && metrics.cpi < 0.98) breaches.push("CPI");
+  if (isEfficiencyBreach(metrics.spi)) breaches.push("SPI");
+  if (isEfficiencyBreach(metrics.cpi)) breaches.push("CPI");
   if (metrics.vac < 0) breaches.push("VAC");
   return breaches;
 }

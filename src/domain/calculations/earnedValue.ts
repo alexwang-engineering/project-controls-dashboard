@@ -31,6 +31,11 @@ export interface EarnedValueResult {
   budgetSpent: number | null;
 }
 
+export const PERFORMANCE_TOLERANCE = {
+  onPlan: 1,
+  recovery: 0.98,
+} as const;
+
 const value = (input: number) => new Decimal(input);
 
 const decimalOrNull = (
@@ -106,13 +111,28 @@ export function efficiencyStatus(
     return "neutral";
   }
 
-  if (valueToAssess >= 0.98) {
+  if (valueToAssess >= PERFORMANCE_TOLERANCE.onPlan) {
     return "positive";
   }
 
-  if (valueToAssess >= 0.95) {
+  if (valueToAssess >= PERFORMANCE_TOLERANCE.recovery) {
     return "attention";
   }
 
   return "adverse";
+}
+
+export function efficiencyStatusLabel(valueToAssess: number | null): string {
+  const status = efficiencyStatus(valueToAssess);
+  if (status === "positive") return "On plan";
+  if (status === "attention") return "Within tolerance";
+  if (status === "adverse") return "Recovery required";
+  return "Unavailable";
+}
+
+export function isEfficiencyBreach(valueToAssess: number | null): boolean {
+  return (
+    valueToAssess !== null &&
+    valueToAssess < PERFORMANCE_TOLERANCE.recovery
+  );
 }
