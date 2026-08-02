@@ -63,7 +63,8 @@ describe("input-first management registers", () => {
     expect(useProjectStore.getState().milestones).toHaveLength(1);
   });
 
-  it("opens an exact milestone record from the URL and moves focus to its editor", async () => {
+  it("opens an exact milestone in read-only inspection before deliberate edit", async () => {
+    const user = userEvent.setup();
     const record = demoMilestones.at(0);
     if (record === undefined) throw new Error("Demo milestone fixture is missing.");
     useProjectStore.setState({ milestones: [record] });
@@ -71,10 +72,18 @@ describe("input-first management registers", () => {
 
     render(<MilestonesPage />);
 
-    const editor = await screen.findByRole("region", {
-      name: `Edit milestone ${record.id}`,
+    const inspection = await screen.findByRole("region", {
+      name: record.name,
     });
-    expect(editor).toHaveFocus();
+    expect(inspection).toHaveFocus();
+    expect(screen.queryByRole("heading", { name: `Edit milestone ${record.id}` })).not.toBeInTheDocument();
+
+    await user.click(within(inspection).getByRole("button", { name: "Edit record" }));
+
+    expect(
+      await screen.findByRole("region", { name: `Edit milestone ${record.id}` }),
+    ).toHaveFocus();
+    expect(window.location.search).toContain("mode=edit");
   });
 
   it("opens an exact risk record from the URL", async () => {
@@ -86,7 +95,7 @@ describe("input-first management registers", () => {
     render(<RisksPage />);
 
     expect(
-      await screen.findByRole("region", { name: `Edit risk ${record.id}` }),
+      await screen.findByRole("region", { name: record.title }),
     ).toHaveFocus();
   });
 
@@ -99,7 +108,7 @@ describe("input-first management registers", () => {
     render(<ChangesPage />);
 
     expect(
-      await screen.findByRole("region", { name: `Edit change ${record.id}` }),
+      await screen.findByRole("region", { name: record.title }),
     ).toHaveFocus();
   });
 

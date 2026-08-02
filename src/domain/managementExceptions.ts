@@ -121,6 +121,14 @@ const evidenceLabel: Record<ManagementExceptionEvidence, string> = {
   "not-required": "no additional evidence required",
 };
 
+const controlRoute = (
+  pathname: string,
+  parameters: Record<string, string>,
+) => {
+  const search = new URLSearchParams(parameters);
+  return `${pathname}?${search.toString()}`;
+};
+
 const createException = (input: {
   id: string;
   recordId: string;
@@ -192,7 +200,11 @@ const metricException = (input: {
     evidence: "required",
     impactWeight: Math.min(gap * 1_000, 150),
     reportingDate: input.reportingDate,
-    route: `/schedule-cost?metric=${input.metric}&scope=${encodeURIComponent(input.scopeId)}`,
+    route: controlRoute("/schedule-cost", {
+      metric: input.metric,
+      scope: input.scopeId,
+      date: input.reportingDate,
+    }),
     cta: `Trace ${input.metric}`,
   });
 };
@@ -200,6 +212,7 @@ const metricException = (input: {
 const milestoneExceptions = (
   milestones: readonly Milestone[],
   reportingDate: string,
+  scopeId: string,
 ): ManagementException[] =>
   milestones.flatMap((milestone) => {
     const status = milestoneStatusAt(milestone, reportingDate);
@@ -243,7 +256,11 @@ const milestoneExceptions = (
         impactWeight: Math.min(Math.max(varianceDays, 0), 60) * 3 +
           (status === "data-issue" ? 90 : status === "overdue" ? 75 : 30),
         reportingDate,
-        route: `/milestones?record=${encodeURIComponent(milestone.id)}`,
+        route: controlRoute("/milestones", {
+          record: milestone.id,
+          scope: scopeId,
+          date: reportingDate,
+        }),
         cta: "Open milestone",
       }),
     ];
@@ -253,6 +270,7 @@ const riskExceptions = (
   risks: readonly Risk[],
   reportingDate: string,
   appetite: RiskAppetiteThresholds,
+  scopeId: string,
 ): ManagementException[] =>
   risks.flatMap((risk) => {
     if ((risk.status ?? "active") === "closed") return [];
@@ -305,7 +323,11 @@ const riskExceptions = (
         evidence: evidenceIncomplete ? "incomplete" : "complete",
         impactWeight: exposure.score * 5 + flagCount * 15,
         reportingDate,
-        route: `/risks?record=${encodeURIComponent(risk.id)}`,
+        route: controlRoute("/risks", {
+          record: risk.id,
+          scope: scopeId,
+          date: reportingDate,
+        }),
         cta: "Open risk",
       }),
     ];
@@ -315,6 +337,7 @@ const changeExceptions = (
   changes: readonly ChangeRequest[],
   reportingDate: string,
   bac: number,
+  scopeId: string,
 ): ManagementException[] =>
   changes.flatMap((change) => {
     const approvedNotIncorporated =
@@ -358,7 +381,11 @@ const changeExceptions = (
           Math.min(Math.abs(change.scheduleImpactDays) * 4, 120) +
           (approvedNotIncorporated ? 60 : 30),
         reportingDate,
-        route: `/changes?record=${encodeURIComponent(change.id)}`,
+        route: controlRoute("/changes", {
+          record: change.id,
+          scope: scopeId,
+          date: reportingDate,
+        }),
         cta: approvedNotIncorporated ? "Open baseline action" : "Open change",
       }),
     ];
@@ -404,20 +431,34 @@ export function buildManagementExceptions(
         evidence: "required",
         impactWeight: Math.min(input.finishVarianceDays * 4, 150),
         reportingDate: input.reportingDate,
-        route: `/schedule-cost?metric=FINISH&scope=${encodeURIComponent(input.scopeId)}`,
+        route: controlRoute("/schedule-cost", {
+          metric: "FINISH",
+          scope: input.scopeId,
+          date: input.reportingDate,
+        }),
         cta: "Trace finish variance",
       }),
     );
   }
 
   exceptions.push(
-    ...milestoneExceptions(input.milestones, input.reportingDate),
+    ...milestoneExceptions(
+      input.milestones,
+      input.reportingDate,
+      input.scopeId,
+    ),
     ...riskExceptions(
       input.risks,
       input.reportingDate,
       input.riskAppetite ?? defaultRiskAppetite,
+      input.scopeId,
     ),
-    ...changeExceptions(input.changes, input.reportingDate, input.bac),
+    ...changeExceptions(
+      input.changes,
+      input.reportingDate,
+      input.bac,
+      input.scopeId,
+    ),
   );
 
   return exceptions.sort(

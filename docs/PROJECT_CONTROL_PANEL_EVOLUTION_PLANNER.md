@@ -1,6 +1,6 @@
 # Project Control Panel Evolution Planner
 
-> Status: First delivery wave approved; Phases 0–1 completed; Phase 2 in progress
+> Status: First delivery wave approved and completed; Phases 0–2 delivered
 >
 > Prepared: 2 August 2026
 >
@@ -368,3 +368,5 @@ Phases 3–5 remain planned options, not pre-approved scope.
 Satisfied on 2 August 2026 when the user explicitly said **“好，从你的 planner 开始”**.
 
 Phase 0 preserved the dirty worktree, reconciled remote security changes, documented the threshold decision, and passed the complete release baseline before Phase 1 product work began. See `PHASE_0_CONTROL_PANEL_BASELINE.md`.
+
+Phase 1 closed the deterministic management-action loop. Phase 2 made that loop bookmarkable and faster to navigate without expanding governed write authority. See `PHASE_1_MANAGEMENT_ACTION_LOOP.md` and `PHASE_2_CONTROL_VIEWS_AND_NAVIGATION.md`.

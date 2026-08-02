@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowRight, Database } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { lazy, Suspense } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
@@ -9,6 +9,7 @@ import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { ProjectSetupRequired } from "../../components/ProjectSetupRequired";
 import { StatusPill } from "../../components/StatusPill";
+import { ColumnChooser } from "../../components/ColumnChooser";
 import {
   calculateEarnedValue,
   efficiencyStatus,
@@ -33,7 +34,17 @@ const PerformanceChart = lazy(() =>
   })),
 );
 
+const workPackageColumns = [
+  { id: "owner", label: "Owner" },
+  { id: "bac", label: "BAC" },
+  { id: "sv", label: "Schedule variance" },
+  { id: "cv", label: "Cost variance" },
+  { id: "spi", label: "SPI" },
+  { id: "cpi", label: "CPI" },
+] as const;
+
 export function OverviewPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     selectedWorkPackage,
     milestones,
@@ -42,6 +53,29 @@ export function OverviewPage() {
     riskAppetite,
   } = useProjectStore();
   const { snapshot, status, error } = useProjectPerformance();
+  const requestedColumns = searchParams.get("columns");
+  const visibleWorkPackageColumns = new Set(
+    requestedColumns === null
+      ? workPackageColumns.map(({ id }) => id)
+      : requestedColumns.split(",").filter((id) =>
+          workPackageColumns.some((column) => column.id === id),
+        ),
+  );
+
+  const toggleWorkPackageColumn = (id: string) => {
+    const nextVisible = new Set(visibleWorkPackageColumns);
+    if (nextVisible.has(id)) nextVisible.delete(id);
+    else nextVisible.add(id);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextVisible.size === workPackageColumns.length) nextParams.delete("columns");
+    else {
+      nextParams.set(
+        "columns",
+        workPackageColumns.filter((column) => nextVisible.has(column.id)).map(({ id: columnId }) => columnId).join(","),
+      );
+    }
+    setSearchParams(nextParams);
+  };
 
   if (snapshot === undefined) {
     return (
@@ -311,6 +345,11 @@ export function OverviewPage() {
               Current snapshot reconciles to the selected scope BAC, PV, EV and AC totals.
             </p>
           </div>
+          <ColumnChooser
+            columns={workPackageColumns}
+            visible={visibleWorkPackageColumns}
+            onToggle={toggleWorkPackageColumn}
+          />
         </div>
         <div
           className="table-scroll"
@@ -325,12 +364,12 @@ export function OverviewPage() {
             <thead>
               <tr>
                 <th scope="col">Work package</th>
-                <th scope="col">Owner</th>
-                <th scope="col">BAC</th>
-                <th scope="col">SV</th>
-                <th scope="col">CV</th>
-                <th scope="col">SPI</th>
-                <th scope="col">CPI</th>
+                {visibleWorkPackageColumns.has("owner") ? <th scope="col">Owner</th> : null}
+                {visibleWorkPackageColumns.has("bac") ? <th scope="col">BAC</th> : null}
+                {visibleWorkPackageColumns.has("sv") ? <th scope="col">SV</th> : null}
+                {visibleWorkPackageColumns.has("cv") ? <th scope="col">CV</th> : null}
+                {visibleWorkPackageColumns.has("spi") ? <th scope="col">SPI</th> : null}
+                {visibleWorkPackageColumns.has("cpi") ? <th scope="col">CPI</th> : null}
                 <th scope="col">Position</th>
               </tr>
             </thead>
@@ -354,16 +393,16 @@ export function OverviewPage() {
                       <span className="table-primary">{workPackage.id}</span>
                       <span className="table-secondary">{workPackage.name}</span>
                     </th>
-                    <td>{workPackage.owner}</td>
-                    <td>{formatCurrency(workPackage.bac)}</td>
-                    <td className={metrics.sv < 0 ? "number--adverse" : undefined}>
+                    {visibleWorkPackageColumns.has("owner") ? <td>{workPackage.owner}</td> : null}
+                    {visibleWorkPackageColumns.has("bac") ? <td>{formatCurrency(workPackage.bac)}</td> : null}
+                    {visibleWorkPackageColumns.has("sv") ? <td className={metrics.sv < 0 ? "number--adverse" : undefined}>
                       {formatCurrency(metrics.sv)}
-                    </td>
-                    <td className={metrics.cv < 0 ? "number--adverse" : undefined}>
+                    </td> : null}
+                    {visibleWorkPackageColumns.has("cv") ? <td className={metrics.cv < 0 ? "number--adverse" : undefined}>
                       {formatCurrency(metrics.cv)}
-                    </td>
-                    <td>{formatIndex(metrics.spi)}</td>
-                    <td>{formatIndex(metrics.cpi)}</td>
+                    </td> : null}
+                    {visibleWorkPackageColumns.has("spi") ? <td>{formatIndex(metrics.spi)}</td> : null}
+                    {visibleWorkPackageColumns.has("cpi") ? <td>{formatIndex(metrics.cpi)}</td> : null}
                     <td>
                       <StatusPill status={combinedStatus}>
                         {combinedLabel}
@@ -375,12 +414,12 @@ export function OverviewPage() {
             </tbody>
             <tfoot>
               <tr>
-                <th scope="row" colSpan={2}>{selectedPackage ? "Selected scope" : "Project total"}</th>
-                <td>{formatCurrency(projectMetrics.bac)}</td>
-                <td className="number--adverse">{formatCurrency(projectMetrics.sv)}</td>
-                <td className="number--adverse">{formatCurrency(projectMetrics.cv)}</td>
-                <td>{formatIndex(projectMetrics.spi)}</td>
-                <td>{formatIndex(projectMetrics.cpi)}</td>
+                <th scope="row" colSpan={visibleWorkPackageColumns.has("owner") ? 2 : 1}>{selectedPackage ? "Selected scope" : "Project total"}</th>
+                {visibleWorkPackageColumns.has("bac") ? <td>{formatCurrency(projectMetrics.bac)}</td> : null}
+                {visibleWorkPackageColumns.has("sv") ? <td className="number--adverse">{formatCurrency(projectMetrics.sv)}</td> : null}
+                {visibleWorkPackageColumns.has("cv") ? <td className="number--adverse">{formatCurrency(projectMetrics.cv)}</td> : null}
+                {visibleWorkPackageColumns.has("spi") ? <td>{formatIndex(projectMetrics.spi)}</td> : null}
+                {visibleWorkPackageColumns.has("cpi") ? <td>{formatIndex(projectMetrics.cpi)}</td> : null}
                 <td />
               </tr>
             </tfoot>

@@ -100,7 +100,7 @@ describe("management exceptions", () => {
       kind: "risk",
       severity: "recovery",
       horizon: "now",
-      route: "/risks?record=R-001",
+      route: "/risks?record=R-001&scope=all&date=2026-07-10",
     });
     expect(result.map(({ kind }) => kind)).toContain("milestone");
     expect(result.map(({ kind }) => kind)).toContain("change");

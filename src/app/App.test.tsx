@@ -91,6 +91,11 @@ describe("project controls application", () => {
       "WP300",
     );
 
+    expect(window.location.search).toContain("scope=WP300");
+    expect(window.location.search).toContain(
+      `date=${demoSnapshot.project.reportingDate}`,
+    );
+
     expect(screen.getByRole("status")).toHaveTextContent(
       "Global scope changed to WP300.",
     );
@@ -173,6 +178,77 @@ describe("project controls application", () => {
     expect(useProjectStore.getState().selectedWorkPackage).toBe("all");
     expect(screen.getByRole("status")).toHaveTextContent(
       "Global scope reset because the selected work package is not in the active project.",
+    );
+  });
+
+  it("restores a scoped saved view from a direct URL", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/milestones?filter=exceptions&scope=WP300&date=${demoSnapshot.project.reportingDate}`,
+    );
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Milestone control", level: 1 });
+    expect(
+      screen.getByRole("combobox", { name: "Global work package scope" }),
+    ).toHaveValue("WP300");
+    expect(screen.getByRole("button", { name: "Exceptions" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("opens keyboard command search and navigates to a named control view", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Project overview", level: 1 });
+
+    await user.keyboard("{Control>}k{/Control}");
+    const dialog = screen.getByRole("dialog", {
+      name: "Find a page, control view or record",
+    });
+    const search = within(dialog).getByPlaceholderText(
+      "Search by name, ID, owner or category",
+    );
+    expect(search).toHaveFocus();
+    const dialogButtons = within(dialog).getAllByRole("button");
+    const closeButton = within(dialog).getByRole("button", {
+      name: "Close quick navigation",
+    });
+    const lastResult = dialogButtons.at(-1);
+    expect(lastResult).toBeDefined();
+    lastResult?.focus();
+    await user.tab();
+    expect(closeButton).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(lastResult).toHaveFocus();
+    search.focus();
+    await user.type(search, "pending decisions");
+    await user.keyboard("{Enter}");
+
+    await screen.findByRole("heading", { name: "Change control", level: 1 });
+    expect(window.location.pathname).toBe("/changes");
+    expect(window.location.search).toContain("view=pending");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("persists Overview table columns in the URL", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Project overview", level: 1 });
+
+    await user.click(screen.getByText("Columns"));
+    await user.click(
+      screen.getByRole("checkbox", { name: "Show Cost variance column" }),
+    );
+
+    const table = screen.getByRole("table", {
+      name: "Work-package budget and earned-value performance",
+    });
+    expect(within(table).queryByRole("columnheader", { name: "CV" })).not.toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("columns")).not.toContain(
+      "cv",
     );
   });
 

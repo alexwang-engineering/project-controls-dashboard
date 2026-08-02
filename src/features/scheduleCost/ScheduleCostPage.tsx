@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, Database, SearchCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { useProjectPerformance } from "../../app/useProjectPerformance";
 import { MetricCard } from "../../components/MetricCard";
@@ -70,6 +71,7 @@ function ScheduleCostWorkspace({
 }: {
   snapshot: ProjectPerformanceSnapshot;
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const selectedWorkPackage = useProjectStore(
     (state) => state.selectedWorkPackage,
   );
@@ -78,10 +80,15 @@ function ScheduleCostWorkspace({
     selectedWorkPackage,
   );
   const [selectedPeriod, setSelectedPeriod] = useState(
-    snapshot.project.reportingDate,
+    searchParams.get("period") ?? snapshot.project.reportingDate,
   );
   const [managementScenario, setManagementScenario] =
-    useState<EacScenarioId>("cpi");
+    useState<EacScenarioId>(() => {
+      const requestedScenario = searchParams.get("scenario");
+      return requestedScenario === "budget-rate" || requestedScenario === "composite"
+        ? requestedScenario
+        : "cpi";
+    });
 
   const scopedPeriods = useMemo(
     () => periodicPerformanceForScope(snapshot, workPackageId),
@@ -95,6 +102,25 @@ function ScheduleCostWorkspace({
       );
     }
   }, [scopedPeriods, selectedPeriod, snapshot.project.reportingDate]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    let changed = false;
+    if (nextParams.get("period") !== selectedPeriod) {
+      nextParams.set("period", selectedPeriod);
+      changed = true;
+    }
+    if (managementScenario === "cpi") {
+      if (nextParams.has("scenario")) {
+        nextParams.delete("scenario");
+        changed = true;
+      }
+    } else if (nextParams.get("scenario") !== managementScenario) {
+      nextParams.set("scenario", managementScenario);
+      changed = true;
+    }
+    if (changed) setSearchParams(nextParams, { replace: true });
+  }, [managementScenario, searchParams, selectedPeriod, setSearchParams]);
 
   const selectedPackage = snapshot.workPackages.find(
     (workPackage) => workPackage.id === workPackageId,

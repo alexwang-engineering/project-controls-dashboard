@@ -30,6 +30,7 @@ import {
   formatDate,
 } from "../../utils/format";
 import { RegisterEditor } from "../registers/RegisterEditor";
+import { RecordInspectionPanel } from "../registers/RecordInspectionPanel";
 
 const changeTone: Record<ChangeStatus, MetricStatus> = {
   draft: "neutral",
@@ -58,9 +59,11 @@ export function ChangesPage() {
     useProjectStore();
   const { snapshot: performance } = useProjectPerformance();
   const [editing, setEditing] = useState<ChangeRequest>();
+  const [inspecting, setInspecting] = useState<ChangeRequest>();
   const [isAdding, setIsAdding] = useState(false);
   const [formStatus, setFormStatus] = useState<ChangeStatus>("draft");
   const [formError, setFormError] = useState("");
+  const view = searchParams.get("view") === "pending" ? "pending" : "all";
 
   const scopedChanges = changes.filter(
     (change) =>
@@ -72,6 +75,13 @@ export function ChangesPage() {
     ({ status, incorporatedBaselineVersion }) =>
       status === "approved" && !incorporatedBaselineVersion,
   );
+  const visibleChanges = view === "pending"
+    ? scopedChanges.filter(
+        ({ status, incorporatedBaselineVersion }) =>
+          status === "submitted" ||
+          (status === "approved" && !incorporatedBaselineVersion),
+      )
+    : scopedChanges;
   const proposedCost = pending.reduce(
     (sum, change) => sum + change.costImpact,
     0,
@@ -116,21 +126,36 @@ export function ChangesPage() {
     });
   }, [changes, performance]);
   const requestedRecordId = searchParams.get("record");
+  const requestedMode = searchParams.get("mode");
 
   useEffect(() => {
-    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    if (requestedRecordId === null) {
+      setInspecting(undefined);
+      return;
+    }
     const requestedRecord = changes.find(({ id }) => id === requestedRecordId);
     if (requestedRecord === undefined) return;
-    setEditing(requestedRecord);
+    if (requestedMode === "edit") {
+      if (editing?.id !== requestedRecordId) setEditing(requestedRecord);
+      setInspecting(undefined);
+      setIsAdding(false);
+      setFormStatus(requestedRecord.status);
+      setFormError("");
+      return;
+    }
+    if (inspecting?.id !== requestedRecordId) setInspecting(requestedRecord);
+    setEditing(undefined);
     setIsAdding(false);
     setFormStatus(requestedRecord.status);
     setFormError("");
-  }, [changes, editing?.id, requestedRecordId]);
+  }, [changes, editing?.id, inspecting?.id, requestedMode, requestedRecordId]);
 
   const clearRequestedRecord = () => {
+    setInspecting(undefined);
     if (!searchParams.has("record")) return;
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("record");
+    nextParams.delete("mode");
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -156,6 +181,24 @@ export function ChangesPage() {
     setIsAdding(false);
     setFormStatus(change.status);
     setFormError("");
+  };
+
+  const editInspectedRecord = (record: ChangeRequest) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("record", record.id);
+    nextParams.set("mode", "edit");
+    setSearchParams(nextParams);
+    setInspecting(undefined);
+    setEditing(record);
+    setIsAdding(false);
+    setFormStatus(record.status);
+  };
+
+  const updateView = (nextView: "all" | "pending") => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextView === "all") nextParams.delete("view");
+    else nextParams.set("view", nextView);
+    setSearchParams(nextParams);
   };
 
   const save = (event: FormEvent<HTMLFormElement>) => {
@@ -208,6 +251,26 @@ export function ChangesPage() {
           { title: "Protect the baseline", detail: "Implement only after approval, with an effective date and explicit rebaseline evidence." },
         ]}
       />
+
+      {inspecting ? (
+        <RecordInspectionPanel
+          kind={`Change ${inspecting.id}`}
+          title={inspecting.title}
+          description="Inspect impact, authority and baseline treatment before deliberately entering edit mode."
+          facts={[
+            { label: "Work package", value: inspecting.wbsId },
+            { label: "Status", value: titleCase(inspecting.status) },
+            { label: "Requester", value: inspecting.requester ?? "Not recorded" },
+            { label: "Cost / schedule impact", value: `${formatCurrency(inspecting.costImpact)} · ${inspecting.scheduleImpactDays > 0 ? "+" : ""}${String(inspecting.scheduleImpactDays)} days` },
+            { label: "Decision authority", value: inspecting.decisionAuthority ?? "Not assigned" },
+            { label: "Decision due", value: formatDate(inspecting.decisionDue) },
+            { label: "Recommendation", value: inspecting.recommendation ?? "Not recorded" },
+            { label: "Baseline treatment", value: inspecting.incorporatedBaselineVersion ? `Incorporated in ${inspecting.incorporatedBaselineVersion}` : "Not incorporated" },
+          ]}
+          onClose={clearRequestedRecord}
+          onEdit={() => editInspectedRecord(inspecting)}
+        />
+      ) : null}
 
       {editorOpen ? (
         <RegisterEditor
@@ -515,16 +578,20 @@ export function ChangesPage() {
             <h2 id="change-register-title">Change requests</h2>
             <p className="panel__description">Status options are constrained by the workflow; completed transitions retain immutable decision evidence.</p>
           </div>
+          <div className="segmented-control" aria-label="Change view">
+            <button type="button" className={view === "all" ? "is-active" : ""} aria-pressed={view === "all"} onClick={() => updateView("all")}>All</button>
+            <button type="button" className={view === "pending" ? "is-active" : ""} aria-pressed={view === "pending"} onClick={() => updateView("pending")}>Pending decisions</button>
+          </div>
         </div>
         {changes.length === 0 ? (
           <div className="register-empty">
             <strong>No change requests have been entered.</strong>
             <span>Use Add change request to record the first controlled proposal.</span>
           </div>
-        ) : scopedChanges.length === 0 ? (
+        ) : visibleChanges.length === 0 ? (
           <div className="register-empty">
-            <strong>No change requests match the global scope.</strong>
-            <span>Clear the work-package scope or add a request for {selectedWorkPackage}.</span>
+            <strong>No change requests match this view.</strong>
+            <span>Change the view, clear the work-package scope, or add a request for {selectedWorkPackage}.</span>
           </div>
         ) : (
           <div className="table-scroll">
@@ -543,7 +610,7 @@ export function ChangesPage() {
                 </tr>
               </thead>
               <tbody>
-                {scopedChanges.map((change) => (
+                {visibleChanges.map((change) => (
                   <tr key={change.id}>
                     <th scope="row">
                       <span className="table-primary">{change.title}</span>

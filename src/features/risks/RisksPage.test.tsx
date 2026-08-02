@@ -99,6 +99,7 @@ const realSaveRiskAppetite = useProjectStore.getState().saveRiskAppetite;
 
 describe("risk-control page", () => {
   beforeEach(() => {
+    window.history.replaceState({}, "", "/risks");
     useProjectStore.setState({
       risks,
       milestones: [],
@@ -166,6 +167,21 @@ describe("risk-control page", () => {
     expect(within(register).queryByRole("row", { name: /Incomplete test scripts/ })).not.toBeInTheDocument();
     expect(screen.getByText(/ordinal prioritisation aid/i)).toBeInTheDocument();
     expect(screen.getByText(/does not aggregate exposure/i)).toBeInTheDocument();
+  });
+
+  it("persists visible register columns in the URL", async () => {
+    const user = userEvent.setup();
+    render(<RisksPage reportingDateOverride="2026-07-20" />);
+
+    await user.click(screen.getByText("Columns"));
+    await user.click(screen.getByRole("checkbox", { name: "Show Owner column" }));
+
+    expect(
+      screen.queryByRole("columnheader", { name: "Owner" }),
+    ).not.toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("columns")).not.toContain(
+      "owner",
+    );
   });
 
   it("surfaces breached, overdue, weak-control and tolerance exceptions", () => {

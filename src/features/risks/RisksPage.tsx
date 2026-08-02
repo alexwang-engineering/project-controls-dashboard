@@ -1,10 +1,11 @@
 import { History, Pencil, Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
 import { useProjectStore } from "../../app/store";
 import { PageGuide } from "../../components/PageGuide";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
+import { ColumnChooser } from "../../components/ColumnChooser";
 import {
   createRiskInputSchema,
   firstRegisterError,
@@ -26,6 +27,7 @@ import type {
 } from "../../domain/types";
 import { formatDate } from "../../utils/format";
 import { RegisterEditor } from "../registers/RegisterEditor";
+import { RecordInspectionPanel } from "../registers/RecordInspectionPanel";
 import { RiskHeatmap, type RiskHeatmapCell } from "./RiskHeatmap";
 
 const riskTone: Record<RiskRating, MetricStatus> = {
@@ -47,6 +49,16 @@ const fixedExceptionLabels = [
   ["reviewOverdue", "Review overdue"],
   ["triggerBreached", "Breached trigger"],
   ["escalationRequired", "Escalation evidence required"],
+] as const;
+
+const riskColumns = [
+  { id: "owner", label: "Owner" },
+  { id: "exposure", label: "Exposure" },
+  { id: "rating", label: "Rating" },
+  { id: "trend", label: "Trend" },
+  { id: "control", label: "Trigger / control" },
+  { id: "decision", label: "Decision" },
+  { id: "due", label: "Treatment due" },
 ] as const;
 
 const exceptionText = (
@@ -88,25 +100,39 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   } = useProjectStore();
   const reportingDate = reportingDateOverride ?? storedReportingDate;
   const [editing, setEditing] = useState<Risk>();
+  const [inspecting, setInspecting] = useState<Risk>();
   const [isAdding, setIsAdding] = useState(false);
   const [formError, setFormError] = useState("");
-  const [basis, setBasis] = useState<RiskExposureBasis>("residual");
-  const [owner, setOwner] = useState("all");
-  const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("active");
-  const [rating, setRating] = useState("all");
+  const basis: RiskExposureBasis =
+    searchParams.get("basis") === "inherent" ? "inherent" : "residual";
+  const owner = searchParams.get("owner") ?? "all";
+  const category = searchParams.get("category") ?? "all";
+  const status = searchParams.get("status") ?? "active";
+  const rating = searchParams.get("rating") ?? "all";
+  const requestedColumns = searchParams.get("columns");
+  const visibleRiskColumns = new Set(
+    requestedColumns === null
+      ? riskColumns.map(({ id }) => id)
+      : requestedColumns.split(",").filter((id) =>
+          riskColumns.some((column) => column.id === id),
+        ),
+  );
   const [selectedCell, setSelectedCell] = useState<RiskHeatmapCell>();
   const [appetiteConfirmed, setAppetiteConfirmed] = useState(false);
   const [appetiteMessage, setAppetiteMessage] = useState("");
   const [appetiteError, setAppetiteError] = useState("");
+  const previousWorkPackage = useRef(selectedWorkPackage);
 
   useEffect(() => {
-    setOwner("all");
-    setCategory("all");
-    setStatus("active");
-    setRating("all");
+    if (previousWorkPackage.current === selectedWorkPackage) return;
+    previousWorkPackage.current = selectedWorkPackage;
+    const nextParams = new URLSearchParams(searchParams);
+    for (const key of ["owner", "category", "status", "rating"]) {
+      nextParams.delete(key);
+    }
+    setSearchParams(nextParams, { replace: true });
     setSelectedCell(undefined);
-  }, [selectedWorkPackage]);
+  }, [searchParams, selectedWorkPackage, setSearchParams]);
 
   const scopeRisks = useMemo(
     () =>
@@ -160,21 +186,45 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   ).length;
   const editorOpen = isAdding || editing !== undefined;
   const requestedRecordId = searchParams.get("record");
+  const requestedMode = searchParams.get("mode");
 
   useEffect(() => {
-    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    if (requestedRecordId === null) {
+      setInspecting(undefined);
+      return;
+    }
     const requestedRecord = risks.find(({ id }) => id === requestedRecordId);
     if (requestedRecord === undefined) return;
-    setEditing(requestedRecord);
+    if (requestedMode === "edit") {
+      if (editing?.id !== requestedRecordId) setEditing(requestedRecord);
+      setInspecting(undefined);
+      setIsAdding(false);
+      setFormError("");
+      return;
+    }
+    if (inspecting?.id !== requestedRecordId) setInspecting(requestedRecord);
+    setEditing(undefined);
     setIsAdding(false);
     setFormError("");
-  }, [editing?.id, requestedRecordId, risks]);
+  }, [editing?.id, inspecting?.id, requestedMode, requestedRecordId, risks]);
 
   const clearRequestedRecord = () => {
+    setInspecting(undefined);
     if (!searchParams.has("record")) return;
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("record");
+    nextParams.delete("mode");
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const editInspectedRecord = (record: Risk) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("record", record.id);
+    nextParams.set("mode", "edit");
+    setSearchParams(nextParams);
+    setInspecting(undefined);
+    setEditing(record);
+    setIsAdding(false);
   };
 
   const closeEditor = () => {
@@ -240,11 +290,34 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
   };
 
   const clearFilters = () => {
-    setOwner("all");
-    setCategory("all");
-    setStatus("active");
-    setRating("all");
+    const nextParams = new URLSearchParams(searchParams);
+    for (const key of ["basis", "owner", "category", "status", "rating"]) {
+      nextParams.delete(key);
+    }
+    setSearchParams(nextParams);
     setSelectedCell(undefined);
+  };
+
+  const updateFilter = (key: string, value: string, defaultValue: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (value === defaultValue) nextParams.delete(key);
+    else nextParams.set(key, value);
+    setSearchParams(nextParams);
+  };
+
+  const toggleRiskColumn = (id: string) => {
+    const nextVisible = new Set(visibleRiskColumns);
+    if (nextVisible.has(id)) nextVisible.delete(id);
+    else nextVisible.add(id);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextVisible.size === riskColumns.length) nextParams.delete("columns");
+    else {
+      nextParams.set(
+        "columns",
+        riskColumns.filter((column) => nextVisible.has(column.id)).map(({ id: columnId }) => columnId).join(","),
+      );
+    }
+    setSearchParams(nextParams);
   };
 
   return (
@@ -286,6 +359,26 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
           },
         ]}
       />
+
+      {inspecting ? (
+        <RecordInspectionPanel
+          kind={`Risk ${inspecting.id}`}
+          title={inspecting.title}
+          description="Inspect exposure, treatment and control evidence without changing the governed risk record."
+          facts={[
+            { label: "Work package / category", value: `${inspecting.wbsId} · ${inspecting.category}` },
+            { label: "Owner", value: inspecting.owner },
+            { label: "Residual exposure", value: `${String(riskExposure(inspecting, "residual").score)} / 25 · ${titleCase(riskExposure(inspecting, "residual").rating)}` },
+            { label: "Treatment", value: inspecting.treatment },
+            { label: "Treatment due", value: formatDate(inspecting.treatmentDue) },
+            { label: "Control owner", value: inspecting.controlOwner ?? "Not recorded" },
+            { label: "Control evidence", value: inspecting.controlEvidence ?? "Not recorded" },
+            { label: "Decision", value: titleCase(inspecting.disposition ?? "within-tolerance") },
+          ]}
+          onClose={clearRequestedRecord}
+          onEdit={() => editInspectedRecord(inspecting)}
+        />
+      ) : null}
 
       <section className="panel risk-appetite" aria-labelledby="risk-appetite-title">
         <div className="panel__header">
@@ -463,11 +556,11 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
           </div>
         </div>
         <div className="filter-bar risk-filter-grid">
-          <label>Exposure basis<select value={basis} onChange={(event) => { setBasis(event.target.value as RiskExposureBasis); setSelectedCell(undefined); }}><option value="residual">Residual</option><option value="inherent">Inherent</option></select></label>
-          <label>Owner filter<select value={owner} onChange={(event) => setOwner(event.target.value)}><option value="all">All owners</option>{owners.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label>Category filter<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label>Status filter<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="active">Active</option><option value="closed">Closed</option><option value="all">All statuses</option></select></label>
-          <label>Rating filter<select value={rating} onChange={(event) => setRating(event.target.value)}><option value="all">All ratings</option><option value="critical">Critical</option><option value="high">High</option><option value="moderate">Moderate</option><option value="low">Low</option></select></label>
+          <label>Exposure basis<select value={basis} onChange={(event) => { updateFilter("basis", event.target.value, "residual"); setSelectedCell(undefined); }}><option value="residual">Residual</option><option value="inherent">Inherent</option></select></label>
+          <label>Owner filter<select value={owner} onChange={(event) => updateFilter("owner", event.target.value, "all")}><option value="all">All owners</option>{owners.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Category filter<select value={category} onChange={(event) => updateFilter("category", event.target.value, "all")}><option value="all">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>Status filter<select value={status} onChange={(event) => updateFilter("status", event.target.value, "active")}><option value="active">Active</option><option value="closed">Closed</option><option value="all">All statuses</option></select></label>
+          <label>Rating filter<select value={rating} onChange={(event) => updateFilter("rating", event.target.value, "all")}><option value="all">All ratings</option><option value="critical">Critical</option><option value="high">High</option><option value="moderate">Moderate</option><option value="low">Low</option></select></label>
           <button className="button button--secondary" type="button" onClick={clearFilters}>Clear filters</button>
           <p aria-live="polite">{filteredRisks.length} of {scopeRisks.length} risks shown</p>
         </div>
@@ -516,6 +609,11 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
             <h2 id="risk-register-title">Prioritised risk register</h2>
             <p className="panel__description">Sorted from highest to lowest {basis} score. Select a heatmap cell to focus the list.</p>
           </div>
+          <ColumnChooser
+            columns={riskColumns}
+            visible={visibleRiskColumns}
+            onToggle={toggleRiskColumn}
+          />
         </div>
         {risks.length === 0 ? (
           <div className="register-empty"><strong>No risks have been entered.</strong><span>Use Add risk to create and control the first uncertainty.</span></div>
@@ -525,7 +623,7 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
           <div className="table-scroll">
             <table>
               <caption className="sr-only">Filtered project risk register</caption>
-              <thead><tr><th scope="col">Risk</th><th scope="col">Owner</th><th scope="col">Exposure</th><th scope="col">Rating</th><th scope="col">Trend</th><th scope="col">Trigger / control</th><th scope="col">Decision</th><th scope="col">Treatment due</th><th scope="col">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Risk</th>{visibleRiskColumns.has("owner") ? <th scope="col">Owner</th> : null}{visibleRiskColumns.has("exposure") ? <th scope="col">Exposure</th> : null}{visibleRiskColumns.has("rating") ? <th scope="col">Rating</th> : null}{visibleRiskColumns.has("trend") ? <th scope="col">Trend</th> : null}{visibleRiskColumns.has("control") ? <th scope="col">Trigger / control</th> : null}{visibleRiskColumns.has("decision") ? <th scope="col">Decision</th> : null}{visibleRiskColumns.has("due") ? <th scope="col">Treatment due</th> : null}<th scope="col">Actions</th></tr></thead>
               <tbody>
                 {[...filteredRisks]
                   .sort((left, right) => riskExposure(right, basis).score - riskExposure(left, basis).score)
@@ -536,13 +634,13 @@ export function RisksPage({ reportingDateOverride }: RisksPageProps) {
                     return (
                       <tr key={risk.id}>
                         <th scope="row"><span className="table-primary">{risk.title}</span><span className="table-secondary">{risk.id} · {risk.wbsId} · {risk.category}</span></th>
-                        <td>{risk.owner}</td>
-                        <td>{basis === "inherent" ? `${exposure.probability} × ${exposure.impact} = ${exposure.score}` : `${inherent.score} → ${residual.score}`}</td>
-                        <td><StatusPill status={riskTone[exposure.rating]}>{titleCase(exposure.rating)}</StatusPill></td>
-                        <td>{titleCase(riskTrend(risk))}</td>
-                        <td><span className={`trigger trigger--${risk.triggerStatus}`}>{titleCase(risk.triggerStatus)}</span><span className="table-secondary">{titleCase(risk.controlEffectiveness)}</span></td>
-                        <td>{titleCase(risk.disposition ?? "not-recorded")}</td>
-                        <td>{formatDate(risk.treatmentDue)}</td>
+                        {visibleRiskColumns.has("owner") ? <td>{risk.owner}</td> : null}
+                        {visibleRiskColumns.has("exposure") ? <td>{basis === "inherent" ? `${exposure.probability} × ${exposure.impact} = ${exposure.score}` : `${inherent.score} → ${residual.score}`}</td> : null}
+                        {visibleRiskColumns.has("rating") ? <td><StatusPill status={riskTone[exposure.rating]}>{titleCase(exposure.rating)}</StatusPill></td> : null}
+                        {visibleRiskColumns.has("trend") ? <td>{titleCase(riskTrend(risk))}</td> : null}
+                        {visibleRiskColumns.has("control") ? <td><span className={`trigger trigger--${risk.triggerStatus}`}>{titleCase(risk.triggerStatus)}</span><span className="table-secondary">{titleCase(risk.controlEffectiveness)}</span></td> : null}
+                        {visibleRiskColumns.has("decision") ? <td>{titleCase(risk.disposition ?? "not-recorded")}</td> : null}
+                        {visibleRiskColumns.has("due") ? <td>{formatDate(risk.treatmentDue)}</td> : null}
                         <td><div className="register-row-actions"><button type="button" aria-label={`Edit ${risk.id}`} onClick={() => { clearRequestedRecord(); setEditing(risk); setIsAdding(false); setFormError(""); }}><Pencil size={15} aria-hidden="true" /></button><button type="button" aria-label={`Delete ${risk.id}`} onClick={() => { if (window.confirm(`Delete risk ${risk.id}?`)) removeRisk(risk.id); }}><Trash2 size={15} aria-hidden="true" /></button></div></td>
                       </tr>
                     );

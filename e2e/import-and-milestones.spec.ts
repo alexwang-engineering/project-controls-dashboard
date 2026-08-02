@@ -49,4 +49,20 @@ test("turns an imported schedule milestone into a controlled exception record", 
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Control record incomplete" }))
     .toBeVisible();
+
+  await page.keyboard.press("Control+K");
+  await page
+    .getByPlaceholder("Search by name, ID, owner or category")
+    .fill("A-001");
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(/\/milestones\?.*record=A-001/);
+  const inspection = page.getByRole("region", { name: "Commissioning gate" });
+  await expect(inspection).toBeFocused();
+  await expect(inspection).toContainText("Inspection is read-only");
+  await inspection.getByRole("button", { name: "Edit record" }).click();
+  await expect(page).toHaveURL(/mode=edit/);
+  await expect(
+    page.getByRole("heading", { name: "Edit milestone A-001" }),
+  ).toBeVisible();
 });

@@ -21,6 +21,7 @@ import {
 import type { MetricStatus, Milestone, MilestoneStatus } from "../../domain/types";
 import { formatDate } from "../../utils/format";
 import { RegisterEditor } from "../registers/RegisterEditor";
+import { RecordInspectionPanel } from "../registers/RecordInspectionPanel";
 
 const statusPresentation: Record<
   MilestoneStatus,
@@ -61,9 +62,14 @@ export function MilestonesPage() {
   const { snapshot } = useProjectPerformance();
   const activeReportingDate = snapshot?.project.reportingDate ?? reportingDate;
   const [editing, setEditing] = useState<Milestone>();
+  const [inspecting, setInspecting] = useState<Milestone>();
   const [isAdding, setIsAdding] = useState(false);
   const [formError, setFormError] = useState("");
-  const [filter, setFilter] = useState<MilestoneFilter>("all");
+  const requestedFilter = searchParams.get("filter");
+  const filter: MilestoneFilter =
+    requestedFilter === "exceptions" || requestedFilter === "next-30"
+      ? requestedFilter
+      : "all";
   const [expandedMilestoneId, setExpandedMilestoneId] = useState<string>();
   const derivedMilestones = milestones.map((milestone) => ({
     ...milestone,
@@ -116,21 +122,52 @@ export function MilestonesPage() {
   );
   const editorOpen = isAdding || editing !== undefined;
   const requestedRecordId = searchParams.get("record");
+  const requestedMode = searchParams.get("mode");
 
   useEffect(() => {
-    if (requestedRecordId === null || editing?.id === requestedRecordId) return;
+    if (requestedRecordId === null) {
+      setInspecting(undefined);
+      return;
+    }
     const requestedRecord = milestones.find(({ id }) => id === requestedRecordId);
     if (requestedRecord === undefined) return;
-    setEditing(requestedRecord);
+    if (requestedMode === "edit") {
+      if (editing?.id !== requestedRecordId) setEditing(requestedRecord);
+      setInspecting(undefined);
+      setIsAdding(false);
+      setFormError("");
+      return;
+    }
+    if (inspecting?.id !== requestedRecordId) setInspecting(requestedRecord);
+    setEditing(undefined);
     setIsAdding(false);
     setFormError("");
-  }, [editing?.id, milestones, requestedRecordId]);
+  }, [editing?.id, inspecting?.id, milestones, requestedMode, requestedRecordId]);
 
   const clearRequestedRecord = () => {
+    setInspecting(undefined);
     if (!searchParams.has("record")) return;
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("record");
+    nextParams.delete("mode");
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const editInspectedRecord = (record: Milestone) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("record", record.id);
+    nextParams.set("mode", "edit");
+    setSearchParams(nextParams);
+    setInspecting(undefined);
+    setEditing(record);
+    setIsAdding(false);
+  };
+
+  const updateFilter = (nextFilter: MilestoneFilter) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextFilter === "all") nextParams.delete("filter");
+    else nextParams.set("filter", nextFilter);
+    setSearchParams(nextParams);
   };
 
   const closeEditor = () => {
@@ -241,6 +278,26 @@ export function MilestonesPage() {
         ]}
       />
 
+      {inspecting ? (
+        <RecordInspectionPanel
+          kind={`Milestone ${inspecting.id}`}
+          title={inspecting.name}
+          description="Inspect the calculated commitment position and its recovery evidence before entering edit mode."
+          facts={[
+            { label: "Work package", value: inspecting.wbsId },
+            { label: "Owner", value: inspecting.owner },
+            { label: "Baseline / forecast", value: `${formatDate(inspecting.baselineDate)} / ${formatDate(inspecting.forecastDate)}` },
+            { label: "Status", value: statusPresentation[milestoneStatusAt(inspecting, activeReportingDate)].label },
+            { label: "Recovery action", value: inspecting.recoveryAction ?? "Not recorded" },
+            { label: "Recovery owner / due", value: inspecting.actionOwner ? `${inspecting.actionOwner} · ${inspecting.actionDueDate ? formatDate(inspecting.actionDueDate) : "No due date"}` : "Not recorded" },
+            { label: "Decision required", value: inspecting.decisionRequired ?? "Not recorded" },
+            { label: "Evidence commentary", value: inspecting.commentary },
+          ]}
+          onClose={clearRequestedRecord}
+          onEdit={() => editInspectedRecord(inspecting)}
+        />
+      ) : null}
+
       {editorOpen ? (
         <RegisterEditor
           title={editing ? `Edit milestone ${editing.id}` : "Add milestone"}
@@ -287,7 +344,7 @@ export function MilestonesPage() {
           <div><p className="eyebrow">Controlled register</p><h2 id="milestone-register-title">Milestone position</h2><p className="panel__description">The filter changes this table only; status remains anchored to the active reporting date.</p></div>
           <div className="segmented-control" aria-label="Milestone view">
             {(["all", "exceptions", "next-30"] as const).map((value) => (
-              <button key={value} type="button" className={filter === value ? "is-active" : ""} aria-pressed={filter === value} onClick={() => setFilter(value)}>
+              <button key={value} type="button" className={filter === value ? "is-active" : ""} aria-pressed={filter === value} onClick={() => updateFilter(value)}>
                 {value === "all" ? "All" : value === "exceptions" ? "Exceptions" : "Next 30 days"}
               </button>
             ))}
