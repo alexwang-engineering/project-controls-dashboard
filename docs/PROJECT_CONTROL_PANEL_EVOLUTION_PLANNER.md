@@ -1,8 +1,10 @@
 # Project Control Panel Evolution Planner
 
-> Status: Draft for approval only  
-> Prepared: 2 August 2026  
-> Implementation authority: Not granted — no application code, branch integration, dependency update, commit, push, or deployment may begin until the user says “好了”.
+> Status: First delivery wave approved; Phase 0 completed
+>
+> Prepared: 2 August 2026
+>
+> Implementation authority: Phases 0–2 approved by the user on 2 August 2026. Phases 3–5 remain separate decision gates.
 
 ## 1. Outcome
 
@@ -363,6 +365,6 @@ Phases 3–5 remain planned options, not pre-approved scope.
 
 ## 12. Start gate
 
-Do not implement this planner until the user explicitly says **“好了”**.
+Satisfied on 2 August 2026 when the user explicitly said **“好，从你的 planner 开始”**.
 
-At that point, begin with Phase 0 only: preserve the dirty worktree, reconcile remote security changes, document the threshold decision, and run the release baseline before changing product behaviour.
+Phase 0 preserved the dirty worktree, reconciled remote security changes, documented the threshold decision, and passed the complete release baseline before Phase 1 product work began. See `PHASE_0_CONTROL_PANEL_BASELINE.md`.
